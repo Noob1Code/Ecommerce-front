@@ -1,1 +1,1 @@
-export * from './components/Cart';
+export { Cart } from './components/Cart';

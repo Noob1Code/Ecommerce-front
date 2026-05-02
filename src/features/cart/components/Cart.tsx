@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useCartStore } from '../../../app/store/useCartStore';
+import { useCartStore } from '../../../app/store';
 
 export const Cart = () => {
   // Extracting clearCart from the Zustand store

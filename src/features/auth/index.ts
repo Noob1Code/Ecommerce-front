@@ -1,1 +1,2 @@
-export * from './components/Login';
+export { Login } from './components/Login';
+export { useAuthStore } from './store/useAuthStore';

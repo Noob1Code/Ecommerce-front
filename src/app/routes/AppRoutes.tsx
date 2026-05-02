@@ -1,9 +1,14 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Layout } from '../../shared/components/layout';
+import { Layout, ErrorBoundary } from '../../shared/components/layout';
 import { Spinner } from '../../shared/components/ui';
 
-// Lazy loading features for performance optimization
+const RouteFallback = () => (
+  <div className="flex min-h-[60vh] items-center justify-center">
+    <Spinner className="h-10 w-10 text-blue-600" />
+  </div>
+);
+
 const ProductGrid = lazy(() => import('../../features/products').then(module => ({ default: module.ProductGrid })));
 const ProductDetail = lazy(() => import('../../features/products').then(module => ({ default: module.ProductDetail })));
 const Cart = lazy(() => import('../../features/cart').then(module => ({ default: module.Cart })));
@@ -13,12 +18,16 @@ const Login = lazy(() => import('../../features/auth').then(module => ({ default
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: (
+      <ErrorBoundary>
+        <Layout />
+      </ErrorBoundary>
+    ),
     children: [
       {
         index: true,
         element: (
-          <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<RouteFallback />}>
             <ProductGrid />
           </Suspense>
         ),
@@ -26,7 +35,7 @@ const router = createBrowserRouter([
       {
         path: 'product/:id',
         element: (
-          <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<RouteFallback />}>
             <ProductDetail />
           </Suspense>
         ),
@@ -34,7 +43,7 @@ const router = createBrowserRouter([
       {
         path: 'cart',
         element: (
-          <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<RouteFallback />}>
             <Cart />
           </Suspense>
         ),
@@ -42,7 +51,7 @@ const router = createBrowserRouter([
       {
         path: 'checkout',
         element: (
-          <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<RouteFallback />}>
             <Checkout />
           </Suspense>
         ),
@@ -50,7 +59,7 @@ const router = createBrowserRouter([
       {
         path: 'login',
         element: (
-          <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<RouteFallback />}>
             <Login />
           </Suspense>
         ),
