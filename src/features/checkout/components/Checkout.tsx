@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useCartStore } from '../../../app/store/useCartStore';
+import { useCartStore } from '../../../app/store';
 
 export const Checkout = () => {
   const navigate = useNavigate();

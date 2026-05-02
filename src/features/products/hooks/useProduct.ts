@@ -1,11 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchProductById } from '../api/productsApi';
-import type { Product } from '../types';
+import { mapApiToProduct } from '../domain/product.mapper';
+import type { Product } from '../domain/product.types';
+import { QUERY_KEYS } from '../../../services/api';
 
-export const useProduct = (id: string) => {
+export const useProduct = (productId: string) => {
   return useQuery<Product, Error>({
-    queryKey: ['product', id],
-    queryFn: () => fetchProductById(id),
-    enabled: !!id, 
+    queryKey: QUERY_KEYS.products.detail(productId),
+    queryFn: async () => {
+      // Busca os dados da API e aplica a Camada de Domínio (Mapper)
+      const rawData = await fetchProductById(productId);
+      return mapApiToProduct(rawData);
+    },
+    enabled: !!productId,
   });
 };

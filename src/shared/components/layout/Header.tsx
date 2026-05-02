@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useCartStore } from '../../../app/store/useCartStore';
+import { useCartStore } from '../../../app/store';
 
 export const Header = () => {
   // We calculate the total number of items, not just unique products
