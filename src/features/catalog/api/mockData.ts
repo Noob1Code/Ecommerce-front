@@ -1,4 +1,3 @@
-// Updated mock data simulating a transitional API response with Sellers and Offers
 export const mockProducts = [
   {
     id: '1',
@@ -6,10 +5,8 @@ export const mockProducts = [
     description: 'Óleo extraído a frio, 100% puro do cerrado brasileiro. Rico em vitaminas A e E.',
     imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     category: 'Food',
-    // Legacy fields (for safety)
     price: 45.90,
     stock: 15,
-    // New Marketplace fields
     offers: [
       {
         id: 'off_1a',
@@ -26,9 +23,18 @@ export const mockProducts = [
         stock: 5,
         condition: 'NEW',
         isBuyBoxWinner: false
+      },
+      {
+        id: 'off_1c',
+        seller: { id: 'sel_7', name: 'Raízes do Cerrado', rating: 4.7 },
+        price: 46.50,
+        stock: 8,
+        condition: 'NEW',
+        isBuyBoxWinner: false
       }
     ]
   },
+
   {
     id: '2',
     name: 'Fone Bluetooth Noise Cancelling',
@@ -45,9 +51,26 @@ export const mockProducts = [
         stock: 5,
         condition: 'NEW',
         isBuyBoxWinner: true
+      },
+      {
+        id: 'off_2b',
+        seller: { id: 'sel_2', name: 'Empório do Brasil', rating: 4.5 },
+        price: 310.00,
+        stock: 3,
+        condition: 'NEW',
+        isBuyBoxWinner: false
+      },
+      {
+        id: 'off_2c',
+        seller: { id: 'sel_8', name: 'Audio Prime', rating: 4.6 },
+        price: 289.90,
+        stock: 7,
+        condition: 'REFURBISHED',
+        isBuyBoxWinner: false
       }
     ]
   },
+
   {
     id: '3',
     name: 'Câmera Mirrorless Alpha',
@@ -72,9 +95,18 @@ export const mockProducts = [
         stock: 1,
         condition: 'USED',
         isBuyBoxWinner: false
+      },
+      {
+        id: 'off_3c',
+        seller: { id: 'sel_3', name: 'Tech Store Oficial', rating: 4.8 },
+        price: 5350.00,
+        stock: 1,
+        condition: 'NEW',
+        isBuyBoxWinner: false
       }
     ]
   },
+
   {
     id: '4',
     name: 'Mochila Urbana Resistente à Água',
@@ -91,6 +123,88 @@ export const mockProducts = [
         stock: 20,
         condition: 'NEW',
         isBuyBoxWinner: true
+      },
+      {
+        id: 'off_4b',
+        seller: { id: 'sel_7', name: 'Raízes do Cerrado', rating: 4.7 },
+        price: 179.90,
+        stock: 10,
+        condition: 'NEW',
+        isBuyBoxWinner: false
+      },
+      {
+        id: 'off_4c',
+        seller: { id: 'sel_9', name: 'Urban Gear', rating: 4.4 },
+        price: 169.90,
+        stock: 4,
+        condition: 'USED',
+        isBuyBoxWinner: false
+      }
+    ]
+  },
+
+  // NOVO PRODUTO
+  {
+    id: '5',
+    name: 'Castanha de Baru Torrada',
+    description: 'Castanhas selecionadas do cerrado, ricas em proteína e sabor intenso.',
+    imageUrl: 'https://images.unsplash.com/photo-1604908177522-402f9c9d7e9d?auto=format&fit=crop&w=800&q=80',
+    category: 'Food',
+    price: 32.90,
+    stock: 25,
+    offers: [
+      {
+        id: 'off_5a',
+        seller: { id: 'sel_1', name: 'Cerrado Natural', rating: 4.9 },
+        price: 32.90,
+        stock: 25,
+        condition: 'NEW',
+        isBuyBoxWinner: true
+      },
+      {
+        id: 'off_5b',
+        seller: { id: 'sel_7', name: 'Raízes do Cerrado', rating: 4.7 },
+        price: 34.50,
+        stock: 12,
+        condition: 'NEW',
+        isBuyBoxWinner: false
+      }
+    ]
+  },
+
+  // NOVO PRODUTO
+  {
+    id: '6',
+    name: 'Teclado Mecânico RGB',
+    description: 'Teclado gamer com switches azuis, iluminação RGB e estrutura em alumínio.',
+    imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
+    category: 'Electronics',
+    price: 399.90,
+    stock: 10,
+    offers: [
+      {
+        id: 'off_6a',
+        seller: { id: 'sel_3', name: 'Tech Store Oficial', rating: 4.8 },
+        price: 399.90,
+        stock: 10,
+        condition: 'NEW',
+        isBuyBoxWinner: true
+      },
+      {
+        id: 'off_6b',
+        seller: { id: 'sel_8', name: 'Audio Prime', rating: 4.6 },
+        price: 379.90,
+        stock: 6,
+        condition: 'NEW',
+        isBuyBoxWinner: false
+      },
+      {
+        id: 'off_6c',
+        seller: { id: 'sel_2', name: 'Empório do Brasil', rating: 4.5 },
+        price: 410.00,
+        stock: 3,
+        condition: 'NEW',
+        isBuyBoxWinner: false
       }
     ]
   }
