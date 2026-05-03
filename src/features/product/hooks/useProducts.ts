@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchProducts } from '../api/productsApi';
+import { fetchProducts } from '../api/productApi';
 import { mapApiToProductList } from '../domain/product.mapper';
 import type { Product } from '../domain/product.types';
 import { QUERY_KEYS } from '../../../services/api';

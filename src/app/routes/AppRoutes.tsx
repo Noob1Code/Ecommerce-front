@@ -9,8 +9,8 @@ const RouteFallback = () => (
   </div>
 );
 
-const ProductGrid = lazy(() => import('../../features/products').then(module => ({ default: module.ProductGrid })));
-const ProductDetail = lazy(() => import('../../features/products').then(module => ({ default: module.ProductDetail })));
+const CatalogView = lazy(() => import('../../features/catalog').then(module => ({ default: module.CatalogView })));
+const ProductDetail = lazy(() => import('../../features/product').then(module => ({ default: module.ProductDetail })));
 const Cart = lazy(() => import('../../features/cart').then(module => ({ default: module.Cart })));
 const Checkout = lazy(() => import('../../features/checkout').then(module => ({ default: module.Checkout })));
 const Login = lazy(() => import('../../features/auth').then(module => ({ default: module.Login })));
@@ -28,7 +28,7 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <ProductGrid />
+            <CatalogView />
           </Suspense>
         ),
       },
