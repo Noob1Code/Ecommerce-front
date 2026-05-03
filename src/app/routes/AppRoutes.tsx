@@ -17,6 +17,9 @@ const Login = lazy(() => import('../../features/auth').then(module => ({ default
 
 const router = createBrowserRouter([
   {
+    // ========================================================
+    // 1. ROTAS PADRÃO (Com o Header principal e Footer)
+    // ========================================================
     path: '/',
     element: (
       <ErrorBoundary>
@@ -49,14 +52,6 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'checkout',
-        element: (
-          <Suspense fallback={<RouteFallback />}>
-            <Checkout />
-          </Suspense>
-        ),
-      },
-      {
         path: 'login',
         element: (
           <Suspense fallback={<RouteFallback />}>
@@ -65,6 +60,19 @@ const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    // ========================================================
+    // 2. ROTA DE CHECKOUT (Isolada, usa o seu próprio CheckoutLayout)
+    // ========================================================
+    path: '/checkout',
+    element: (
+      <ErrorBoundary>
+        <Suspense fallback={<RouteFallback />}>
+          <Checkout />
+        </Suspense>
+      </ErrorBoundary>
+    ),
   },
 ]);
 

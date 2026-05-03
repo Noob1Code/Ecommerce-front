@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../domain/product.types';
-import { useCartStore } from '../../../app/store/useCartStore'; // Caminho atualizado
+import { useCartStore } from '../../../app/store/useCartStore';
 
 interface ProductCardProps {
   product: Product;
@@ -11,24 +11,35 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const addItem = useCartStore((state) => state.addItem);
   const [isAdded, setIsAdded] = useState(false);
 
+  // Variáveis derivadas elevadas para o escopo do componente
+  const targetPrice = product.bestOffer?.price ?? product.price;
+  const targetStock = product.bestOffer?.stock ?? product.stock;
+  const offerId = product.bestOffer?.id || product.id;
+  const targetSeller = product.bestOffer?.seller 
+    ? { id: product.bestOffer.seller.id, name: product.bestOffer.seller.name }
+    : undefined;
+
   const formattedPrice = new Intl.NumberFormat('pt-PT', {
     style: 'currency',
     currency: 'EUR',
-  }).format(product.price);
+  }).format(targetPrice);
 
   const sellerName = product.bestOffer?.seller?.name || 'Loja Parceira';
-  const otherOffersCount = product.offers ? product.offers.length - 1 : 0;
+  
+  // Garantia matemática para evitar resultados negativos
+  const otherOffersCount = Math.max(0, (product.offers?.length || 0) - 1);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); 
     addItem({
-      id: product.id,
+      id: offerId,
+      productId: product.id,
       name: product.name,
-      price: product.price,
+      price: targetPrice,
       imageUrl: product.imageUrl,
-      stock: product.stock, // <- Enviamos o estoque para a sua regra de negócio!
+      stock: targetStock,
+      seller: targetSeller,
     });
-    
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
@@ -70,10 +81,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           
           <button
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            title={product.stock === 0 ? 'Esgotado' : 'Adicionar ao carrinho'}
+            disabled={targetStock === 0}
+            title={targetStock === 0 ? 'Esgotado' : 'Adicionar ao carrinho'}
             className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
-              product.stock === 0 
+              targetStock === 0 
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
                 : isAdded 
                   ? 'bg-green-500 text-white hover:bg-green-600' 

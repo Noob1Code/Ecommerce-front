@@ -1,44 +1,55 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// 1. O carrinho agora guarda apenas o resumo necessário para o checkout,
-// e não o objeto de Domínio de Produto inteiro com todos os vendedores.
 export interface CartItem {
   id: string;
+  productId?: string;
   name: string;
   price: number;
   imageUrl: string;
   stock: number;
   quantity: number;
+  seller?: {
+    id: string;
+    name: string;
+  };
 }
 
-// Tipo auxiliar para o que vem da tela de catálogo (tudo menos a quantidade que começa no 1)
 export type AddCartItemDTO = Omit<CartItem, 'quantity'>;
 
 interface CartState {
   items: CartItem[];
+  selectedItemIds: string[];
+  getSelectedTotal: () => number;
+
   addItem: (item: AddCartItemDTO) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+
+  // Ações de Seleção
+  toggleItemSelection: (itemId: string) => void;
+  toggleSellerSelection: (itemIds: string[]) => void; // Ação para selecionar pacote inteiro
+  isItemSelected: (itemId: string) => boolean;
+  selectAll: () => void;
+  unselectAll: () => void;
+  getSelectedItems: () => CartItem[];
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      
+      selectedItemIds: [],
+
       addItem: (newItem) => {
         const currentItems = get().items;
         const existingItem = currentItems.find((item) => item.id === newItem.id);
 
         if (existingItem) {
-          // REGRA DE NEGÓCIO: Impede de adicionar se já atingiu o limite do estoque
-          if (existingItem.quantity >= newItem.stock) {
-            return; 
-          }
-          
+          if (existingItem.quantity >= newItem.stock) return;
+
           set({
             items: currentItems.map((item) =>
               item.id === newItem.id
@@ -47,21 +58,31 @@ export const useCartStore = create<CartState>()(
             ),
           });
         } else {
-          // REGRA DE NEGÓCIO: Impede adição de produtos sem estoque
           if (newItem.stock <= 0) return;
 
-          set({ items: [...currentItems, { ...newItem, quantity: 1 }] });
+          const itemToAdd: CartItem = {
+            ...newItem,
+            productId: newItem.productId || newItem.id,
+            quantity: 1
+          };
+
+          set({
+            items: [...currentItems, itemToAdd],
+            selectedItemIds: [...get().selectedItemIds, itemToAdd.id]
+          });
         }
       },
 
       removeItem: (itemId) => {
-        set({ items: get().items.filter((item) => item.id !== itemId) });
+        set({
+          items: get().items.filter((item) => item.id !== itemId),
+          selectedItemIds: get().selectedItemIds.filter(id => id !== itemId)
+        });
       },
 
       updateQuantity: (itemId, quantity) => {
         if (quantity <= 0) return;
-        
-        // Regra extra: garantir que não atualiza para um valor maior que o stock
+
         const currentItems = get().items;
         const itemToUpdate = currentItems.find(i => i.id === itemId);
         if (itemToUpdate && quantity > itemToUpdate.stock) return;
@@ -73,7 +94,7 @@ export const useCartStore = create<CartState>()(
         });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], selectedItemIds: [] }),
 
       getCartTotal: () => {
         return get().items.reduce(
@@ -81,9 +102,67 @@ export const useCartStore = create<CartState>()(
           0
         );
       },
+      
+      getSelectedTotal: () => {
+        const state = get();
+        return state.items
+          .filter(item => state.selectedItemIds.includes(item.id))
+          .reduce((total, item) => total + item.price * item.quantity, 0);
+      },
+
+      toggleItemSelection: (itemId) => {
+        const currentSelected = get().selectedItemIds;
+        set({
+          selectedItemIds: currentSelected.includes(itemId)
+            ? currentSelected.filter((id) => id !== itemId)
+            : [...currentSelected, itemId]
+        });
+      },
+
+      // Nova implementação para selecionar o grupo do vendedor
+      toggleSellerSelection: (itemIds) => {
+        const currentSelected = get().selectedItemIds;
+        const allSelected = itemIds.every(id => currentSelected.includes(id));
+
+        if (allSelected) {
+          set({
+            selectedItemIds: currentSelected.filter(id => !itemIds.includes(id))
+          });
+        } else {
+          const newSelected = Array.from(new Set([...currentSelected, ...itemIds]));
+          set({ selectedItemIds: newSelected });
+        }
+      },
+
+      isItemSelected: (itemId) => get().selectedItemIds.includes(itemId),
+
+      selectAll: () => {
+        set({ selectedItemIds: get().items.map(item => item.id) });
+      },
+
+      unselectAll: () => {
+        set({ selectedItemIds: [] });
+      },
+
+      getSelectedItems: () => {
+        const state = get();
+        return state.items.filter(item => state.selectedItemIds.includes(item.id));
+      }
     }),
     {
       name: 'ecommerce-cart-storage',
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0 && persistedState.items) {
+          persistedState.items = persistedState.items.map((item: any) => ({
+            ...item,
+            productId: item.productId || item.id,
+            seller: item.seller || undefined,
+          }));
+          persistedState.selectedItemIds = persistedState.items.map((i: any) => i.id);
+        }
+        return persistedState as CartState;
+      },
     }
   )
 );
