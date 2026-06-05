@@ -1,13 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useCartStore } from '../../../app/store';
-import { useAuthStore, useAuthorization } from '../../../features/auth';
+import { useCartStore } from '../../features/cart';
+import { useAuthStore, useAuthorization } from '../../features/auth';
 
 export const Header = () => {
   const navigate = useNavigate();
   const items = useCartStore((state) => state.items);
   const cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
 
-  // Read clean authentication states and authorization rules from our secure domain hooks
   const { isAuthenticated, user, isOperationalStaff } = useAuthorization();
   const logoutUser = useAuthStore((state) => state.logout);
 
@@ -20,16 +19,13 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Logo / Store Name */}
         <div className="flex items-center">
           <Link to="/" className="text-2xl font-bold tracking-tight text-blue-600 transition-colors hover:text-blue-700">
             Mercado Preso
           </Link>
         </div>
 
-        {/* Navigation & Actions */}
         <div className="flex items-center space-x-6">
-          {/* Conditional Navigation based on Operational/Staff Profile Credentials */}
           {isOperationalStaff && (
             <Link 
               to="/backoffice" 
@@ -54,9 +50,7 @@ export const Header = () => {
                 d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
               />
             </svg>
-            <span className="sr-only">items in cart, view bag</span>
             
-            {/* Cart Badge */}
             {cartItemCount > 0 && (
               <span className="absolute top-0 right-0 inline-flex items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-xs font-bold text-white ring-2 ring-white">
                 {cartItemCount}
@@ -64,7 +58,6 @@ export const Header = () => {
             )}
           </Link>
 
-          {/* User Status Profile Actions Block */}
           {isAuthenticated && user ? (
             <div className="flex items-center space-x-4 border-l border-gray-200 pl-4">
               <div className="text-right hidden sm:block">

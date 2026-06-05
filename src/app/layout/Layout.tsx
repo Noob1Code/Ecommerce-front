@@ -7,7 +7,6 @@ export const Layout = () => {
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
       <main className="flex-1 flex flex-col">
-        {/* Outlet is where the child routes will be rendered */}
         <Outlet />
       </main>
       <Footer />

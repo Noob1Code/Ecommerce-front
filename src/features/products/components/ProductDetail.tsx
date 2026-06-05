@@ -1,58 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProduct } from '../hooks/useProduct';
-import { useCartStore } from '../../../app/store';
+import { useVariantSelector } from '../hooks/useVariantSelector';
+import { useCartStore } from '../../cart';
 import { Spinner, ErrorMessage, Button } from '../../../shared/components/ui';
-import type { ProductSku } from '../domain/product.types';
 
 export const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { product, isLoading, error } = useProduct(id);
   const addItem = useCartStore((state) => state.addItem);
-
-  // State to track user selected options: Record<attributeId, value>
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [resolvedSku, setResolvedSku] = useState<ProductSku | null>(null);
-  const [activeImageUrl, setActiveImageUrl] = useState<string>('/fallback-image.jpg');
   const [isAdded, setIsAdded] = useState(false);
 
-  // Initialize options with the first available SKU to guarantee a deterministic state
-  useEffect(() => {
-    if (product && product.skus && product.skus.length > 0) {
-      const defaultSku = product.skus[0];
-      const initialOptions: Record<string, string> = {};
-      
-      defaultSku.options.forEach((opt) => {
-        initialOptions[opt.attributeId] = opt.value;
-      });
-
-      setSelectedOptions(initialOptions);
-      setResolvedSku(defaultSku);
-
-      if (defaultSku.images && defaultSku.images.length > 0) {
-        setActiveImageUrl(defaultSku.images[0].imageUrl);
-      }
-    }
-  }, [product]);
-
-  // Synchronize SKU determination whenever options change
-  useEffect(() => {
-    if (!product || !product.skus) return;
-
-    const matchedSku = product.skus.find((sku) =>
-      sku.options.every((opt) => selectedOptions[opt.attributeId] === opt.value)
-    );
-
-    if (matchedSku) {
-      setResolvedSku(matchedSku);
-      // Automatically update the main picture if the newly selected variant possesses media assets
-      if (matchedSku.images && matchedSku.images.length > 0) {
-        setActiveImageUrl(matchedSku.images[0].imageUrl);
-      }
-    } else {
-      setResolvedSku(null);
-    }
-  }, [selectedOptions, product]);
+  // Consumes the centralized domain variant selector engine hook abstraction cleanly
+  const {
+    selectedOptions,
+    resolvedSku,
+    activeImageUrl,
+    handleOptionChange,
+    getOptionGroupValues,
+    isCombinationAvailable,
+  } = useVariantSelector(product);
 
   if (isLoading) {
     return (
@@ -78,13 +45,6 @@ export const ProductDetail = () => {
     );
   }
 
-  const handleOptionChange = (attributeId: string, value: string) => {
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [attributeId]: value,
-    }));
-  };
-
   const handleAddToCart = () => {
     if (!resolvedSku || resolvedSku.stock <= 0) return;
 
@@ -94,24 +54,6 @@ export const ProductDetail = () => {
     window.setTimeout(() => {
       setIsAdded(false);
     }, 2000);
-  };
-
-  // Extract all unique values per attribute across all SKUs to draw correct option pickers
-  const getOptionGroupValues = (attributeId: string): string[] => {
-    const valuesSet = new Set<string>();
-    product.skus.forEach((sku) => {
-      const match = sku.options.find((o) => o.attributeId === attributeId);
-      if (match) valuesSet.add(match.value);
-    });
-    return Array.from(valuesSet);
-  };
-
-  // Determine combination compatibility to visually disable invalid selections
-  const isCombinationAvailable = (attributeId: string, value: string): boolean => {
-    const hypotheticalSelection = { ...selectedOptions, [attributeId]: value };
-    return product.skus.some((sku) =>
-      sku.options.every((opt) => hypotheticalSelection[opt.attributeId] === opt.value)
-    );
   };
 
   return (
@@ -125,7 +67,7 @@ export const ProductDetail = () => {
       </div>
 
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-        {/* Left Column: Media Presentation */}
+        {/* Left Column: Media Presentation Layout */}
         <div className="flex flex-col">
           <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-100 border border-gray-200">
             <img
@@ -134,31 +76,9 @@ export const ProductDetail = () => {
               className="h-full w-full object-cover object-center sm:rounded-lg"
             />
           </div>
-
-          {/* Sku Thumbnails Collection */}
-          {resolvedSku && resolvedSku.images && resolvedSku.images.length > 1 && (
-            <div className="mx-auto mt-4 hidden w-full max-w-2xl sm:block lg:max-w-none">
-              <div className="grid grid-cols-4 gap-4" role="tablist" aria-label="Product images">
-                {resolvedSku.images.map((img) => (
-                  <button
-                    key={img.id}
-                    onClick={() => setActiveImageUrl(img.imageUrl)}
-                    className={`relative flex h-24 cursor-pointer items-center justify-center rounded-md bg-white text-sm font-medium uppercase hover:bg-gray-50 border ${
-                      activeImageUrl === img.imageUrl ? 'border-blue-600 ring-2 ring-blue-600' : 'border-gray-200'
-                    }`}
-                    type="button"
-                  >
-                    <span className="absolute inset-0 overflow-hidden rounded-md">
-                      <img src={img.imageUrl} alt="" className="h-full w-full object-cover object-center" />
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Right Column: Configuration & Purchase Operations */}
+        {/* Right Column: Configuration & Purchase Operations Section */}
         <div className="mt-10 px-4 sm:mt-16 sm:px-0 lg:mt-0">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">{product.name}</h1>
           
@@ -175,7 +95,7 @@ export const ProductDetail = () => {
           </div>
 
           <div className="mt-8 border-t border-gray-200 pt-8">
-            {/* Dynamic Variant Option Controls */}
+            {/* Dynamic Variant Option Controls generated via hooks extraction filters */}
             {product.attributes.map((attr) => {
               const currentSelectedValue = selectedOptions[attr.attributeId];
               const dynamicValues = getOptionGroupValues(attr.attributeId);
@@ -196,7 +116,7 @@ export const ProductDetail = () => {
                           disabled={!isAllowed}
                           className={`px-4 py-2 text-sm font-medium rounded-md border transition-all ${
                             isSelected
-                              ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                              ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-100'
                               : isAllowed
                               ? 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                               : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-40 line-through'
@@ -211,7 +131,7 @@ export const ProductDetail = () => {
               );
             })}
 
-            {/* Inventory Feedback */}
+            {/* Inventory Status Real-time Feedback indicator */}
             <div className="mt-4 flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">Availability:</span>
               {resolvedSku ? (
@@ -227,7 +147,7 @@ export const ProductDetail = () => {
               )}
             </div>
 
-            {/* Checkout Actions */}
+            {/* Checkout Form Actions */}
             <div className="mt-8 flex">
               <Button
                 type="button"

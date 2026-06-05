@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Product } from '../domain/product.types';
-import { useCartStore } from '../../../app/store';
+import { useCartStore } from '../../cart';
 import { RoleGuard } from '../../auth';
 import { Button, Card } from '../../../shared/components/ui';
 
