@@ -1,10 +1,20 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../../app/store';
+import { useAuthStore, useAuthorization } from '../../../features/auth';
 
 export const Header = () => {
-  // We calculate the total number of items, not just unique products
+  const navigate = useNavigate();
   const items = useCartStore((state) => state.items);
   const cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
+
+  // Read clean authentication states and authorization rules from our secure domain hooks
+  const { isAuthenticated, user, isOperationalStaff } = useAuthorization();
+  const logoutUser = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/login');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
@@ -13,19 +23,22 @@ export const Header = () => {
         {/* Logo / Store Name */}
         <div className="flex items-center">
           <Link to="/" className="text-2xl font-bold tracking-tight text-blue-600 transition-colors hover:text-blue-700">
-            Cacats viado
+            Mercado Preso
           </Link>
         </div>
 
         {/* Navigation & Actions */}
         <div className="flex items-center space-x-6">
-          <Link 
-            to="/login" 
-            className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-600"
-          >
-            Sign in
-          </Link>
-          
+          {/* Conditional Navigation based on Operational/Staff Profile Credentials */}
+          {isOperationalStaff && (
+            <Link 
+              to="/backoffice" 
+              className="text-sm font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 hover:bg-amber-100 transition-all"
+            >
+              Backoffice Panel
+            </Link>
+          )}
+
           <Link to="/cart" className="group flex items-center p-2 relative">
             <svg
               className="h-6 w-6 flex-shrink-0 text-gray-400 transition-colors group-hover:text-blue-600"
@@ -50,6 +63,32 @@ export const Header = () => {
               </span>
             )}
           </Link>
+
+          {/* User Status Profile Actions Block */}
+          {isAuthenticated && user ? (
+            <div className="flex items-center space-x-4 border-l border-gray-200 pl-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-medium text-gray-900">{user.name}</p>
+                <p className="text-[10px] text-gray-400 font-mono tracking-wide">
+                  {user.roles[0]?.replace('ROLE_', '')}
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                type="button"
+                className="text-sm font-medium text-red-600 hover:text-red-500 transition-colors bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link 
+              to="/login" 
+              className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-600 bg-gray-50 hover:bg-gray-100 px-4 py-1.5 rounded-md border border-gray-200"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
 
       </div>

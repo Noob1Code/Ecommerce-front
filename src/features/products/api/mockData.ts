@@ -1,36 +1,106 @@
-import type { Product } from '../types';
+import type { 
+  BackendProdutoAtributoResponseDTO, 
+  BackendProdutoVariacaoResponseDTO 
+} from '../domain/product.types';
 
-export const mockProducts: Product[] = [
+// Interface que representa exatamente o ProdutoDetalhadoResponseDTO com as variações embutidas
+export interface BackendProdutoDetalhadoPayload {
+  id: string;
+  nome: string;
+  descricao: string;
+  ativo: boolean;
+  criadoEm: string;
+  variacoes: BackendProdutoVariacaoResponseDTO[];
+  atributos: BackendProdutoAtributoResponseDTO[];
+}
+
+export const mockBackendProducts: BackendProdutoDetalhadoPayload[] = [
   {
-    id: '1',
-    name: 'Premium Wireless Headphones',
-    description: 'High-quality noise-canceling wireless headphones with 30 hours of battery life.',
-    price: 299.99,
-    imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80',
-    stock: 15,
+    id: 'p1-mechanical-keyboard',
+    nome: 'Teclado Mecânico Premium RGB',
+    descricao: 'Teclado mecânico de alta performance com switches intercambiáveis e iluminação RGB customizável.',
+    ativo: true,
+    criadoEm: '2026-01-15T10:00:00Z',
+    atributos: [
+      { id: 'a1', atributoId: 'attr-color', atributoNome: 'Cor' },
+      { id: 'a2', atributoId: 'attr-switch', atributoNome: 'Switch' }
+    ],
+    variacoes: [
+      {
+        id: 'sku-keyboard-black-red',
+        sku: 'TEC-RGB-BLK-RED',
+        preco: 149.99,
+        estoque: 10,
+        opcoes: [
+          { id: 'o1', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Preto' },
+          { id: 'o2', atributo: { id: 'attr-switch', nome: 'Switch' }, valor: 'Red' }
+        ],
+        imagens: [
+          { id: 'img1', urlImagem: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=500', ordem: 1, criadoEm: '2026-01-15T10:00:00Z' }
+        ]
+      },
+      {
+        id: 'sku-keyboard-black-blue',
+        sku: 'TEC-RGB-BLK-BLU',
+        preco: 144.99,
+        estoque: 0, // Fora de estoque para testarmos lógica de indisponibilidade
+        opcoes: [
+          { id: 'o3', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Preto' },
+          { id: 'o4', atributo: { id: 'attr-switch', nome: 'Switch' }, valor: 'Blue' }
+        ],
+        imagens: [
+          { id: 'img2', urlImagem: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=500', ordem: 1, criadoEm: '2026-01-15T10:00:00Z' }
+        ]
+      },
+      {
+        id: 'sku-keyboard-white-red',
+        sku: 'TEC-RGB-WHT-RED',
+        preco: 159.99,
+        estoque: 8,
+        opcoes: [
+          { id: 'o5', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Branco' },
+          { id: 'o6', atributo: { id: 'attr-switch', nome: 'Switch' }, valor: 'Red' }
+        ],
+        imagens: [
+          { id: 'img3', urlImagem: 'https://images.unsplash.com/photo-1626958390898-162d3577f593?w=500', ordem: 1, criadoEm: '2026-01-15T10:00:00Z' }
+        ]
+      }
+    ]
   },
   {
-    id: '2',
-    name: 'Mechanical Gaming Keyboard',
-    description: 'RGB mechanical keyboard with tactile switches for precision gaming and typing.',
-    price: 129.50,
-    imageUrl: 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=500&q=80',
-    stock: 8,
-  },
-  {
-    id: '3',
-    name: 'Artisan Pequi Oil',
-    description: 'Pure, cold-pressed pequi oil. Perfect for traditional culinary dishes and skin care.',
-    price: 24.99,
-    imageUrl: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=500&q=80',
-    stock: 50,
-  },
-  {
-    id: '4',
-    name: '4K Ultra HD Smart TV',
-    description: '55-inch 4K Smart TV with vibrant colors and built-in streaming apps.',
-    price: 599.00,
-    imageUrl: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=500&q=80',
-    stock: 3,
+    id: 'p2-wireless-mouse',
+    nome: 'Mouse Gamer Wireless Pro',
+    descricao: 'Mouse sem fio ultra leve com sensor de 26000 DPI e bateria de longa duração.',
+    ativo: true,
+    criadoEm: '2026-02-20T14:30:00Z',
+    atributos: [
+      { id: 'a3', atributoId: 'attr-color', atributoNome: 'Cor' }
+    ],
+    variacoes: [
+      {
+        id: 'sku-mouse-black',
+        sku: 'MS-WRL-BLK',
+        preco: 79.99,
+        estoque: 42,
+        opcoes: [
+          { id: 'o7', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Preto' }
+        ],
+        imagens: [
+          { id: 'img4', urlImagem: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500', ordem: 1, criadoEm: '2026-02-20T14:30:00Z' }
+        ]
+      },
+      {
+        id: 'sku-mouse-white',
+        sku: 'MS-WRL-WHT',
+        preco: 84.99,
+        estoque: 20,
+        opcoes: [
+          { id: 'o8', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Branco' }
+        ],
+        imagens: [
+          { id: 'img5', urlImagem: 'https://images.unsplash.com/photo-1625842268584-8f329043265c?w=500', ordem: 1, criadoEm: '2026-02-20T14:30:00Z' }
+        ]
+      }
+    ]
   }
 ];
