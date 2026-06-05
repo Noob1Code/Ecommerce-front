@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProduct } from '../hooks/useProduct';
 import { useVariantSelector } from '../hooks/useVariantSelector';
-import { useCartStore } from '../../../app/store/useCartStore';
+import { useCartStore } from '../../cart';
 import { Spinner, ErrorMessage, Button } from '../../../shared/components/ui';
 
 export const ProductDetail = () => {
@@ -11,6 +11,7 @@ export const ProductDetail = () => {
   const addItem = useCartStore((state) => state.addItem);
   const [isAdded, setIsAdded] = useState(false);
 
+  // Consumes the centralized domain variant selector engine hook abstraction cleanly
   const {
     selectedOptions,
     resolvedSku,
