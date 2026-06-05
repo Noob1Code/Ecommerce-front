@@ -3,7 +3,7 @@ import { ProductCard } from './ProductCard';
 import { Spinner, ErrorMessage, EmptyState, Button } from '../../../shared/components/ui';
 
 export const ProductGrid = () => {
-  const { data: products, isLoading, isError, error, refetch } = useProducts();
+  const { products, isLoading, error } = useProducts();
 
   if (isLoading) {
     return (
@@ -13,12 +13,12 @@ export const ProductGrid = () => {
     );
   }
 
-  if (isError) {
+  if (error) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <ErrorMessage 
-          message={error.message || 'An unexpected error occurred while fetching products.'}
-          onRetry={() => refetch()} 
+          message={error || 'An unexpected error occurred while fetching products.'}
+          onRetry={() => window.location.reload()} 
         />
       </div>
     );
@@ -31,7 +31,7 @@ export const ProductGrid = () => {
           title="No products found" 
           description="We couldn't find any products at the moment. Please check back later."
           action={
-            <Button variant="secondary" onClick={() => refetch()}>
+            <Button variant="secondary" onClick={() => window.location.reload()}>
               Refresh
             </Button>
           }

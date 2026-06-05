@@ -11,9 +11,11 @@ const RouteFallback = () => (
 
 const ProductGrid = lazy(() => import('../../features/products').then(module => ({ default: module.ProductGrid })));
 const ProductDetail = lazy(() => import('../../features/products').then(module => ({ default: module.ProductDetail })));
+const ProductBackoffice = lazy(() => import('../../features/products').then(module => ({ default: module.ProductBackoffice })));
 const Cart = lazy(() => import('../../features/cart').then(module => ({ default: module.Cart })));
 const Checkout = lazy(() => import('../../features/checkout').then(module => ({ default: module.Checkout })));
 const Login = lazy(() => import('../../features/auth').then(module => ({ default: module.Login })));
+const Register = lazy(() => import('../../features/auth').then(module => ({ default: module.Register })));
 
 const router = createBrowserRouter([
   {
@@ -61,6 +63,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<RouteFallback />}>
             <Login />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'register',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <Register />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <ProductBackoffice />
           </Suspense>
         ),
       },

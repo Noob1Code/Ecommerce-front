@@ -1,16 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchProducts } from '../api/productsApi';
-import { mapApiToProductList } from '../domain/product.mapper';
-import type { Product } from '../domain/product.types';
-import { QUERY_KEYS } from '../../../services/api';
+import { QUERY_KEYS } from '../../../services/api/queryKeys';
+import { fetchProductsFromApi } from '../api/productsApi';
+import { mapApiToProduct } from '../domain/product.mapper';
+import type { BackendProdutoResponseDTO, Product } from '../domain/product.types';
 
 export const useProducts = () => {
-  return useQuery<Product[], Error>({
-    queryKey: QUERY_KEYS.products.all,
+  const { data, isLoading, error } = useQuery<Product[], Error>({
+    queryKey: QUERY_KEYS.products.list(),
     queryFn: async () => {
-      // Busca os dados da API e aplica a Camada de Domínio (Mapper)
-      const rawData = await fetchProducts();
-      return mapApiToProductList(rawData);
+      const rawPayloadList = await fetchProductsFromApi();
+      
+      // Converte a lista crua vinda da API aplicando as regras de entidade e tradução idiomática
+      return rawPayloadList.map((rawProduct) => 
+        mapApiToProduct(
+          rawProduct as unknown as BackendProdutoResponseDTO, 
+          rawProduct.variacoes
+        )
+      );
     },
+    staleTime: 1000 * 60 * 5, // Cache conservador de 5 minutos para dados de catálogo
   });
+
+  return {
+    products: data || [],
+    isLoading,
+    error: error ? error.message : null,
+  };
 };

@@ -1,37 +1,70 @@
 import { httpClient, ENDPOINTS } from '../../../services/api';
-import type { ApiProductDTO } from '../domain/product.types';
-import { mockProducts } from './mockData';
+import type { BackendProdutoResponseDTO } from '../domain/product.types';
+import { mockBackendProducts, type BackendProdutoDetalhadoPayload } from './mockData';
 
-// Feature flag para controlar os mocks sem quebrar a aplicação
 const USE_MOCKS = true;
-const DELAY_MS = 800;
+const DELAY_MS = 600;
 
-export const fetchProducts = async (): Promise<ApiProductDTO[]> => {
+export const fetchProductsFromApi = async (): Promise<BackendProdutoDetalhadoPayload[]> => {
   if (USE_MOCKS) {
     return new Promise((resolve) => {
-      // Cast para o DTO do domínio
-      setTimeout(() => resolve(mockProducts as ApiProductDTO[]), DELAY_MS);
+      setTimeout(() => resolve(mockBackendProducts), DELAY_MS);
     });
   }
 
-  const response = await httpClient.get<ApiProductDTO[]>(ENDPOINTS.products.base);
+  const response = await httpClient.get<BackendProdutoDetalhadoPayload[]>(
+    `${ENDPOINTS.products.base}?embed=variacoes`
+  );
   return response.data;
 };
 
-export const fetchProductById = async (id: string): Promise<ApiProductDTO> => {
+export const fetchProductByIdFromApi = async (id: string): Promise<BackendProdutoDetalhadoPayload> => {
   if (USE_MOCKS) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const product = mockProducts.find((p) => p.id === id);
+        const product = mockBackendProducts.find((p) => p.id === id);
         if (product) {
-          resolve(product as ApiProductDTO);
+          resolve(product);
         } else {
-          reject(new Error('Product not found'));
+          reject(new Error('Product container not found'));
         }
       }, DELAY_MS);
     });
   }
 
-  const response = await httpClient.get<ApiProductDTO>(ENDPOINTS.products.detail(id));
+  const response = await httpClient.get<BackendProdutoDetalhadoPayload>(
+    `${ENDPOINTS.products.detail(id)}?embed=variacoes`
+  );
   return response.data;
+};
+
+/**
+ * Persistently updates a SKU stock quantity matching the Java @PutMapping("/{id}") controller
+ */
+export const updateSkuStockInApi = async (skuId: string, newStock: number): Promise<void> => {
+  if (USE_MOCKS) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        let isUpdated = false;
+        
+        // Mutates the underlying simulated database source fields directly
+        mockBackendProducts.forEach((product) => {
+          const skuMatch = product.variacoes.find((v) => v.id === skuId);
+          if (skuMatch) {
+            skuMatch.estoque = newStock;
+            isUpdated = true;
+          }
+        });
+
+        if (isUpdated) {
+          resolve();
+        } else {
+          reject(new Error('SKU reference identifier not found inside mock storage'));
+        }
+      }, 300);
+    });
+  }
+
+  // Real HTTP execution targeting your friend's exact route endpoint: /api/produto/variacao/{id}
+  await httpClient.put(`/api/produto/variacao/${skuId}`, { estoque: newStock });
 };

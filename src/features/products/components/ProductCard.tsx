@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Product } from '../domain/product.types';
 import { useCartStore } from '../../../app/store';
+import { RoleGuard } from '../../auth';
 import { Button, Card } from '../../../shared/components/ui';
 
 interface ProductCardProps {
@@ -9,14 +10,28 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const navigate = useNavigate();
   const addItem = useCartStore((state) => state.addItem);
   const [isAdded, setIsAdded] = useState(false);
+
+  // Extract the first SKU as fallback for catalog display presentation
+  const defaultSku = product.skus && product.skus.length > 0 ? product.skus[0] : null;
+  
+  // Resolve primary thumbnail image matching the default resolved variant setup
+  const displayImageUrl = defaultSku && defaultSku.images.length > 0 
+    ? defaultSku.images[0].imageUrl 
+    : '/fallback-image.jpg';
+
+  const displayPrice = defaultSku ? defaultSku.formattedPrice : '$0.00';
+  const isOutOfStock = defaultSku ? defaultSku.stock <= 0 : true;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    addItem(product);
+    if (!defaultSku || isOutOfStock) return;
+
+    addItem(product, defaultSku.id);
     setIsAdded(true);
 
     window.setTimeout(() => {
@@ -24,12 +39,35 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }, 2000);
   };
 
+  const handleQuickEditRedirect = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Smoothly redirect the staff profile to the backoffice context pre-filtered by name
+    navigate(`/backoffice?search=${encodeURIComponent(product.name)}`);
+  };
+
   return (
-    <Card className="group flex flex-col transition-all hover:shadow-md">
-      <div className="relative h-64 overflow-hidden bg-gray-100">
+    <Card className="group flex flex-col transition-all hover:shadow-md relative">
+      <div className="relative h-64 overflow-hidden bg-gray-100 rounded-t-lg">
+        {/* Administrative Quick Edit Control overlay triggered exclusively by staff roles */}
+        <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
+          <button
+            type="button"
+            onClick={handleQuickEditRedirect}
+            className="absolute top-3 left-3 z-20 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-md shadow-md transition-all border border-amber-500 hover:scale-105 flex items-center space-x-1"
+            title="Redirect to Backoffice Inventory edit page"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>Edit Asset</span>
+          </button>
+        </RoleGuard>
+
         <Link to={`/product/${product.id}`} className="block h-full w-full">
           <img
-            src={product.imageUrl}
+            src={displayImageUrl}
             alt={product.name}
             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
           />
@@ -38,12 +76,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <Button
           variant="icon"
           onClick={handleAddToCart}
+          disabled={isOutOfStock}
           className="absolute bottom-3 right-3 z-10"
-          aria-label="Add to cart"
-          title="Quick add to cart"
+          aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
+          title={isOutOfStock ? "Out of stock" : "Quick add to cart"}
         >
-          {isAdded ? (
-            <svg className="h-5 w-5 text-green-500 transition-colors group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          {isOutOfStock ? (
+            <span className="text-xs font-semibold text-red-500 px-1">Esgotado</span>
+          ) : isAdded ? (
+            <svg className="h-5 w-5 text-green-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           ) : (
@@ -60,7 +101,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </h3>
         <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
         <div className="mt-auto pt-4 flex items-center justify-between">
-          <span className="text-lg font-bold text-gray-900">{product.formattedPrice}</span>
+          <span className="text-lg font-bold text-gray-900">{displayPrice}</span>
+          {defaultSku && defaultSku.stock > 0 && (
+            <span className="text-xs text-gray-400">{defaultSku.stock} un.</span>
+          )}
         </div>
       </div>
     </Card>
