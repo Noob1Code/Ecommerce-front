@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { QUERY_KEYS } from '../../../services/api/queryKeys';
 import { useProducts } from '../hooks/useProducts';
-import { updateSkuStockInApi } from '../api/productsApi';
+import { updateSkuStockInApi, updateProductMetadataInApi, deleteProductInApi, deleteSkuInApi } from '../api/productsApi';
 import { RoleGuard } from '../../auth';
 import { Spinner, ErrorMessage, Card, Button, Input } from '../../../shared/components/ui';
 
@@ -11,15 +11,20 @@ export const ProductBackoffice = () => {
   const queryClient = useQueryClient();
   const { products, isLoading, error } = useProducts();
   
-  // Instantiates the search parameters synchronization hook interface
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearchQuery = searchParams.get('search') || '';
 
   const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   
-  // Local client buffer state to accumulate multiple uncommitted stock modifications
+  // Local uncommitted buffers tracking multi-item changes before batch submission
   const [stockChanges, setStockChanges] = useState<Record<string, number | string>>({});
+  const [metadataChanges, setMetadataChanges] = useState<Record<string, { name: string; description: string }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync state if URL param search updates externally
+  useEffect(() => {
+    setSearchQuery(urlSearchQuery);
+  }, [urlSearchQuery]);
 
   if (isLoading) {
     return (
@@ -29,19 +34,65 @@ export const ProductBackoffice = () => {
     );
   }
 
-  // Filter products by name based on the client search input query
+  // Filter products by name based on the client search input query (Only showing active parent containers)
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) && product.isActive
   );
 
-  // Read current value from local uncommitted buffer fallback to actual cache value
+  // Safe property getters checking local buffers before falling back to query cache values
   const getSkuEffectiveStock = (skuId: string, currentStock: number): number | string => {
     return stockChanges[skuId] !== undefined ? stockChanges[skuId] : currentStock;
   };
 
-  // Determine the count of actual items that contain differences from the server cache
+  const getProductEffectiveMetadata = (productId: string, currentName: string, currentDesc: string) => {
+    return metadataChanges[productId] || { name: currentName, description: currentDesc };
+  };
+
+  const handleMetadataChange = (productId: string, key: 'name' | 'description', value: string) => {
+    setMetadataChanges((prev) => {
+      const current = prev[productId] || {
+        name: products.find((p) => p.id === productId)?.name || '',
+        description: products.find((p) => p.id === productId)?.description || '',
+      };
+      return {
+        ...prev,
+        [productId]: { ...current, [key]: value },
+      };
+    });
+  };
+
+  const handleProductInactivation = async (productId: string, productName: string) => {
+    if (!window.confirm(`Are you sure you want to logically INACTIVATE the parent product: ${productName}?`)) return;
+    try {
+      await deleteProductInApi(productId);
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      alert('Product parent container successfully inactivated!');
+    } catch (err) {
+      alert('Failed to inactivate product asset.');
+    }
+  };
+
+  const handleSkuPhysicalDeletion = async (skuId: string, skuCode: string) => {
+    if (!window.confirm(`CRITICAL: Are you sure you want to PHYSICALLY DELETE the SKU variation [${skuCode}] from the database?`)) return;
+    try {
+      await deleteSkuInApi(skuId);
+      // Remove from local buffers if present
+      setStockChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[skuId];
+        return copy;
+      });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      alert('SKU variation physically erased from database records.');
+    } catch (err) {
+      alert('Failed to physically delete SKU variation.');
+    }
+  };
+
   const getModifiedItemsCount = (): number => {
     let count = 0;
+    
+    // Evaluate stock buffer counts
     Object.entries(stockChanges).forEach(([skuId, val]) => {
       const newStock = val === '' ? 0 : Number(val);
       let originalStock = -1;
@@ -49,65 +100,54 @@ export const ProductBackoffice = () => {
         const match = p.skus.find((s) => s.id === skuId);
         if (match) originalStock = match.stock;
       });
-      if (originalStock !== -1 && originalStock !== newStock) {
+      if (originalStock !== -1 && originalStock !== newStock) count++;
+    });
+
+    // Evaluate product info metadata modifications count
+    Object.entries(metadataChanges).forEach(([id, meta]) => {
+      const original = products.find((p) => p.id === id);
+      if (original && (original.name !== meta.name || original.description !== meta.description)) {
         count++;
       }
     });
+
     return count;
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    
-    // Synchronize the text string value to the active routing query parameters
-    if (value.trim()) {
-      setSearchParams({ search: value });
-    } else {
-      searchParams.delete('search');
-      setSearchParams(searchParams);
-    }
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    searchParams.delete('search');
-    setSearchParams(searchParams);
-  };
-
   const handleBatchSubmit = async () => {
-    const changesToApply = Object.entries(stockChanges).filter(([skuId, val]) => {
-      const newStock = val === '' ? 0 : Number(val);
-      let originalStock = -1;
-      products.forEach((p) => {
-        const match = p.skus.find((s) => s.id === skuId);
-        if (match) originalStock = match.stock;
-      });
-      return originalStock !== -1 && originalStock !== newStock;
-    });
-
-    if (changesToApply.length === 0) {
-      alert('No structural modifications detected inside the stock buffer.');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      await Promise.all(
-        changesToApply.map(([skuId, val]) => {
+      const stockPromises = Object.entries(stockChanges)
+        .filter(([skuId, val]) => {
+          const newStock = val === '' ? 0 : Number(val);
+          let originalStock = -1;
+          products.forEach((p) => {
+            const match = p.skus.find((s) => s.id === skuId);
+            if (match) originalStock = match.stock;
+          });
+          return originalStock !== -1 && originalStock !== newStock;
+        })
+        .map(([skuId, val]) => {
           const newStock = val === '' ? 0 : Number(val);
           return updateSkuStockInApi(skuId, newStock);
-        })
-      );
+        });
 
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.products.all,
-      });
+      const metadataPromises = Object.entries(metadataChanges)
+        .filter(([id, meta]) => {
+          const original = products.find((p) => p.id === id);
+          return original && (original.name !== meta.name || original.description !== meta.description);
+        })
+        .map(([id, meta]) => updateProductMetadataInApi(id, meta.name, meta.description));
+
+      await Promise.all([...stockPromises, ...metadataPromises]);
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
 
       setStockChanges({});
-      alert('All accumulated inventory configurations saved successfully!');
+      setMetadataChanges({});
+      alert('All batch configurations and CRUD updates saved successfully!');
     } catch (err) {
-      alert('An error occurred while executing batch stock updates.');
+      alert('An error occurred while deploying batch updates.');
     } finally {
       setIsSubmitting(false);
     }
@@ -133,12 +173,12 @@ export const ProductBackoffice = () => {
       }
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header Action Control Section */}
+        {/* Header Strip */}
         <div className="sm:flex sm:items-center sm:justify-between border-b border-gray-200 pb-5 mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Inventory Control Center</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Inventory & Catalog CRUD</h1>
             <p className="mt-2 text-sm text-gray-500">
-              Manage product listings, dimensional variants, modification items, and real-time SKU stock fulfillment.
+              Modify container details, soft-delete parent products, and physically purge SKU rows.
             </p>
           </div>
           <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-3">
@@ -151,26 +191,20 @@ export const ProductBackoffice = () => {
                 modifiedCount > 0 ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white shadow-md' : ''
               }`}
             >
-              {isSubmitting ? 'Saving changes...' : `Submit Changes (${modifiedCount} modified)`}
+              {isSubmitting ? 'Saving changes...' : `Submit Changes (${modifiedCount} updates)`}
             </Button>
-            
-            <RoleGuard allowedRoles={['ROLE_ADMIN']}>
-              <Button variant="secondary" onClick={() => alert('New catalog item creation modal simulation')}>
-                + Provision New Item
-              </Button>
-            </RoleGuard>
           </div>
         </div>
 
-        {/* Search Bar Utilities Strip */}
+        {/* Search Bar Utility */}
         <div className="mb-8 max-w-md">
           <div className="flex items-center justify-between mb-1.5">
             <label htmlFor="search" className="block text-sm font-semibold text-gray-700">
-              Search Catalog Items
+              Filter Active Items
             </label>
             {urlSearchQuery && (
-              <span className="text-xs bg-blue-50 text-blue-700 font-medium px-2 py-0.5 rounded border border-blue-100 animate-fade-in">
-                Filtering url context active
+              <span className="text-xs bg-blue-50 text-blue-700 font-medium px-2 py-0.5 rounded border border-blue-100">
+                Catálogo shortcut active
               </span>
             )}
           </div>
@@ -180,15 +214,19 @@ export const ProductBackoffice = () => {
               name="search"
               type="text"
               value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search by product name (e.g., Teclado Mecânico)..."
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value.trim()) setSearchParams({ search: e.target.value });
+                else setSearchParams({});
+              }}
+              placeholder="Search product name..."
               disabled={isSubmitting}
-              className="w-full pl-3 pr-10 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-3 pr-10 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none"
             />
             {searchQuery && (
               <button
                 type="button"
-                onClick={handleClearSearch}
+                onClick={() => { setSearchQuery(''); setSearchParams({}); }}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
               >
                 Clear
@@ -199,141 +237,158 @@ export const ProductBackoffice = () => {
 
         {error && <ErrorMessage message={error} />}
 
-        {/* Empty State when Search yields no matches */}
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 border border-dashed border-gray-300 rounded-xl bg-gray-50">
-            <p className="text-sm text-gray-500 font-medium">
-              No products found matching "{searchQuery}"
-            </p>
+            <p className="text-sm text-gray-500 font-medium">No active products found matching requirements.</p>
           </div>
         )}
 
-        {/* Product Cards Container */}
+        {/* Catalog Items Iteration Loop */}
         <div className="space-y-6">
-          {filteredProducts.map((product) => (
-            <Card key={product.id} className="p-6 border border-gray-200 bg-white shadow-sm rounded-xl">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 pb-4 mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">{product.name}</h3>
-                  <p className="text-xs text-gray-400 font-mono mt-0.5">Product ID: {product.id}</p>
-                </div>
-                
-                <RoleGuard allowedRoles={['ROLE_ADMIN']}>
-                  <div className="flex gap-2">
-                    <button 
-                      type="button"
-                      onClick={() => alert(`Toggling structural availability context for: ${product.name}`)}
-                      className="text-xs font-medium text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-md border border-gray-200 transition-colors"
-                    >
-                      Toggle Active State
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => alert(`Purging product structure container reference: ${product.id}`)}
-                      className="text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 bg-red-50 px-3 py-1.5 rounded-md border border-red-100 transition-colors"
-                    >
-                      Delete Asset
-                    </button>
+          {filteredProducts.map((product) => {
+            const { name: currentName, description: currentDesc } = getProductEffectiveMetadata(product.id, product.name, product.description);
+            const isProductDirty = currentName !== product.name || currentDesc !== product.description;
+
+            return (
+              <Card key={product.id} className={`p-6 border bg-white shadow-sm rounded-xl transition-all ${isProductDirty ? 'border-amber-400 ring-1 ring-amber-400' : 'border-gray-200'}`}>
+                {/* Product Metadata Editable Section (ProdutoRequestDTO Form mapping) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100 pb-5 mb-5 items-start">
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Product Container Name</label>
+                    <input
+                      type="text"
+                      value={currentName}
+                      disabled={isSubmitting}
+                      onChange={(e) => handleMetadataChange(product.id, 'name', e.target.value)}
+                      className="w-full text-base font-bold text-gray-900 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-gray-50/50"
+                    />
+                    <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {product.id}</p>
                   </div>
-                </RoleGuard>
-              </div>
 
-              {/* SKU Variations Data Table Grid */}
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">SKU Code</th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">Configuration Options</th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">Price Factor</th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-500">Server Active Stock</th>
-                      <th className="px-4 py-3 text-right font-medium text-gray-500">Batch Buffer Counter (Editable)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {product.skus.map((sku) => {
-                      const effectiveStock = getSkuEffectiveStock(sku.id, sku.stock);
-                      const isItemDirty = stockChanges[sku.id] !== undefined && stockChanges[sku.id] !== sku.stock;
-                      const numericEffectiveStock = effectiveStock === '' ? 0 : Number(effectiveStock);
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Catalog Description</label>
+                    <textarea
+                      value={currentDesc}
+                      rows={2}
+                      disabled={isSubmitting}
+                      onChange={(e) => handleMetadataChange(product.id, 'description', e.target.value)}
+                      className="w-full text-sm text-gray-600 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-gray-50/50 resize-none leading-tight"
+                    />
+                  </div>
 
-                      return (
-                        <tr key={sku.id} className={`transition-colors ${isItemDirty ? 'bg-amber-50/50 hover:bg-amber-50' : 'hover:bg-gray-50/50'}`}>
-                          <td className="px-4 py-3 font-mono font-semibold text-gray-700">
-                            {sku.skuCode}
-                            {isItemDirty && (
-                              <span className="ml-2 inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 animate-pulse">
-                                Pending
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 text-xs">
-                            {sku.options.map((opt) => `${opt.attributeName}: ${opt.value}`).join(' | ') || 'No configurations'}
-                          </td>
-                          <td className="px-4 py-3 font-medium text-gray-900">{sku.formattedPrice}</td>
-                          <td className="px-4 py-3 text-gray-500">
-                            {sku.stock} units
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                type="button"
-                                disabled={isSubmitting || numericEffectiveStock <= 0}
-                                onClick={() => {
-                                  const nextStock = Math.max(0, numericEffectiveStock - 1);
-                                  setStockChanges((prev) => ({ ...prev, [sku.id]: nextStock }));
-                                }}
-                                className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40 select-none transition-colors"
-                              >
-                                -
-                              </button>
-                              
-                              <input
-                                type="number"
-                                min={0}
-                                value={effectiveStock}
-                                disabled={isSubmitting}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (val === '') {
-                                    setStockChanges((prev) => ({ ...prev, [sku.id]: '' }));
-                                  } else {
-                                    const parsedValue = parseInt(val, 10);
-                                    if (!isNaN(parsedValue) && parsedValue >= 0) {
-                                      setStockChanges((prev) => ({ ...prev, [sku.id]: parsedValue }));
+                  <div className="md:col-span-1 flex justify-end pt-5 md:pt-4">
+                    <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+                      <button 
+                        type="button"
+                        onClick={() => handleProductInactivation(product.id, product.name)}
+                        className="text-xs font-semibold text-red-600 hover:text-white hover:bg-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2 transition-all shadow-sm"
+                        title="Performs logical soft delete via PATCH mapping"
+                      >
+                        Inactivate Product (Soft)
+                      </button>
+                    </RoleGuard>
+                  </div>
+                </div>
+
+                {/* SKU Variations Data Table Subgrid */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">SKU Code</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">Configuration Options</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">Price Factor</th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-500">Active Stock</th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-500">Modify Quantity</th>
+                        <th className="px-4 py-3 text-right font-medium text-gray-500">Purge Record</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {product.skus.map((sku) => {
+                        const effectiveStock = getSkuEffectiveStock(sku.id, sku.stock);
+                        const isSkuDirty = stockChanges[sku.id] !== undefined && stockChanges[sku.id] !== sku.stock;
+                        const numericStock = effectiveStock === '' ? 0 : Number(effectiveStock);
+
+                        return (
+                          <tr key={sku.id} className={`transition-colors ${isSkuDirty ? 'bg-amber-50/40 hover:bg-amber-50/70' : 'hover:bg-gray-50/50'}`}>
+                            <td className="px-4 py-3 font-mono font-semibold text-gray-700">
+                              {sku.skuCode}
+                              {isSkuDirty && (
+                                <span className="ml-2 inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 animate-pulse">
+                                  Pending Stock
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600 text-xs">
+                              {sku.options.map((opt) => `${opt.attributeName}: ${opt.value}`).join(' | ')}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-gray-900">{sku.formattedPrice}</td>
+                            <td className="px-4 py-3 text-gray-400 text-xs">
+                              {sku.stock} un.
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  type="button"
+                                  disabled={isSubmitting || numericStock <= 0}
+                                  onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: Math.max(0, numericStock - 1) }))}
+                                  className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40 select-none"
+                                >
+                                  -
+                                </button>
+                                
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={effectiveStock}
+                                  disabled={isSubmitting}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '') setStockChanges((prev) => ({ ...prev, [sku.id]: '' }));
+                                    else {
+                                      const parsed = parseInt(val, 10);
+                                      if (!isNaN(parsed) && parsed >= 0) setStockChanges((prev) => ({ ...prev, [sku.id]: parsed }));
                                     }
-                                  }
-                                }}
-                                onBlur={() => {
-                                  if (effectiveStock === '') {
-                                    setStockChanges((prev) => ({ ...prev, [sku.id]: 0 }));
-                                  }
-                                }}
-                                className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                                  isItemDirty ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold' : 'border-gray-300'
-                                }`}
-                              />
+                                  }}
+                                  onBlur={() => { if (effectiveStock === '') setStockChanges((prev) => ({ ...prev, [sku.id]: 0 })); }}
+                                  className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    isSkuDirty ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold' : 'border-gray-300'
+                                  }`}
+                                />
 
-                              <button
-                                type="button"
-                                disabled={isSubmitting}
-                                onClick={() => {
-                                  const nextStock = numericEffectiveStock + 1;
-                                  setStockChanges((prev) => ({ ...prev, [sku.id]: nextStock }));
-                                }}
-                                className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40 select-none transition-colors"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          ))}
+                                <button
+                                  type="button"
+                                  disabled={isSubmitting}
+                                  onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: numericStock + 1 }))}
+                                  className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {/* True Admin Role Guard to physically delete variations via standard HTTP DELETE mapping */}
+                              <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+                                <button
+                                  type="button"
+                                  disabled={isSubmitting}
+                                  onClick={() => handleSkuPhysicalDeletion(sku.id, sku.skuCode)}
+                                  className="text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md px-2.5 py-1.5 transition-colors"
+                                  title="Triggers physical record deletion from database storage"
+                                >
+                                  Delete Variation (Hard)
+                                </button>
+                              </RoleGuard>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </RoleGuard>
