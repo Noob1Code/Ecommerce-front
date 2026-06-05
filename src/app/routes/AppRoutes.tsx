@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Layout, ErrorBoundary } from '../../shared/components/layout';
+import { Layout, ErrorBoundary } from '../layout';
 import { Spinner } from '../../shared/components/ui';
 
 const RouteFallback = () => (

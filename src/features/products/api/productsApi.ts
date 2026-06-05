@@ -1,70 +1,62 @@
-import { httpClient, ENDPOINTS } from '../../../services/api';
-import type { BackendProdutoResponseDTO } from '../domain/product.types';
-import { mockBackendProducts, type BackendProdutoDetalhadoPayload } from './mockData';
+import { httpClient } from '../../../services/api';
+import { PRODUCT_ENDPOINTS } from './productsEndpoints';
+import { productsMockService } from './productsMockService';
+import type { BackendProdutoDetalhadoPayload } from './mockData';
 
 const USE_MOCKS = true;
-const DELAY_MS = 600;
 
 export const fetchProductsFromApi = async (): Promise<BackendProdutoDetalhadoPayload[]> => {
   if (USE_MOCKS) {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockBackendProducts), DELAY_MS);
-    });
+    return productsMockService.getAll();
   }
 
-  const response = await httpClient.get<BackendProdutoDetalhadoPayload[]>(
-    `${ENDPOINTS.products.base}?embed=variacoes`
-  );
+  const response = await httpClient.get<BackendProdutoDetalhadoPayload[]>(PRODUCT_ENDPOINTS.base);
   return response.data;
 };
 
 export const fetchProductByIdFromApi = async (id: string): Promise<BackendProdutoDetalhadoPayload> => {
   if (USE_MOCKS) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const product = mockBackendProducts.find((p) => p.id === id);
-        if (product) {
-          resolve(product);
-        } else {
-          reject(new Error('Product container not found'));
-        }
-      }, DELAY_MS);
-    });
+    return productsMockService.getById(id);
   }
 
-  const response = await httpClient.get<BackendProdutoDetalhadoPayload>(
-    `${ENDPOINTS.products.detail(id)}?embed=variacoes`
-  );
+  const response = await httpClient.get<BackendProdutoDetalhadoPayload>(PRODUCT_ENDPOINTS.detail(id));
   return response.data;
 };
 
-/**
- * Persistently updates a SKU stock quantity matching the Java @PutMapping("/{id}") controller
- */
-export const updateSkuStockInApi = async (skuId: string, newStock: number): Promise<void> => {
+export const updateProductMetadataInApi = async (id: string, name: string, description: string): Promise<void> => {
   if (USE_MOCKS) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        let isUpdated = false;
-        
-        // Mutates the underlying simulated database source fields directly
-        mockBackendProducts.forEach((product) => {
-          const skuMatch = product.variacoes.find((v) => v.id === skuId);
-          if (skuMatch) {
-            skuMatch.estoque = newStock;
-            isUpdated = true;
-          }
-        });
-
-        if (isUpdated) {
-          resolve();
-        } else {
-          reject(new Error('SKU reference identifier not found inside mock storage'));
-        }
-      }, 300);
-    });
+    return productsMockService.updateMetadata(id, name, description);
   }
 
-  // Real HTTP execution targeting your friend's exact route endpoint: /api/produto/variacao/{id}
-  await httpClient.put(`/api/produto/variacao/${skuId}`, { estoque: newStock });
+  await httpClient.put(PRODUCT_ENDPOINTS.detail(id), {
+    nome: name,
+    descricao: description,
+    atributosIds: []
+  });
+};
+
+export const updateSkuStockInApi = async (skuId: string, newStock: number): Promise<void> => {
+  if (USE_MOCKS) {
+    return productsMockService.updateSkuStock(skuId, newStock);
+  }
+
+  await httpClient.put(PRODUCT_ENDPOINTS.variation.detail(skuId), { 
+    estoque: newStock 
+  });
+};
+
+export const deleteProductInApi = async (id: string): Promise<void> => {
+  if (USE_MOCKS) {
+    return productsMockService.softDeleteProduct(id);
+  }
+
+  await httpClient.patch(`${PRODUCT_ENDPOINTS.detail(id)}/delete`);
+};
+
+export const deleteSkuInApi = async (skuId: string): Promise<void> => {
+  if (USE_MOCKS) {
+    return productsMockService.hardDeleteSku(skuId);
+  }
+
+  await httpClient.delete(PRODUCT_ENDPOINTS.variation.detail(skuId));
 };

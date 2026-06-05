@@ -1,7 +1,7 @@
 import { httpClient } from '../../../services/api';
+import { AUTH_ENDPOINTS } from './authEndpoints';
 import type { AuthUser } from '../store/useAuthStore';
 
-// Toggle this to false once your friend turns on the Java backend module
 const USE_MOCKS = true;
 const DELAY_MS = 800;
 
@@ -74,7 +74,7 @@ export const registerCustomerApi = async (input: RegisterInput): Promise<AuthUse
   };
 
   const response = await httpClient.post<BackendRegisterResponseDTO>(
-    '/auth/register', 
+    AUTH_ENDPOINTS.register, 
     dto
   );
 
@@ -88,9 +88,8 @@ export const registerCustomerApi = async (input: RegisterInput): Promise<AuthUse
 
 export const loginUserApi = async (input: LoginInput): Promise<LoginResult> => {
   if (USE_MOCKS) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       setTimeout(() => {
-        // Simple client-side mock validation shortcut
         if (input.email.includes('admin')) {
           resolve({
             token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_admin_token',
@@ -112,7 +111,6 @@ export const loginUserApi = async (input: LoginInput): Promise<LoginResult> => {
             }
           });
         } else {
-          // Default fallthrough resolves as standard buyer customer profile
           resolve({
             token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_customer_token',
             user: {
@@ -133,7 +131,7 @@ export const loginUserApi = async (input: LoginInput): Promise<LoginResult> => {
   };
 
   const response = await httpClient.post<BackendTokenResponseDTO>(
-    '/auth/login',
+    AUTH_ENDPOINTS.login,
     dto
   );
 
