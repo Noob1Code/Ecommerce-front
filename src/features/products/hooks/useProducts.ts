@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchProductsFromApi } from '../api/productsApi';
-import { mapApiToProduct } from '../domain/product.mapper';
+import { mapApiToProduct, type BackendProductDetailedPayload } from '../domain/product.mapper';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
-import type { BackendProdutoResponseDTO, Product } from '../domain/product.types';
+import type { Product } from '../domain/product.types';
 
 export const useProducts = () => {
   const { data, isLoading, error } = useQuery<Product[], Error>({
@@ -10,11 +10,8 @@ export const useProducts = () => {
     queryFn: async () => {
       const rawPayloadList = await fetchProductsFromApi();
       
-      return rawPayloadList.map((rawProduct) => 
-        mapApiToProduct(
-          rawProduct as unknown as BackendProdutoResponseDTO, 
-          rawProduct.variacoes
-        )
+      return (rawPayloadList as unknown as BackendProductDetailedPayload[]).map((rawProduct) => 
+        mapApiToProduct(rawProduct)
       );
     },
     staleTime: 1000 * 60 * 5,

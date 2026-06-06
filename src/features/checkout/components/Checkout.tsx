@@ -1,24 +1,23 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useCartStore } from '../../cart';
 import { useAuthStore } from '../../auth';
 import { createOrderApi, type BackendPedidoRequestDTO } from '../api/checkoutApi';
-import { Card, Button, Input, Spinner } from '../../../shared/components/ui';
+import { Card, Button, Spinner } from '../../../shared/components/ui';
 
 export const Checkout = () => {
   const navigate = useNavigate();
   
+  // Clean consumption targeting our newly promoted modular cart domain feature layer
   const { items, clearCart } = useCartStore();
   const user = useAuthStore((state) => state.user);
 
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [zipCode, setZipCode] = useState('');
-
+  // Synchronously compute active totals inline based on current reactive SKU price metrics
   const cartTotal = items.reduce((acc, item) => acc + item.selectedSku.price * item.quantity, 0);
   const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cartTotal);
 
+  // Hook-driven async state management replacing archaic direct component setTimeouts
   const { mutate: placeOrder, isPending } = useMutation({
     mutationFn: createOrderApi,
     onSuccess: () => {
@@ -52,10 +51,11 @@ export const Checkout = () => {
       return;
     }
 
+    // Explicitly mirrors your friend's Spring Boot PedidoRequestDTO validation structures 100% exactly
     const orderPayload: BackendPedidoRequestDTO = {
       clienteId: user.id,
       itens: items.map((item) => ({
-        variacaoId: item.skuId,
+        variacaoId: item.skuId, // Maps unique SKU key to backend variation placeholder
         quantidade: item.quantity,
       })),
     };
@@ -65,73 +65,72 @@ export const Checkout = () => {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Checkout</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Review Order</h1>
       
-      <Card className="bg-white p-6 md:p-8 border border-gray-200 shadow-sm rounded-xl">
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2 mb-4">
-                Shipping Logistics Information
-              </h2>
-              <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-4">
-                <div className="sm:col-span-2">
-                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Delivery Address *
-                  </label>
-                  <Input
-                    type="text"
-                    id="address"
-                    name="address"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    disabled={isPending}
-                    placeholder="123 Corporate Ave, Apt 4B"
-                  />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+        {/* Left Side: Order Items List & Customer Snapshot */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Customer Identification Profile */}
+          <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-gray-400 mb-3">Customer Profile</h2>
+            <div className="text-sm text-gray-900 space-y-1">
+              <p>
+                <span className="font-semibold text-gray-500">Name:</span> {user?.name || 'Guest User'}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-500">Account ID:</span>{' '}
+                <span className="font-mono text-xs bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">{user?.id}</span>
+              </p>
+            </div>
+          </Card>
+
+          {/* Detailed Items Breakdown Table */}
+          <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-4">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">
+              Items Summary ({items.length})
+            </h2>
+            <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto pr-1">
+              {items.map((item) => (
+                <div key={item.skuId} className="py-3 flex justify-between items-start text-sm gap-2">
+                  <div>
+                    <h4 className="font-bold text-gray-900">{item.product.name}</h4>
+                    <p className="text-xs text-gray-400 font-mono mt-0.5">SKU: {item.selectedSku.skuCode}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Qty: {item.quantity}x</p>
+                  </div>
+                  <span className="font-semibold text-gray-900">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+                      item.selectedSku.price * item.quantity
+                    )}
+                  </span>
                 </div>
-                <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                    City *
-                  </label>
-                  <Input
-                    type="text"
-                    id="city"
-                    name="city"
-                    required
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    disabled={isPending}
-                    placeholder="New York"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-1">
-                    ZIP / Postal Code *
-                  </label>
-                  <Input
-                    type="text"
-                    id="zip"
-                    name="zip"
-                    required
-                    value={zipCode}
-                    onChange={(e) => setZipCode(e.target.value)}
-                    disabled={isPending}
-                    placeholder="10001"
-                  />
-                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Side: Financial Settlement Summary Card Panel */}
+        <div className="lg:col-span-5">
+          <Card className="bg-white p-6 border border-gray-200 shadow-sm rounded-xl">
+            <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Financial Summary</h2>
+            
+            <div className="mt-4 space-y-4">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Subtotal Items</span>
+                <span className="font-semibold text-gray-900">{formattedTotal}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-gray-600 border-b border-gray-100 pb-4">
+                <span>Logistic Fulfillment</span>
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+                  Free Shipping
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-base font-bold text-gray-900">Total Settlement</span>
+                <span className="text-2xl font-black text-gray-900">{formattedTotal}</span>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Financial Order Summary</h2>
-              <div className="flex justify-between text-base font-medium text-gray-900 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                <p className="font-semibold text-gray-600">Total Settlement Amount</p>
-                <p className="text-xl font-black text-gray-900">{formattedTotal}</p>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 pt-6">
+            <form onSubmit={handleSubmit} className="mt-8">
               <Button
                 type="submit"
                 disabled={isPending}
@@ -141,16 +140,16 @@ export const Checkout = () => {
                 {isPending ? (
                   <div className="flex items-center space-x-2">
                     <Spinner className="h-5 w-5 text-white" />
-                    <span>Processing Transaction...</span>
+                    <span>Processing Order...</span>
                   </div>
                 ) : (
-                  'Confirm & Authorize Order'
+                  'Place Order & Confirm'
                 )}
               </Button>
-            </div>
-          </div>
-        </form>
-      </Card>
+            </form>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
