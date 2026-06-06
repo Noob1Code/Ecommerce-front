@@ -34,16 +34,13 @@ export const useCartStore = create<CartState>()(
           const updatedItems = [...currentItems];
           const targetItem = updatedItems[existingItemIndex];
           
-          // Inventory boundary protection check before incrementing cart item count
           if (targetItem.quantity >= selectedSku.stock) {
-            alert(`Cannot accommodate request. Max available inventory capacity reached for this configuration.`);
             return;
           }
 
           targetItem.quantity += 1;
           set({ items: updatedItems });
         } else {
-          // Initialize fresh cart item reference row entry snapshot
           set({
             items: [
               ...currentItems,
@@ -73,9 +70,7 @@ export const useCartStore = create<CartState>()(
 
         const updatedItems = get().items.map((item) => {
           if (item.skuId === skuId) {
-            // Validate incoming parameter value bounds against active SKU server stock capacity
             if (quantity > item.selectedSku.stock) {
-              alert(`Requested amount exceeds active inventory stock levels.`);
               return item;
             }
             return { ...item, quantity };
@@ -89,7 +84,7 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [] }),
     }),
     {
-      name: 'mercado-preso-cart-storage', // Key placeholder target for LocalStorage persistence
+      name: 'mercado-preso-cart-storage',
     }
   )
 );

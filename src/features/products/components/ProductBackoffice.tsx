@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { QUERY_KEYS } from '../../../services/api/queryKeys';
+import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys'; // <-- Corrigido para as chaves descentralizadas locais
 import { useProducts } from '../hooks/useProducts';
 import { updateSkuStockInApi, updateProductMetadataInApi, deleteProductInApi, deleteSkuInApi } from '../api/productsApi';
 import { RoleGuard } from '../../auth';
@@ -12,19 +12,14 @@ export const ProductBackoffice = () => {
   const { products, isLoading, error } = useProducts();
   
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlSearchQuery = searchParams.get('search') || '';
-
-  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
+  
+  // A URL agora é a Fonte Única da Verdade para a busca. Eliminamos o estado local searchQuery duplicado.
+  const searchQuery = searchParams.get('search') || '';
   
   // Local uncommitted buffers tracking multi-item changes before batch submission
   const [stockChanges, setStockChanges] = useState<Record<string, number | string>>({});
   const [metadataChanges, setMetadataChanges] = useState<Record<string, { name: string; description: string }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Sync state if URL param search updates externally
-  useEffect(() => {
-    setSearchQuery(urlSearchQuery);
-  }, [urlSearchQuery]);
 
   if (isLoading) {
     return (
@@ -34,10 +29,12 @@ export const ProductBackoffice = () => {
     );
   }
 
-  // Filter products by name based on the client search input query (Only showing active parent containers)
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) && product.isActive
-  );
+  // Otimização de Performance: Memoriza a filtragem para não reprocessar o array à toa em mutações de stock
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) && product.isActive
+    );
+  }, [products, searchQuery]);
 
   // Safe property getters checking local buffers before falling back to query cache values
   const getSkuEffectiveStock = (skuId: string, currentStock: number): number | string => {
@@ -65,7 +62,7 @@ export const ProductBackoffice = () => {
     if (!window.confirm(`Are you sure you want to logically INACTIVATE the parent product: ${productName}?`)) return;
     try {
       await deleteProductInApi(productId);
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
       alert('Product parent container successfully inactivated!');
     } catch (err) {
       alert('Failed to inactivate product asset.');
@@ -76,13 +73,12 @@ export const ProductBackoffice = () => {
     if (!window.confirm(`CRITICAL: Are you sure you want to PHYSICALLY DELETE the SKU variation [${skuCode}] from the database?`)) return;
     try {
       await deleteSkuInApi(skuId);
-      // Remove from local buffers if present
       setStockChanges((prev) => {
         const copy = { ...prev };
         delete copy[skuId];
         return copy;
       });
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
       alert('SKU variation physically erased from database records.');
     } catch (err) {
       alert('Failed to physically delete SKU variation.');
@@ -92,7 +88,6 @@ export const ProductBackoffice = () => {
   const getModifiedItemsCount = (): number => {
     let count = 0;
     
-    // Evaluate stock buffer counts
     Object.entries(stockChanges).forEach(([skuId, val]) => {
       const newStock = val === '' ? 0 : Number(val);
       let originalStock = -1;
@@ -103,7 +98,6 @@ export const ProductBackoffice = () => {
       if (originalStock !== -1 && originalStock !== newStock) count++;
     });
 
-    // Evaluate product info metadata modifications count
     Object.entries(metadataChanges).forEach(([id, meta]) => {
       const original = products.find((p) => p.id === id);
       if (original && (original.name !== meta.name || original.description !== meta.description)) {
@@ -141,7 +135,7 @@ export const ProductBackoffice = () => {
         .map(([id, meta]) => updateProductMetadataInApi(id, meta.name, meta.description));
 
       await Promise.all([...stockPromises, ...metadataPromises]);
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
 
       setStockChanges({});
       setMetadataChanges({});
@@ -202,7 +196,7 @@ export const ProductBackoffice = () => {
             <label htmlFor="search" className="block text-sm font-semibold text-gray-700">
               Filter Active Items
             </label>
-            {urlSearchQuery && (
+            {searchQuery && (
               <span className="text-xs bg-blue-50 text-blue-700 font-medium px-2 py-0.5 rounded border border-blue-100">
                 Catálogo shortcut active
               </span>
@@ -215,9 +209,9 @@ export const ProductBackoffice = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (e.target.value.trim()) setSearchParams({ search: e.target.value });
-                else setSearchParams({});
+                const val = e.target.value;
+                if (val.trim()) setSearchParams({ search: val }, { replace: true });
+                else setSearchParams({}, { replace: true });
               }}
               placeholder="Search product name..."
               disabled={isSubmitting}
@@ -226,7 +220,7 @@ export const ProductBackoffice = () => {
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => { setSearchQuery(''); setSearchParams({}); }}
+                onClick={() => setSearchParams({}, { replace: true })}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
               >
                 Clear
@@ -251,7 +245,7 @@ export const ProductBackoffice = () => {
 
             return (
               <Card key={product.id} className={`p-6 border bg-white shadow-sm rounded-xl transition-all ${isProductDirty ? 'border-amber-400 ring-1 ring-amber-400' : 'border-gray-200'}`}>
-                {/* Product Metadata Editable Section (ProdutoRequestDTO Form mapping) */}
+                {/* Product Metadata Editable Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100 pb-5 mb-5 items-start">
                   <div className="md:col-span-1">
                     <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Product Container Name</label>
@@ -367,7 +361,6 @@ export const ProductBackoffice = () => {
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              {/* True Admin Role Guard to physically delete variations via standard HTTP DELETE mapping */}
                               <RoleGuard allowedRoles={['ROLE_ADMIN']}>
                                 <button
                                   type="button"

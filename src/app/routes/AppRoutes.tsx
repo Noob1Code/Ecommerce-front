@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Layout, ErrorBoundary } from '../layout';
 import { Spinner } from '../../shared/components/ui';
+import { RoleGuard } from '../../features/auth';
 
 const RouteFallback = () => (
   <div className="flex min-h-[60vh] items-center justify-center">
@@ -78,7 +79,29 @@ const router = createBrowserRouter([
         path: 'backoffice',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <ProductBackoffice />
+            {/* Blindagem estrutural de rota: impede o carregamento do bundle caso o usuário não tenha privilégios */}
+            <RoleGuard 
+              allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}
+              fallback={
+                <div className="mx-auto max-w-xl px-4 py-16 text-center">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-8 shadow-sm">
+                    <h2 className="text-xl font-bold text-red-700 mb-2">Acesso Negado</h2>
+                    <p className="text-sm text-red-600 mb-6">
+                      Sua conta ativa não possui privilégios operacionais para acessar este nó do sistema.
+                    </p>
+                    <button 
+                      type="button"
+                      onClick={() => window.location.assign('/')}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Voltar para a Página Inicial
+                    </button>
+                  </div>
+                </div>
+              }
+            >
+              <ProductBackoffice />
+            </RoleGuard>
           </Suspense>
         ),
       },
