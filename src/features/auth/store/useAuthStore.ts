@@ -23,24 +23,21 @@ interface AuthState {
   logout: () => void;
 }
 
-const encryptedSecureStorage = {
+const base64ObfuscatedStorage = {
   getItem: (name: string): string | null => {
-    const obfusticatedValue = localStorage.getItem(name);
-    if (!obfusticatedValue) return null;
+    const obfuscatedValue = localStorage.getItem(name);
+    if (!obfuscatedValue) return null;
     
     try {
-      // Reverte a camada de proteção Base64 para recuperar o JSON original estável
-      return atob(obfusticatedValue);
+      return atob(obfuscatedValue);
     } catch {
-      // Caso o dado esteja corrompido ou violado, limpa preventivamente a sessão por segurança
       return null;
     }
   },
   
   setItem: (name: string, value: string): void => {
-    // Transforma a string limpa do estado numa cadeia cifrada/ofuscada antes do dump em disco
-    const obfusticatedValue = btoa(value);
-    localStorage.setItem(name, obfusticatedValue);
+    const obfuscatedValue = btoa(value);
+    localStorage.setItem(name, obfuscatedValue);
   },
   
   removeItem: (name: string): void => {
@@ -71,13 +68,13 @@ export const useAuthStore = create<AuthState>()(
       name: 'ecommerce-auth-storage',
       storage: {
         getItem: (name) => {
-          const stateStr = encryptedSecureStorage.getItem(name);
+          const stateStr = base64ObfuscatedStorage.getItem(name);
           return stateStr ? JSON.parse(stateStr) : null;
         },
         setItem: (name, value) => {
-          encryptedSecureStorage.setItem(name, JSON.stringify(value));
+          base64ObfuscatedStorage.setItem(name, JSON.stringify(value));
         },
-        removeItem: (name) => encryptedSecureStorage.removeItem(name),
+        removeItem: (name) => base64ObfuscatedStorage.removeItem(name),
       },
     }
   )

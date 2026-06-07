@@ -11,7 +11,6 @@ export const ProductDetail = () => {
   const addItem = useCartStore((state) => state.addItem);
   const [isAdded, setIsAdded] = useState(false);
 
-  // Consumes the centralized domain variant selector engine hook abstraction cleanly
   const {
     selectedOptions,
     resolvedSku,
@@ -48,7 +47,7 @@ export const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!resolvedSku || resolvedSku.stock <= 0) return;
 
-    addItem(product, resolvedSku.id);
+    addItem(resolvedSku.id, resolvedSku.stock);
     setIsAdded(true);
 
     window.setTimeout(() => {
@@ -67,7 +66,6 @@ export const ProductDetail = () => {
       </div>
 
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-        {/* Left Column: Media Presentation Layout */}
         <div className="flex flex-col">
           <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-100 border border-gray-200">
             <img
@@ -78,7 +76,6 @@ export const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Right Column: Configuration & Purchase Operations Section */}
         <div className="mt-10 px-4 sm:mt-16 sm:px-0 lg:mt-0">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">{product.name}</h1>
           
@@ -95,7 +92,6 @@ export const ProductDetail = () => {
           </div>
 
           <div className="mt-8 border-t border-gray-200 pt-8">
-            {/* Dynamic Variant Option Controls generated via hooks extraction filters */}
             {product.attributes.map((attr) => {
               const currentSelectedValue = selectedOptions[attr.attributeId];
               const dynamicValues = getOptionGroupValues(attr.attributeId);
@@ -131,7 +127,6 @@ export const ProductDetail = () => {
               );
             })}
 
-            {/* Inventory Status Real-time Feedback indicator */}
             <div className="mt-4 flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">Availability:</span>
               {resolvedSku ? (
@@ -147,7 +142,6 @@ export const ProductDetail = () => {
               )}
             </div>
 
-            {/* Checkout Form Actions */}
             <div className="mt-8 flex">
               <Button
                 type="button"

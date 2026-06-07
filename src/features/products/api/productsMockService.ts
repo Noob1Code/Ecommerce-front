@@ -40,6 +40,31 @@ export const productsMockService = {
     if (!isUpdated) throw new Error('SKU target row identifier not found inside collection state');
   },
 
+  // NOVO MÉTODO DO MOCK: Realiza a mutação real de reativação comercial mudando para true
+  activateProduct: async (id: string): Promise<void> => {
+    await delay(MOCK_DELAY_MS);
+    const index = mockBackendProducts.findIndex((p) => p.id === id);
+    if (index !== -1) {
+      mockBackendProducts[index].ativo = true;
+    }
+  },
+
+  // NOVO MÉTODO DO MOCK: Realiza a mutação real de preços percorrendo a lista de variações brutas
+  updateSkuPrice: async (skuId: string, newPrice: number): Promise<void> => {
+    await delay(MOCK_DELAY_MS);
+    let isUpdated = false;
+
+    mockBackendProducts.forEach((product) => {
+      const skuMatch = product.variacoes.find((v) => v.id === skuId);
+      if (skuMatch) {
+        skuMatch.preco = newPrice;
+        isUpdated = true;
+      }
+    });
+
+    if (!isUpdated) throw new Error('SKU target identifier not found for price allocation');
+  },
+
   softDeleteProduct: async (id: string): Promise<void> => {
     await delay(MOCK_DELAY_MS);
     const index = mockBackendProducts.findIndex((p) => p.id === id);

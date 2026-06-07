@@ -3,188 +3,277 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
 import { useProducts } from './useProducts';
-import { updateSkuStockInApi, updateProductMetadataInApi, deleteProductInApi, deleteSkuInApi } from '../api/productsApi';
+import {
+  updateSkuStockInApi,
+  updateProductMetadataInApi,
+  deleteProductInApi,
+  deleteSkuInApi,
+  activateProductInApi,
+  updateSkuPriceInApi
+} from '../api/productsApi';
 
 export const useProductBackofficeController = () => {
   const queryClient = useQueryClient();
-  const { products, isLoading, error } = useProducts();
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  // A URL é mantida como a única Fonte Verdadeira de dados para a busca por texto
-  const searchQuery = searchParams.get('search') || '';
-  
-  // Buffers locais de modificações temporárias em lote
-  const [stockChanges, setStockChanges] = useState<Record<string, number | string>>({});
-  const [metadataChanges, setMetadataChanges] = useState<Record<string, { name: string; description: string }>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { products: produtos, isLoading: estaCarregando, error: erro } = useProducts();
+  const [parametrosBusca, setParametrosBusca] = useSearchParams();
+  const termoPesquisa = parametrosBusca.get('search') || '';
+  const [filtroStatus, setFiltroStatus] = useState<'todos' | 'ativos' | 'inativos'>('todos');
+  const [alteracoesEstoque, setAlteracoesEstoque] = useState<Record<string, number | string>>({});
+  const [alteracoesPreco, setAlteracoesPreco] = useState<Record<string, number | string>>({});
+  const [alteracoesMetadados, setAlteracoesMetadados] = useState<Record<string, { name: string; description: string }>>({});
+  const [estaEnviando, setEstaEnviando] = useState(false);
 
-  // AJUSTE: Removida a trava rígida '&& product.isActive' para permitir visualização de inativos no admin
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [products, searchQuery]);
+  const produtosFiltrados = useMemo(() => {
+    if (!produtos) return [];
 
-  // Recupera o estoque modificado do buffer ou retorna o valor original estável do cache
-  const getSkuEffectiveStock = (skuId: string, currentStock: number): number | string => {
-    return stockChanges[skuId] !== undefined ? stockChanges[skuId] : currentStock;
+    return produtos.filter((produto) => {
+      const correspondeBusca = produto.name.toLowerCase().includes(termoPesquisa.toLowerCase());
+
+      const correspondeStatus =
+        filtroStatus === 'todos' ||
+        (filtroStatus === 'ativos' && produto.isActive) ||
+        (filtroStatus === 'inativos' && !produto.isActive);
+
+      return correspondeBusca && correspondeStatus;
+    });
+  }, [produtos, termoPesquisa, filtroStatus]);
+
+  const obterEstoqueEfetivoSku = (skuId: string, estoqueAtual: number): number | string => {
+    return alteracoesEstoque[skuId] !== undefined ? alteracoesEstoque[skuId] : estoqueAtual;
   };
 
-  // Recupera os metadados modificados do buffer ou retorna o valor original do cache
-  const getProductEffectiveMetadata = (productId: string, currentName: string, currentDesc: string) => {
-    return metadataChanges[productId] || { name: currentName, description: currentDesc };
+  const obterPrecoEfetivoSku = (skuId: string, precoAtual: number): number | string => {
+    return alteracoesPreco[skuId] !== undefined ? alteracoesPreco[skuId] : precoAtual;
   };
 
-  // Sincroniza as alterações de digitação de Nome e Descrição com o buffer local
-  const handleMetadataChange = (productId: string, key: 'name' | 'description', value: string) => {
-    setMetadataChanges((prev) => {
-      const current = prev[productId] || {
-        name: products.find((p) => p.id === productId)?.name || '',
-        description: products.find((p) => p.id === productId)?.description || '',
+  const obterMetadadosEfetivosProduto = (produtoId: string, nomeAtual: string, descricaoAtual: string) => {
+    return alteracoesMetadados[produtoId] || { name: nomeAtual, description: descricaoAtual };
+  };
+
+  const handleMudancaMetadados = (produtoId: string, chave: 'name' | 'description', valor: string) => {
+    setAlteracoesMetadados((prev) => {
+      const atual = prev[produtoId] || {
+        name: produtos?.find((p) => p.id === produtoId)?.name || '',
+        description: produtos?.find((p) => p.id === produtoId)?.description || '',
       };
       return {
         ...prev,
-        [productId]: { ...current, [key]: value },
+        [produtoId]: { ...atual, [chave]: valor },
       };
     });
   };
 
-  // Tratador assíncrono para a inativação lógica do Produto Pai (Soft Delete)
-  const handleProductInactivation = async (productId: string, productName: string) => {
-    if (!window.confirm(`Are you sure you want to logically INACTIVATE the parent product: ${productName}?`)) return;
+  const handleMudancaPreco = (skuId: string, valor: string) => {
+    const valorSaneado = valor.replace(/[^0-9.]/g, '');
+    const partes = valorSaneado.split('.');
+    const valorFinal = partes.length > 2 ? `${partes[0]}.${partes.slice(1).join('')}` : valorSaneado;
+
+    setAlteracoesPreco((prev) => ({ ...prev, [skuId]: valorFinal }));
+  };
+
+  const handleAlternarStatusProduto = async (produtoId: string, nomeProduto: string, estaAtivo: boolean) => {
+    const mensagemConfirmacao = estaAtivo
+      ? `Tem certeza que deseja INATIVAR o produto pai: ${nomeProduto}?`
+      : `Tem certeza que deseja REATIVAR o produto pai: ${nomeProduto}?`;
+
+    if (!window.confirm(mensagemConfirmacao)) return;
+
     try {
-      await deleteProductInApi(productId);
+      if (estaAtivo) {
+        await deleteProductInApi(produtoId);
+      } else {
+        await activateProductInApi(produtoId);
+      }
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert('Product parent container successfully inactivated!');
+      alert(`Status do produto alterado com sucesso!`);
     } catch (err) {
-      alert('Failed to inactivate product asset.');
+      alert('Falha ao modificar o status operacional do ativo.');
     }
   };
 
-  // Tratador assíncrono para a exclusão física da variação de SKU (Hard Delete)
-  const handleSkuPhysicalDeletion = async (skuId: string, skuCode: string) => {
-    if (!window.confirm(`CRITICAL: Are you sure you want to PHYSICALLY DELETE the SKU variation [${skuCode}] from the database?`)) return;
+  const handleExclusaoFisicaSku = async (skuId: string, codigoSku: string) => {
+    if (!window.confirm(`CRÍTICO: Tem certeza que deseja EXCLUIR FISICAMENTE a variação [${codigoSku}] do banco de dados?`)) return;
     try {
       await deleteSkuInApi(skuId);
-      setStockChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[skuId];
-        return copy;
+      setAlteracoesEstoque((prev) => {
+        const copia = { ...prev };
+        delete copia[skuId];
+        return copia;
+      });
+      setAlteracoesPreco((prev) => {
+        const copia = { ...prev };
+        delete copia[skuId];
+        return copia;
       });
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert('SKU variation physically erased from database records.');
+      alert('Variação de SKU removida permanentemente dos registros.');
     } catch (err) {
-      alert('Failed to physically delete SKU variation.');
+      alert('Falha ao deletar fisicamente o SKU.');
     }
   };
 
-  // Calcula dinamicamente o volume total de modificações pendentes de envio
-  const getModifiedItemsCount = (): number => {
-    let count = 0;
-    
-    Object.entries(stockChanges).forEach(([skuId, val]) => {
-      const newStock = val === '' ? 0 : Number(val);
-      let originalStock = -1;
-      products.forEach((p) => {
+  const obterContagemItensModificados = (): number => {
+    let contagem = 0;
+    if (!produtos) return 0;
+
+    Object.entries(alteracoesEstoque).forEach(([skuId, val]) => {
+      const novoEstoque = val === '' ? 0 : Number(val);
+      let estoqueOriginal = -1;
+      produtos.forEach((p) => {
         const match = p.skus.find((s) => s.id === skuId);
-        if (match) originalStock = match.stock;
+        if (match) estoqueOriginal = match.stock;
       });
-      if (originalStock !== -1 && originalStock !== newStock) count++;
+      if (estoqueOriginal !== -1 && estoqueOriginal !== novoEstoque) contagem++;
     });
 
-    Object.entries(metadataChanges).forEach(([id, meta]) => {
-      const original = products.find((p) => p.id === id);
+    Object.entries(alteracoesPreco).forEach(([skuId, val]) => {
+      const novoPreco = val === '' ? 0 : Number(val);
+      let precoOriginal = -1;
+      produtos.forEach((p) => {
+        const match = p.skus.find((s) => s.id === skuId);
+        if (match) precoOriginal = match.price;
+      });
+      if (precoOriginal !== -1 && precoOriginal !== novoPreco) contagem++;
+    });
+
+    Object.entries(alteracoesMetadados).forEach(([id, meta]) => {
+      const original = produtos.find((p) => p.id === id);
       if (original && (original.name !== meta.name || original.description !== meta.description)) {
-        count++;
+        contagem++;
       }
     });
 
-    return count;
+    return contagem;
   };
 
-  // Orquestrador de submissões concorrentes em lote com validação de segurança contra campos em branco
-  const handleBatchSubmit = async () => {
-    setIsSubmitting(true);
+  const handleEnvioEmLote = async () => {
+    setEstaEnviando(true);
+    if (!produtos) return;
 
-    // Validação Arquitetural: Bloqueia preventivamente strings vazias ou preenchidas apenas com espaços em branco
-    const hasInvalidFields = Object.values(metadataChanges).some(
+    const camposInvalidos = Object.values(alteracoesMetadados).some(
       (meta) => meta.name.trim() === '' || meta.description.trim() === ''
     );
 
-    if (hasInvalidFields) {
-      alert('Validation Error: Product name and description cannot be left empty or contain only whitespace characters.');
-      setIsSubmitting(false);
+    if (camposInvalidos) {
+      alert('Erro de Validação: O nome e a descrição do produto não podem ser deixados em branco.');
+      setEstaEnviando(false);
       return;
     }
 
     try {
-      const stockPromises = Object.entries(stockChanges)
+      const promessasEstoque = Object.entries(alteracoesEstoque)
         .filter(([skuId, val]) => {
-          const newStock = val === '' ? 0 : Number(val);
-          let originalStock = -1;
-          products.forEach((p) => {
+          const novoEstoque = val === '' ? 0 : Number(val);
+          let original = -1;
+          produtos.forEach((p) => {
             const match = p.skus.find((s) => s.id === skuId);
-            if (match) originalStock = match.stock;
+            if (match) original = match.stock;
           });
-          return originalStock !== -1 && originalStock !== newStock;
+          return original !== -1 && original !== novoEstoque;
         })
-        .map(([skuId, val]) => {
-          const newStock = val === '' ? 0 : Number(val);
-          return updateSkuStockInApi(skuId, newStock);
-        });
+        .map(([skuId, val]) => updateSkuStockInApi(skuId, val === '' ? 0 : Number(val)));
 
-      const metadataPromises = Object.entries(metadataChanges)
+      const promessasPreco = Object.entries(alteracoesPreco)
+        .filter(([skuId, val]) => {
+          const novoPreco = val === '' ? 0 : Number(val);
+          let original = -1;
+          produtos.forEach((p) => {
+            const match = p.skus.find((s) => s.id === skuId);
+            if (match) original = match.price;
+          });
+          return original !== -1 && original !== novoPreco;
+        })
+        .map(([skuId, val]) => updateSkuPriceInApi(skuId, Number(val)));
+
+      const promessasMetadados = Object.entries(alteracoesMetadados)
         .filter(([id, meta]) => {
-          const original = products.find((p) => p.id === id);
+          const original = produtos.find((p) => p.id === id);
           return original && (original.name !== meta.name || original.description !== meta.description);
         })
         .map(([id, meta]) => updateProductMetadataInApi(id, meta.name, meta.description));
 
-      await Promise.all([...stockPromises, ...metadataPromises]);
+      await Promise.all([...promessasEstoque, ...promessasPreco, ...promessasMetadados]);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
 
-      setStockChanges({});
-      setMetadataChanges({});
-      alert('All batch configurations and CRUD updates saved successfully!');
+      setAlteracoesEstoque({});
+      setAlteracoesPreco({});
+      setAlteracoesMetadados({});
+      alert('Todas as configurações em lote e preços foram salvos com sucesso!');
     } catch (err) {
-      alert('An error occurred while deploying batch updates.');
+      alert('Ocorreu um erro ao aplicar as updates em lote.');
     } finally {
-      setIsSubmitting(false);
+      setEstaEnviando(false);
     }
   };
 
-  const modifiedCount = getModifiedItemsCount();
+  const contagemModificados = obterContagemItensModificados();
 
-  // Atualiza síncronamente os parâmetros da URL para manter a integridade da busca
-  const handleSearchChange = (value: string) => {
-    if (value.trim()) {
-      setSearchParams({ search: value }, { replace: true });
+  const handleMudancaPesquisa = (valor: string) => {
+    if (valor.trim()) {
+      setParametrosBusca({ search: valor }, { replace: true });
     } else {
-      setSearchParams({}, { replace: true });
+      setParametrosBusca({}, { replace: true });
     }
   };
 
-  const clearSearch = () => {
-    setSearchParams({}, { replace: true });
+  const limparPesquisa = () => {
+    setParametrosBusca({}, { replace: true });
+  };
+
+  const handleIncrementarEstoque = (skuId: string, estoqueAtual: number) => {
+    const efetivo = obterEstoqueEfetivoSku(skuId, estoqueAtual);
+    const numerico = efetivo === '' ? 0 : Number(efetivo);
+    setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: numerico + 1 }));
+  };
+
+  const handleDecrementarEstoque = (skuId: string, estoqueAtual: number) => {
+    const efetivo = obterEstoqueEfetivoSku(skuId, estoqueAtual);
+    const numerico = efetivo === '' ? 0 : Number(efetivo);
+    setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: Math.max(0, numerico - 1) }));
+  };
+
+  const handleMudancaEstoqueInput = (skuId: string, valor: string) => {
+    if (valor === '') {
+      setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: '' }));
+    } else {
+      const analisado = parseInt(valor, 10);
+      if (!isNaN(analisado) && analisado >= 0) {
+        setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: analisado }));
+      }
+    }
+  };
+
+  const handleBlurEstoqueInput = (skuId: string) => {
+    if (alteracoesEstoque[skuId] === '') {
+      setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: 0 }));
+    }
   };
 
   return {
-    products,
-    isLoading,
-    error,
-    searchQuery,
-    filteredProducts,
-    stockChanges,
-    isSubmitting,
-    modifiedCount,
-    getSkuEffectiveStock,
-    getProductEffectiveMetadata,
-    handleMetadataChange,
-    handleProductInactivation,
-    handleSkuPhysicalDeletion,
-    handleBatchSubmit,
-    handleSearchChange,
-    clearSearch,
-    setStockChanges
+    produtos,
+    estaCarregando,
+    erro,
+    termoPesquisa,
+    produtosFiltrados,
+    filtroStatus,
+    estaEnviando,
+    contagemModificados,
+    setFiltroStatus,
+    alteracoesEstoque,
+    alteracoesPreco,
+    obterEstoqueEfetivoSku,
+    obterPrecoEfetivoSku,
+    obterMetadadosEfetivosProduto,
+    handleMudancaMetadados,
+    handleMudancaPreco,
+    handleAlternarStatusProduto,
+    handleExclusaoFisicaSku,
+    handleEnvioEmLote,
+    handleMudancaPesquisa,
+    limparPesquisa,
+    handleIncrementarEstoque,
+    handleDecrementarEstoque,
+    handleMudancaEstoqueInput,
+    handleBlurEstoqueInput
   };
 };

@@ -31,7 +31,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
     if (!defaultSku || isOutOfStock) return;
 
-    addItem(product, defaultSku.id);
+    // CORREÇÃO ARQUITETURAL: Assinatura de parâmetros sincronizada com a nova assinatura da useCartStore
+    addItem(defaultSku.id, defaultSku.stock);
     setIsAdded(true);
 
     window.setTimeout(() => {

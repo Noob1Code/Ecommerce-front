@@ -1,20 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Product, ProductSku } from '../../products/domain/product.types';
 
-export interface CartItem {
-  id: string;
-  product: Product;
+export interface CartStoreItem {
   skuId: string;
-  selectedSku: ProductSku;
   quantity: number;
 }
 
 interface CartState {
-  items: CartItem[];
-  addItem: (product: Product, skuId: string) => void;
+  items: CartStoreItem[];
+  addItem: (skuId: string, maxStock: number) => void;
   removeItem: (skuId: string) => void;
-  updateQuantity: (skuId: string, quantity: number) => void;
+  updateQuantity: (skuId: string, quantity: number, maxStock: number) => void;
   clearCart: () => void;
 }
 
@@ -23,10 +19,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
 
-      addItem: (product: Product, skuId: string) => {
-        const selectedSku = product.skus.find((s) => s.id === skuId);
-        if (!selectedSku) return;
-
+      addItem: (skuId: string, maxStock: number) => {
         const currentItems = get().items;
         const existingItemIndex = currentItems.findIndex((item) => item.skuId === skuId);
 
@@ -34,7 +27,7 @@ export const useCartStore = create<CartState>()(
           const updatedItems = [...currentItems];
           const targetItem = updatedItems[existingItemIndex];
           
-          if (targetItem.quantity >= selectedSku.stock) {
+          if (targetItem.quantity >= maxStock) {
             return;
           }
 
@@ -45,10 +38,7 @@ export const useCartStore = create<CartState>()(
             items: [
               ...currentItems,
               {
-                id: skuId,
-                product,
                 skuId,
-                selectedSku,
                 quantity: 1,
               },
             ],
@@ -62,7 +52,7 @@ export const useCartStore = create<CartState>()(
         });
       },
 
-      updateQuantity: (skuId: string, quantity: number) => {
+      updateQuantity: (skuId: string, quantity: number, maxStock: number) => {
         if (quantity <= 0) {
           get().removeItem(skuId);
           return;
@@ -70,7 +60,7 @@ export const useCartStore = create<CartState>()(
 
         const updatedItems = get().items.map((item) => {
           if (item.skuId === skuId) {
-            if (quantity > item.selectedSku.stock) {
+            if (quantity > maxStock) {
               return item;
             }
             return { ...item, quantity };
@@ -84,7 +74,7 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [] }),
     }),
     {
-      name: 'mercado-preso-cart-storage',
+      name: 'ecommerce-cart-storage',
     }
   )
 );

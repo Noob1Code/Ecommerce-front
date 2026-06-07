@@ -3,19 +3,60 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useCartStore } from '../../cart';
 import { useAuthStore } from '../../auth';
-import { createOrderApi, type BackendPedidoRequestDTO } from '../api/checkoutApi';
+import { useProducts } from '../../products';
+import { createOrderApi } from '../api/checkoutApi';
+import { mapCheckoutToApi } from '../domain/checkout.mapper';
+import type { Product, ProductSku } from '../../products/domain/product.types';
+
+interface EnrichedCheckoutItem {
+  skuId: string;
+  quantity: number;
+  product: Product;
+  selectedSku: ProductSku;
+}
 
 export const useCheckoutController = () => {
   const navigate = useNavigate();
+  const { products } = useProducts();
   
-  const { items, clearCart } = useCartStore();
+  const rawItems = useCartStore((state) => state.items);
+  const clearCart = useCartStore((state) => state.clearCart);
   const user = useAuthStore((state) => state.user);
 
-  const isEmpty = items.length === 0;
+  const enrichedItems = useMemo<EnrichedCheckoutItem[]>(() => {
+    if (!products || products.length === 0) return [];
+
+    return rawItems
+      .map((rawItem) => {
+        let foundProduct: Product | null = null;
+        let foundSku: ProductSku | null = null;
+
+        for (const p of products) {
+          const matchSku = p.skus.find((s) => s.id === rawItem.skuId);
+          if (matchSku) {
+            foundProduct = p;
+            foundSku = matchSku;
+            break;
+          }
+        }
+
+        if (!foundProduct || !foundSku) return null;
+
+        return {
+          skuId: rawItem.skuId,
+          quantity: rawItem.quantity,
+          product: foundProduct,
+          selectedSku: foundSku,
+        };
+      })
+      .filter((item): item is EnrichedCheckoutItem => item !== null);
+  }, [rawItems, products]);
+
+  const isEmpty = enrichedItems.length === 0;
 
   const cartTotal = useMemo(() => {
-    return items.reduce((acc, item) => acc + item.selectedSku.price * item.quantity, 0);
-  }, [items]);
+    return enrichedItems.reduce((acc, item) => acc + item.selectedSku.price * item.quantity, 0);
+  }, [enrichedItems]);
 
   const formattedTotal = useMemo(() => {
     return new Intl.NumberFormat('pt-BR', { 
@@ -45,19 +86,13 @@ export const useCheckoutController = () => {
       return;
     }
 
-    const orderPayload: BackendPedidoRequestDTO = {
-      clienteId: user.id,
-      itens: items.map((item) => ({
-        variacaoId: item.skuId,
-        quantidade: item.quantity,
-      })),
-    };
+    const orderPayload = mapCheckoutToApi(user.id, enrichedItems);
 
     placeOrder(orderPayload);
   };
 
   return {
-    items,
+    items: enrichedItems,
     user,
     isEmpty,
     formattedTotal,
