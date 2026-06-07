@@ -1,25 +1,26 @@
-import React, { useState, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys'; // <-- Corrigido para as chaves descentralizadas locais
-import { useProducts } from '../hooks/useProducts';
-import { updateSkuStockInApi, updateProductMetadataInApi, deleteProductInApi, deleteSkuInApi } from '../api/productsApi';
+import { useProductBackofficeController } from '../hooks/useProductBackofficeController';
 import { RoleGuard } from '../../auth';
 import { Spinner, ErrorMessage, Card, Button, Input } from '../../../shared/components/ui';
 
 export const ProductBackoffice = () => {
-  const queryClient = useQueryClient();
-  const { products, isLoading, error } = useProducts();
-  
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  // A URL agora é a Fonte Única da Verdade para a busca. Eliminamos o estado local searchQuery duplicado.
-  const searchQuery = searchParams.get('search') || '';
-  
-  // Local uncommitted buffers tracking multi-item changes before batch submission
-  const [stockChanges, setStockChanges] = useState<Record<string, number | string>>({});
-  const [metadataChanges, setMetadataChanges] = useState<Record<string, { name: string; description: string }>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    isLoading,
+    error,
+    searchQuery,
+    filteredProducts,
+    stockChanges,
+    isSubmitting,
+    modifiedCount,
+    getSkuEffectiveStock,
+    getProductEffectiveMetadata,
+    handleMetadataChange,
+    handleProductInactivation,
+    handleSkuPhysicalDeletion,
+    handleBatchSubmit,
+    handleSearchChange,
+    clearSearch,
+    setStockChanges
+  } = useProductBackofficeController();
 
   if (isLoading) {
     return (
@@ -28,126 +29,6 @@ export const ProductBackoffice = () => {
       </div>
     );
   }
-
-  // Otimização de Performance: Memoriza a filtragem para não reprocessar o array à toa em mutações de stock
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) && product.isActive
-    );
-  }, [products, searchQuery]);
-
-  // Safe property getters checking local buffers before falling back to query cache values
-  const getSkuEffectiveStock = (skuId: string, currentStock: number): number | string => {
-    return stockChanges[skuId] !== undefined ? stockChanges[skuId] : currentStock;
-  };
-
-  const getProductEffectiveMetadata = (productId: string, currentName: string, currentDesc: string) => {
-    return metadataChanges[productId] || { name: currentName, description: currentDesc };
-  };
-
-  const handleMetadataChange = (productId: string, key: 'name' | 'description', value: string) => {
-    setMetadataChanges((prev) => {
-      const current = prev[productId] || {
-        name: products.find((p) => p.id === productId)?.name || '',
-        description: products.find((p) => p.id === productId)?.description || '',
-      };
-      return {
-        ...prev,
-        [productId]: { ...current, [key]: value },
-      };
-    });
-  };
-
-  const handleProductInactivation = async (productId: string, productName: string) => {
-    if (!window.confirm(`Are you sure you want to logically INACTIVATE the parent product: ${productName}?`)) return;
-    try {
-      await deleteProductInApi(productId);
-      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert('Product parent container successfully inactivated!');
-    } catch (err) {
-      alert('Failed to inactivate product asset.');
-    }
-  };
-
-  const handleSkuPhysicalDeletion = async (skuId: string, skuCode: string) => {
-    if (!window.confirm(`CRITICAL: Are you sure you want to PHYSICALLY DELETE the SKU variation [${skuCode}] from the database?`)) return;
-    try {
-      await deleteSkuInApi(skuId);
-      setStockChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[skuId];
-        return copy;
-      });
-      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert('SKU variation physically erased from database records.');
-    } catch (err) {
-      alert('Failed to physically delete SKU variation.');
-    }
-  };
-
-  const getModifiedItemsCount = (): number => {
-    let count = 0;
-    
-    Object.entries(stockChanges).forEach(([skuId, val]) => {
-      const newStock = val === '' ? 0 : Number(val);
-      let originalStock = -1;
-      products.forEach((p) => {
-        const match = p.skus.find((s) => s.id === skuId);
-        if (match) originalStock = match.stock;
-      });
-      if (originalStock !== -1 && originalStock !== newStock) count++;
-    });
-
-    Object.entries(metadataChanges).forEach(([id, meta]) => {
-      const original = products.find((p) => p.id === id);
-      if (original && (original.name !== meta.name || original.description !== meta.description)) {
-        count++;
-      }
-    });
-
-    return count;
-  };
-
-  const handleBatchSubmit = async () => {
-    setIsSubmitting(true);
-
-    try {
-      const stockPromises = Object.entries(stockChanges)
-        .filter(([skuId, val]) => {
-          const newStock = val === '' ? 0 : Number(val);
-          let originalStock = -1;
-          products.forEach((p) => {
-            const match = p.skus.find((s) => s.id === skuId);
-            if (match) originalStock = match.stock;
-          });
-          return originalStock !== -1 && originalStock !== newStock;
-        })
-        .map(([skuId, val]) => {
-          const newStock = val === '' ? 0 : Number(val);
-          return updateSkuStockInApi(skuId, newStock);
-        });
-
-      const metadataPromises = Object.entries(metadataChanges)
-        .filter(([id, meta]) => {
-          const original = products.find((p) => p.id === id);
-          return original && (original.name !== meta.name || original.description !== meta.description);
-        })
-        .map(([id, meta]) => updateProductMetadataInApi(id, meta.name, meta.description));
-
-      await Promise.all([...stockPromises, ...metadataPromises]);
-      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-
-      setStockChanges({});
-      setMetadataChanges({});
-      alert('All batch configurations and CRUD updates saved successfully!');
-    } catch (err) {
-      alert('An error occurred while deploying batch updates.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const modifiedCount = getModifiedItemsCount();
 
   return (
     <RoleGuard 
@@ -208,11 +89,7 @@ export const ProductBackoffice = () => {
               name="search"
               type="text"
               value={searchQuery}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val.trim()) setSearchParams({ search: val }, { replace: true });
-                else setSearchParams({}, { replace: true });
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search product name..."
               disabled={isSubmitting}
               className="w-full pl-3 pr-10 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none"
@@ -220,7 +97,7 @@ export const ProductBackoffice = () => {
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchParams({}, { replace: true })}
+                onClick={clearSearch}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
               >
                 Clear
