@@ -3,7 +3,6 @@ import { useCartController } from '../hooks/useCartController';
 import { Card, Button } from '../../../shared/components/ui';
 
 export const Cart = () => {
-  // Camada de Lógica: Consome unicamente as propriedades e ações mastigadas do Controlador
   const {
     items,
     isEmpty,
@@ -16,7 +15,6 @@ export const Cart = () => {
     handleCheckoutRedirect,
   } = useCartController();
 
-  // Tratamento visual prioritário para estado de Carrinho Vazio
   if (isEmpty) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
@@ -48,14 +46,12 @@ export const Cart = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
-        {/* Left Grid: Reactive Selection Row Tables */}
         <div className="lg:col-span-8 space-y-4">
           {items.map((item) => (
             <Card 
               key={item.skuId} 
               className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
             >
-              {/* Product Info snapshot */}
               <div className="flex items-start gap-4">
                 <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center text-xs text-gray-400 font-mono">
                   {item.selectedSku.images?.[0]?.imageUrl ? (
@@ -82,7 +78,6 @@ export const Cart = () => {
                 </div>
               </div>
 
-              {/* Quantity selectors and deletion row controllers */}
               <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
                 <div className="flex items-center gap-2">
                   <button
@@ -103,8 +98,9 @@ export const Cart = () => {
                 </div>
 
                 <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 sm:gap-1 min-w-[100px]">
+                  {/* CORREÇÃO: Multiplicação do subtotal formatada estritamente em BRL */}
                   <span className="text-base font-black text-gray-900 hidden sm:block">
-                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                       item.selectedSku.price * item.quantity
                     )}
                   </span>
@@ -121,7 +117,6 @@ export const Cart = () => {
           ))}
         </div>
 
-        {/* Right Grid: Order Settled Summary Card Panel */}
         <div className="lg:col-span-4">
           <Card className="bg-white p-6 border border-gray-200 shadow-sm rounded-xl">
             <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Order Summary</h2>

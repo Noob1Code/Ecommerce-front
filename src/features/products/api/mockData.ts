@@ -3,7 +3,6 @@ import type {
   BackendProdutoVariacaoResponseDTO 
 } from '../domain/product.types';
 
-// Interface que representa exatamente o ProdutoDetalhadoResponseDTO com as variações embutidas
 export interface BackendProdutoDetalhadoPayload {
   id: string;
   nome: string;
@@ -32,8 +31,9 @@ export const mockBackendProducts: BackendProdutoDetalhadoPayload[] = [
         preco: 149.99,
         estoque: 10,
         opcoes: [
-          { id: 'o1', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Preto' },
-          { id: 'o2', atributo: { id: 'attr-switch', nome: 'Switch' }, valor: 'Red' }
+          // CORREÇÃO: Alinhado com as propriedades planas do DTO real do backend
+          { id: 'o1', produtoAtributoId: 'attr-color', atributoNome: 'Cor', valor: 'Preto' }, //
+          { id: 'o2', produtoAtributoId: 'attr-switch', atributoNome: 'Switch', valor: 'Red' } //
         ],
         imagens: [
           { id: 'img1', urlImagem: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=500', ordem: 1, criadoEm: '2026-01-15T10:00:00Z' }
@@ -43,10 +43,10 @@ export const mockBackendProducts: BackendProdutoDetalhadoPayload[] = [
         id: 'sku-keyboard-black-blue',
         sku: 'TEC-RGB-BLK-BLU',
         preco: 144.99,
-        estoque: 0, // Fora de estoque para testarmos lógica de indisponibilidade
+        estoque: 0,
         opcoes: [
-          { id: 'o3', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Preto' },
-          { id: 'o4', atributo: { id: 'attr-switch', nome: 'Switch' }, valor: 'Blue' }
+          { id: 'o3', produtoAtributoId: 'attr-color', atributoNome: 'Cor', valor: 'Preto' }, //
+          { id: 'o4', produtoAtributoId: 'attr-switch', atributoNome: 'Switch', valor: 'Blue' } //
         ],
         imagens: [
           { id: 'img2', urlImagem: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=500', ordem: 1, criadoEm: '2026-01-15T10:00:00Z' }
@@ -58,8 +58,8 @@ export const mockBackendProducts: BackendProdutoDetalhadoPayload[] = [
         preco: 159.99,
         estoque: 8,
         opcoes: [
-          { id: 'o5', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Branco' },
-          { id: 'o6', atributo: { id: 'attr-switch', nome: 'Switch' }, valor: 'Red' }
+          { id: 'o5', produtoAtributoId: 'attr-color', atributoNome: 'Cor', valor: 'Branco' }, //
+          { id: 'o6', produtoAtributoId: 'attr-switch', atributoNome: 'Switch', valor: 'Red' } //
         ],
         imagens: [
           { id: 'img3', urlImagem: 'https://images.unsplash.com/photo-1626958390898-162d3577f593?w=500', ordem: 1, criadoEm: '2026-01-15T10:00:00Z' }
@@ -83,7 +83,7 @@ export const mockBackendProducts: BackendProdutoDetalhadoPayload[] = [
         preco: 79.99,
         estoque: 42,
         opcoes: [
-          { id: 'o7', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Preto' }
+          { id: 'o7', produtoAtributoId: 'attr-color', atributoNome: 'Cor', valor: 'Preto' } //
         ],
         imagens: [
           { id: 'img4', urlImagem: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500', ordem: 1, criadoEm: '2026-02-20T14:30:00Z' }
@@ -95,7 +95,7 @@ export const mockBackendProducts: BackendProdutoDetalhadoPayload[] = [
         preco: 84.99,
         estoque: 20,
         opcoes: [
-          { id: 'o8', atributo: { id: 'attr-color', nome: 'Cor' }, valor: 'Branco' }
+          { id: 'o8', produtoAtributoId: 'attr-color', atributoNome: 'Cor', valor: 'Branco' } //
         ],
         imagens: [
           { id: 'img5', urlImagem: 'https://images.unsplash.com/photo-1625842268584-8f329043265c?w=500', ordem: 1, criadoEm: '2026-02-20T14:30:00Z' }
