@@ -1,8 +1,15 @@
+import { useNavigate } from 'react-router-dom';
 import { useProductBackofficeController } from '../hooks/useProductBackofficeController';
-import { RoleGuard } from '../../auth';
+import { useAuthStore, RoleGuard } from '../../auth';
 import { Spinner, ErrorMessage, Card, Button, Input } from '../../../shared/components/ui';
 
 export const ProductBackoffice = () => {
+  const navigate = useNavigate();
+  const usuarioLogado = useAuthStore((state) => state.usuario);
+  const ehAdmin = usuarioLogado?.perfis.includes('ROLE_ADMIN') ?? false;
+  const ehEstoque = usuarioLogado?.perfis.includes('ROLE_ESTOQUE') ?? false;
+  const podeEditarMetadados = ehAdmin || ehEstoque;
+
   const {
     estaCarregando,
     erro,
@@ -12,7 +19,6 @@ export const ProductBackoffice = () => {
     estaEnviando,
     contagemModificados,
     setFiltroStatus,
-    // CORREÇÃO: Desestruturando os objetos de buffer para uso reativo nas condicionais de estilo CSS abaixo
     alteracoesEstoque,
     alteracoesPreco,
     obterEstoqueEfetivoSku,
@@ -47,7 +53,7 @@ export const ProductBackoffice = () => {
           <div className="bg-red-50 border border-red-200 rounded-xl p-8 shadow-sm">
             <h2 className="text-xl font-bold text-red-700 mb-2">Acesso Negado</h2>
             <p className="text-sm text-red-600 mb-6">
-              Suas credenciais de conta ativa não possuem privilégios autorizados para visualizar o nó do backoffice.
+              Suas credenciais não possuem privilégios autorizados para visualizar o painel do backoffice.
             </p>
             <Button variant="primary" onClick={() => window.location.assign('/')}>
               Retornar para a Vitrine
@@ -61,12 +67,24 @@ export const ProductBackoffice = () => {
         {/* Barra Superior de Título */}
         <div className="sm:flex sm:items-center sm:justify-between border-b border-gray-200 pb-5 mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">CRUD de Inventário e Catálogo</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Painel Administrativo de Estoque</h1>
             <p className="mt-2 text-sm text-gray-500">
-              Modifique detalhes de containers, reative produtos e altere preços ou estoques de SKUs em lote.
+              Modifique detalhes de containers, gerencie estoques e altere preços de SKUs em lote.
             </p>
           </div>
           <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-3">
+            {/* Botão de Recursos Humanos: Protegido rigidamente apenas para ROLE_ADMIN */}
+            <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate('/backoffice/funcionarios')}
+                className="px-4 py-3 text-sm font-bold border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-50"
+              >
+                Gerenciar Funcionários
+              </Button>
+            </RoleGuard>
+
             <Button
               type="button"
               variant={contagemModificados > 0 ? 'primary' : 'secondary'}
@@ -81,19 +99,12 @@ export const ProductBackoffice = () => {
           </div>
         </div>
 
-        {/* Painel de Filtros Integrado (Pesquisa + Filtro Comercial de Status) */}
+        {/* Filtros */}
         <div className="mb-8 flex flex-col sm:flex-row gap-4 items-end max-w-3xl">
           <div className="w-full sm:w-1/2">
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="search" className="block text-sm font-semibold text-gray-700">
-                Filtrar Itens por Nome
-              </label>
-              {termoPesquisa && (
-                <span className="text-xs bg-blue-50 text-blue-700 font-medium px-2 py-0.5 rounded border border-blue-100">
-                  Filtro de busca ativo
-                </span>
-              )}
-            </div>
+            <label htmlFor="search" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Filtrar Itens por Nome
+            </label>
             <div className="relative rounded-md shadow-sm">
               <Input
                 id="search"
@@ -106,18 +117,13 @@ export const ProductBackoffice = () => {
                 className="w-full pl-3 pr-10 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none"
               />
               {termoPesquisa && (
-                <button
-                  type="button"
-                  onClick={limparPesquisa}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                >
+                <button type="button" onClick={limparPesquisa} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
                   Limpar
                 </button>
               )}
             </div>
           </div>
 
-          {/* Controle visual para Seleção e Filtragem por Status */}
           <div className="w-full sm:w-1/2">
             <label htmlFor="statusFilter" className="block text-sm font-semibold text-gray-700 mb-1.5">
               Filtrar por Status Comercial
@@ -127,7 +133,7 @@ export const ProductBackoffice = () => {
               value={filtroStatus}
               disabled={estaEnviando}
               onChange={(e) => setFiltroStatus(e.target.value as 'todos' | 'ativos' | 'inativos')}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none font-medium text-gray-700 shadow-xs"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none font-medium text-gray-700 shadow-xs"
             >
               <option value="todos">Exibir Todos os Produtos</option>
               <option value="ativos">Apenas Produtos Ativos</option>
@@ -140,11 +146,11 @@ export const ProductBackoffice = () => {
 
         {produtosFiltrados.length === 0 && (
           <div className="text-center py-12 border border-dashed border-gray-300 rounded-xl bg-gray-50">
-            <p className="text-sm text-gray-500 font-medium">Nenhum produto localizado com os critérios informados.</p>
+            <p className="text-sm text-gray-500 font-medium">Nenhum produto localizado.</p>
           </div>
         )}
 
-        {/* Grade Iterativa de Itens */}
+        {/* Grade de Produtos */}
         <div className="space-y-6">
           {produtosFiltrados.map((product) => {
             const { name: nomeAtual, description: descricaoAtual } = obterMetadadosEfetivosProduto(product.id, product.name, product.description);
@@ -174,14 +180,15 @@ export const ProductBackoffice = () => {
                         </span>
                       )}
                     </div>
+                    {/* ALINHAMENTO DE PERMISSÃO: O campo agora aceita a digitação do estoquista (podeEditarMetadados) */}
                     <Input
                       type="text"
                       id={`name-${product.id}`}
                       value={nomeAtual}
-                      disabled={estaEnviando} 
+                      disabled={estaEnviando || !product.isActive || !podeEditarMetadados} 
                       onChange={(e) => handleMudancaMetadados(product.id, 'name', e.target.value)}
                       className={`text-base font-bold text-gray-900 border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none ${
-                        !product.isActive ? 'text-gray-500 bg-gray-100' : 'bg-gray-50/50'
+                        (!product.isActive || !podeEditarMetadados) ? 'text-gray-500 bg-gray-100 cursor-not-allowed' : 'bg-gray-50/50'
                       }`}
                     />
                     <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {product.id}</p>
@@ -191,21 +198,22 @@ export const ProductBackoffice = () => {
                     <label htmlFor={`desc-${product.id}`} className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">
                       Descrição do Catálogo
                     </label>
+                    {/* ALINHAMENTO DE PERMISSÃO: A caixa de descrição agora aceita a digitação do estoquista (podeEditarMetadados) */}
                     <textarea
                       id={`desc-${product.id}`} 
                       value={descricaoAtual}
                       rows={2}
-                      disabled={estaEnviando} 
+                      disabled={estaEnviando || !product.isActive || !podeEditarMetadados} 
                       onChange={(e) => handleMudancaMetadados(product.id, 'description', e.target.value)}
                       className={`w-full text-sm text-gray-600 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none leading-tight ${
-                        !product.isActive ? 'bg-gray-100 text-gray-400' : 'bg-gray-50/50'
+                        (!product.isActive || !podeEditarMetadados) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50/50'
                       }`}
                     />
                   </div>
 
-                  {/* Botão chaveador dinâmico de Inativação / Reativação */}
+                  {/* Tanto ADMIN quanto ESTOQUE podem alterar o status do produto pai */}
                   <div className="md:col-span-1 flex justify-end pt-5 md:pt-4">
-                    <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+                    <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
                       <button 
                         type="button"
                         onClick={() => handleAlternarStatusProduto(product.id, product.name, product.isActive)}
@@ -268,14 +276,14 @@ export const ProductBackoffice = () => {
                             </td>
                             <td className="px-4 py-3 font-medium text-gray-400 line-through">{sku.formattedPrice}</td>
                             
-                            {/* Coluna de edição de Preços por SKU */}
+                            {/* Ajuste de Preços: Permitido para ADMIN e ESTOQUE conforme regras RBAC */}
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1">
                                 <input
                                   type="text"
                                   aria-label={`Preço para o SKU ${sku.skuCode}`}
                                   value={precoEfetivo}
-                                  disabled={estaEnviando}
+                                  disabled={estaEnviando || !product.isActive}
                                   onChange={(e) => handleMudancaPreco(sku.id, e.target.value)}
                                   placeholder="0.00"
                                   className={`w-24 px-2 py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 text-left ${
@@ -292,7 +300,7 @@ export const ProductBackoffice = () => {
                                 <button
                                   type="button"
                                   aria-label={`Diminuir estoque de ${sku.skuCode}`}
-                                  disabled={estaEnviando || estoqueNumerico <= 0}
+                                  disabled={estaEnviando || estoqueNumerico <= 0 || !product.isActive}
                                   onClick={() => handleDecrementarEstoque(sku.id, sku.stock)}
                                   className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40 select-none"
                                 >
@@ -304,7 +312,7 @@ export const ProductBackoffice = () => {
                                   aria-label={`Volume de estoque de ${sku.skuCode}`}
                                   min={0}
                                   value={estoqueEfetivo}
-                                  disabled={estaEnviando}
+                                  disabled={estaEnviando || !product.isActive}
                                   onChange={(e) => handleMudancaEstoqueInput(sku.id, e.target.value)}
                                   onBlur={() => handleBlurEstoqueInput(sku.id)}
                                   className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
@@ -317,7 +325,7 @@ export const ProductBackoffice = () => {
                                 <button
                                   type="button"
                                   aria-label={`Incrementar estoque de ${sku.skuCode}`}
-                                  disabled={estaEnviando}
+                                  disabled={estaEnviando || !product.isActive}
                                   onClick={() => handleIncrementarEstoque(sku.id, sku.stock)}
                                   className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold"
                                 >
@@ -325,11 +333,13 @@ export const ProductBackoffice = () => {
                                 </button>
                               </div>
                             </td>
+                            
+                            {/* Tanto ADMIN quanto ESTOQUE podem remover fisicamente a variação de SKU */}
                             <td className="px-4 py-3 text-right">
-                              <RoleGuard allowedRoles={['ROLE_ADMIN']}>
+                              <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
                                 <button
                                   type="button"
-                                  disabled={estaEnviando}
+                                  disabled={estaEnviando || !product.isActive}
                                   onClick={() => handleExclusaoFisicaSku(sku.id, sku.skuCode)}
                                   className="text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md px-2.5 py-1.5 transition-colors disabled:opacity-40"
                                 >

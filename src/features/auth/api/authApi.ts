@@ -1,11 +1,11 @@
 import { httpClient } from '../../../services/api';
 import { AUTH_ENDPOINTS } from './authEndpoints';
-import type { AuthUser } from '../store/useAuthStore';
+import type { UsuarioAutenticado, PerfilUsuario } from '../store/useAuthStore';
 
-const USE_MOCKS = true;
-const DELAY_MS = 800;
+const USAR_MOCKS = true;
+const TEMPO_ESPERA_MS = 800;
 
-export interface BackendRegisterRequestDTO {
+export interface ClienteRequestDTO {
   nome: string;
   email: string;
   senha: string;
@@ -13,135 +13,201 @@ export interface BackendRegisterRequestDTO {
   telefone?: string;
 }
 
-export interface BackendRegisterResponseDTO {
+export interface ClienteResponseDTO {
   id: string;
   nome: string;
   email: string;
   ativo: boolean;
   roles: string[];
+  cpf?: string;
+  telefone?: string;
 }
 
-export interface BackendLoginRequestDTO {
+export interface FuncionarioRequestDTO {
+  nome: string;
+  email: string;
+  senha: string;
+  matricula: string;
+  roles: string[];
+}
+
+export interface FuncionarioResponseDTO {
+  id: string;
+  nome: string;
+  email: string;
+  ativo: boolean;
+  roles: string[];
+  matricula: string;
+}
+
+export interface LoginRequestDTO {
   username: string;
   password: string;
 }
 
-export interface BackendTokenResponseDTO {
+export interface TokenResponseDTO {
   token: string;
   id: string;
   nome: string;
   roles: string[];
 }
 
-export interface RegisterInput {
-  name: string;
+export interface EntradaCadastroCliente {
+  nome: string;
   email: string;
-  password: string;
+  senha: string;
   cpf?: string;
-  phone?: string;
+  telefone?: string;
 }
 
-export interface LoginInput {
+export interface EntradaCadastroFuncionario {
+  nome: string;
   email: string;
-  password: string;
+  senha: string;
+  matricula: string;
+  perfis: PerfilUsuario[];
 }
 
-export interface LoginResult {
+export interface EntradaLogin {
+  email: string;
+  senha: string;
+}
+
+export interface ResultadoAutenticacao {
   token: string;
-  user: AuthUser;
+  usuario: UsuarioAutenticado;
 }
 
-export const registerCustomerApi = async (input: RegisterInput): Promise<AuthUser> => {
-  if (USE_MOCKS) {
+export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<UsuarioAutenticado> => {
+  if (USAR_MOCKS) {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
-          id: 'mock-generated-customer-id',
-          name: input.name,
-          email: input.email,
-          roles: ['ROLE_CLIENTE'],
+          id: 'mock-id-cliente-gerado',
+          nome: entrada.nome,
+          email: entrada.email,
+          perfis: ['ROLE_CLIENTE'],
+          cpf: entrada.cpf,
         });
-      }, DELAY_MS);
+      }, TEMPO_ESPERA_MS);
     });
   }
 
-  const dto: BackendRegisterRequestDTO = {
-    nome: input.name,
-    email: input.email,
-    senha: input.password,
-    cpf: input.cpf,
-    telefone: input.phone,
+  const dto: ClienteRequestDTO = {
+    nome: entrada.nome,
+    email: entrada.email,
+    senha: entrada.senha,
+    cpf: entrada.cpf,
+    telefone: entrada.telefone,
   };
 
-  const response = await httpClient.post<BackendRegisterResponseDTO>(
+  const resposta = await httpClient.post<ClienteResponseDTO>(
     AUTH_ENDPOINTS.register, 
     dto
   );
 
   return {
-    id: response.data.id,
-    name: response.data.nome,
-    email: response.data.email,
-    roles: response.data.roles as any[],
+    id: resposta.data.id,
+    nome: resposta.data.nome,
+    email: resposta.data.email,
+    perfis: resposta.data.roles as PerfilUsuario[],
+    cpf: resposta.data.cpf,
   };
 };
 
-export const loginUserApi = async (input: LoginInput): Promise<LoginResult> => {
-  if (USE_MOCKS) {
+export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionario): Promise<UsuarioAutenticado> => {
+  if (USAR_MOCKS) {
     return new Promise((resolve) => {
       setTimeout(() => {
-        if (input.email.includes('admin')) {
+        resolve({
+          id: 'mock-id-funcionario-gerado',
+          nome: entrada.nome,
+          email: entrada.email,
+          perfis: entrada.perfis,
+          matricula: entrada.matricula,
+        });
+      }, TEMPO_ESPERA_MS);
+    });
+  }
+
+  const dto: FuncionarioRequestDTO = {
+    nome: entrada.nome,
+    email: entrada.email,
+    senha: entrada.senha,
+    matricula: entrada.matricula,
+    roles: entrada.perfis,
+  };
+
+  const resposta = await httpClient.post<FuncionarioResponseDTO>(
+    '/api/funcionarios',
+    dto
+  );
+
+  return {
+    id: resposta.data.id,
+    nome: resposta.data.nome,
+    email: resposta.data.email,
+    perfis: resposta.data.roles as PerfilUsuario[],
+    matricula: resposta.data.matricula,
+  };
+};
+
+export const logarUsuarioApi = async (entrada: EntradaLogin): Promise<ResultadoAutenticacao> => {
+  if (USAR_MOCKS) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (entrada.email.includes('admin')) {
           resolve({
             token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_admin_token',
-            user: {
+            usuario: {
               id: 'mock-admin-id',
-              name: 'Administrator Master',
-              email: input.email,
-              roles: ['ROLE_ADMIN'],
+              nome: 'Administrador Master',
+              email: entrada.email,
+              perfis: ['ROLE_ADMIN'],
             }
           });
-        } else if (input.email.includes('vendedor') || input.email.includes('estoque')) {
+        } else if (entrada.email.includes('vendedor') || entrada.email.includes('estoque')) {
           resolve({
             token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_staff_token',
-            user: {
+            usuario: {
               id: 'mock-staff-id',
-              name: 'Operador de Estoque',
-              email: input.email,
-              roles: ['ROLE_ESTOQUE'],
+              nome: 'Operador de Estoque',
+              email: entrada.email,
+              perfis: ['ROLE_ESTOQUE'],
             }
           });
         } else {
           resolve({
             token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_customer_token',
-            user: {
+            usuario: {
               id: 'mock-customer-id',
-              name: 'John Customer Doe',
-              email: input.email,
-              roles: ['ROLE_CLIENTE'],
+              nome: 'Fulano Cliente da Silva',
+              email: entrada.email,
+              perfis: ['ROLE_CLIENTE'],
             }
           });
         }
-      }, DELAY_MS);
+      }, TEMPO_ESPERA_MS);
     });
   }
 
-  const dto: BackendLoginRequestDTO = {
-    username: input.email,
-    password: input.password,
+  const dto: LoginRequestDTO = {
+    username: entrada.email,
+    password: entrada.senha,
   };
 
-  const response = await httpClient.post<BackendTokenResponseDTO>(
+  const resposta = await httpClient.post<TokenResponseDTO>(
     AUTH_ENDPOINTS.login,
     dto
   );
 
   return {
-    token: response.data.token,
-    user: {
-      id: response.data.id,
-      name: response.data.nome,
-      email: input.email,
-      roles: response.data.roles as any[],
+    token: resposta.data.token,
+    usuario: {
+      id: resposta.data.id,
+      nome: resposta.data.nome,
+      email: entrada.email,
+      perfis: resposta.data.roles as PerfilUsuario[],
     },
   };
 };

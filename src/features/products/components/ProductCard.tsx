@@ -14,10 +14,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const addItem = useCartStore((state) => state.addItem);
   const [isAdded, setIsAdded] = useState(false);
 
-  // Extract the first SKU as fallback for catalog display presentation
   const defaultSku = product.skus && product.skus.length > 0 ? product.skus[0] : null;
   
-  // Resolve primary thumbnail image matching the default resolved variant setup
   const displayImageUrl = defaultSku && defaultSku.images.length > 0 
     ? defaultSku.images[0].imageUrl 
     : '/fallback-image.jpg';
@@ -31,7 +29,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
     if (!defaultSku || isOutOfStock) return;
 
-    // CORREÇÃO ARQUITETURAL: Assinatura de parâmetros sincronizada com a nova assinatura da useCartStore
     addItem(defaultSku.id, defaultSku.stock);
     setIsAdded(true);
 
@@ -43,26 +40,25 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const handleQuickEditRedirect = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Smoothly redirect the staff profile to the backoffice context pre-filtered by name
     navigate(`/backoffice?search=${encodeURIComponent(product.name)}`);
   };
 
   return (
     <Card className="group flex flex-col transition-all hover:shadow-md relative">
       <div className="relative h-64 overflow-hidden bg-gray-100 rounded-t-lg">
-        {/* Administrative Quick Edit Control overlay triggered exclusively by staff roles */}
+        
+        {/* CORREÇÃO DO FLUXO: Tanto ADMIN quanto ESTOQUE podem visualizar e clicar para ir ao backoffice */}
         <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
           <button
             type="button"
             onClick={handleQuickEditRedirect}
             className="absolute top-3 left-3 z-20 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-md shadow-md transition-all border border-amber-500 hover:scale-105 flex items-center space-x-1"
-            title="Redirect to Backoffice Inventory edit page"
+            title="Acessar painel de gerenciamento deste item"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            <span>Edit Asset</span>
+            <span>Editar Ativo</span>
           </button>
         </RoleGuard>
 
@@ -79,8 +75,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           onClick={handleAddToCart}
           disabled={isOutOfStock}
           className="absolute bottom-3 right-3 z-10"
-          aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
-          title={isOutOfStock ? "Out of stock" : "Quick add to cart"}
+          aria-label={isOutOfStock ? "Esgotado" : "Adicionar ao carrinho"}
         >
           {isOutOfStock ? (
             <span className="text-xs font-semibold text-red-500 px-1">Esgotado</span>
