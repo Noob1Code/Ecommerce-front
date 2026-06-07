@@ -1,33 +1,25 @@
 import type {
   BackendProdutoResponseDTO,
-  BackendProdutoVariacaoResponseDTO,
   Product,
   ProductSku,
   ProductAttribute,
   SkuOption,
   SkuImage
-} from './product.types';
-
-/**
- * Enterprise Product Payload Alignment Blueprint
- * Bridges the gap by intersecting the parent container with the unmapped variation entity array natively.
- */
-export interface BackendProductDetailedPayload extends Omit<BackendProdutoResponseDTO, 'variacoes'> {
-  variacoes: BackendProdutoVariacaoResponseDTO[];
-}
+} from '../domain/product.types';
 
 /**
  * Enterprise Domain Product Mapper
  * Transforms raw incoming backend payload DTO graphs natively into type-safe, 
  * clean frontend core domain entities without leaking network structural contracts.
  */
-export const mapApiToProduct = (payload: BackendProductDetailedPayload): Product => {
+export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => {
   const mappedSkus: ProductSku[] = (payload.variacoes || []).map((skuDto) => {
+    // CORREÇÃO: Mapeando os campos planos vindos diretamente do VariacaoOpcaoResponseDTO.java
     const mappedOptions: SkuOption[] = (skuDto.opcoes || []).map((opt) => ({
       id: opt.id,
-      attributeId: opt.atributo.id,
-      attributeName: opt.atributo.nome,
-      value: opt.valor,
+      attributeId: opt.produtoAtributoId, // Corrigido de opt.atributo.id
+      attributeName: opt.atributoNome,   // Corrigido de opt.atributo.nome
+      value: opt.valor,                  // Mapeia "valor" para "value"
     }));
 
     const mappedImages: SkuImage[] = (skuDto.imagens || []).map((img) => ({
@@ -44,9 +36,10 @@ export const mapApiToProduct = (payload: BackendProductDetailedPayload): Product
       stock: skuDto.estoque,
       options: mappedOptions,
       images: mappedImages,
-      formattedPrice: new Intl.NumberFormat('en-US', {
+      // Alinhado para a moeda do ecossistema do projeto (BRL)
+      formattedPrice: new Intl.NumberFormat('pt-BR', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'BRL',
       }).format(skuDto.preco),
     };
   });

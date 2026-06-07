@@ -18,10 +18,10 @@ export const useProductBackofficeController = () => {
   const [metadataChanges, setMetadataChanges] = useState<Record<string, { name: string; description: string }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Performance Optimization: Memoriza o array para evitar processamento linear inline no JSX
+  // AJUSTE: Removida a trava rígida '&& product.isActive' para permitir visualização de inativos no admin
   const filteredProducts = useMemo(() => {
     return products.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) && product.isActive
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [products, searchQuery]);
 
