@@ -1,67 +1,33 @@
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { useCartStore } from '../../cart';
-import { useAuthStore } from '../../auth';
-import { createOrderApi, type BackendPedidoRequestDTO } from '../api/checkoutApi';
+import { Link } from 'react-router-dom';
+import { useCheckoutController } from '../hooks/useCheckoutController';
 import { Card, Button, Spinner } from '../../../shared/components/ui';
 
 export const Checkout = () => {
-  const navigate = useNavigate();
-  
-  // Clean consumption targeting our newly promoted modular cart domain feature layer
-  const { items, clearCart } = useCartStore();
-  const user = useAuthStore((state) => state.user);
+  // Camada de Lógica: Extrai de forma limpa o estado transacional do controlador intermediário
+  const {
+    items,
+    user,
+    isEmpty,
+    formattedTotal,
+    isPending,
+    handleSubmit,
+  } = useCheckoutController();
 
-  // Synchronously compute active totals inline based on current reactive SKU price metrics
-  const cartTotal = items.reduce((acc, item) => acc + item.selectedSku.price * item.quantity, 0);
-  const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cartTotal);
-
-  // Hook-driven async state management replacing archaic direct component setTimeouts
-  const { mutate: placeOrder, isPending } = useMutation({
-    mutationFn: createOrderApi,
-    onSuccess: () => {
-      clearCart();
-      alert('Order placed successfully matching modular sales guidelines! Thank you.');
-      navigate('/');
-    },
-    onError: () => {
-      alert('An error occurred while communicating order fulfillment details to the backend.');
-    }
-  });
-
-  if (items.length === 0) {
+  // Tratamento prioritário e limpo para estado reativo de carrinho vazio
+  if (isEmpty) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
         <h2 className="text-2xl font-bold text-gray-900">Your cart is empty</h2>
         <p className="text-gray-500">You need items in your cart to checkout.</p>
-        <Link to="/" className="mt-4 rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <Link 
+          to="/" 
+          className="mt-4 rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+        >
           Go to Products
         </Link>
       </div>
     );
   }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!user) {
-      alert('Authentication required. Please sign in before finalizing transaction protocols.');
-      navigate('/login');
-      return;
-    }
-
-    // Explicitly mirrors your friend's Spring Boot PedidoRequestDTO validation structures 100% exactly
-    const orderPayload: BackendPedidoRequestDTO = {
-      clienteId: user.id,
-      itens: items.map((item) => ({
-        variacaoId: item.skuId, // Maps unique SKU key to backend variation placeholder
-        quantidade: item.quantity,
-      })),
-    };
-
-    placeOrder(orderPayload);
-  };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
