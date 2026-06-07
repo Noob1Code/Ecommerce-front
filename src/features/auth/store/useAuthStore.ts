@@ -1,80 +1,82 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type UserRole = 
+export type PerfilUsuario = 
   | 'ROLE_CLIENTE'
   | 'ROLE_ADMIN'
   | 'ROLE_ESTOQUE'
   | 'ROLE_ENTREGA'
   | 'ROLE_FATURAMENTO';
 
-export interface AuthUser {
+export interface UsuarioAutenticado {
   id: string;
-  name: string;
+  nome: string;
   email: string;
-  roles: UserRole[];
+  perfis: PerfilUsuario[];
+  matricula?: string;
+  cpf?: string;
 }
 
-interface AuthState {
+interface EstadoAutenticacao {
   token: string | null;
-  user: AuthUser | null;
-  isAuthenticated: boolean;
-  login: (token: string, user: AuthUser) => void;
-  logout: () => void;
+  usuario: UsuarioAutenticado | null;
+  estaAutenticado: boolean;
+  fazerLogin: (token: string, usuario: UsuarioAutenticado) => void;
+  fazerLogout: () => void;
 }
 
-const base64ObfuscatedStorage = {
-  getItem: (name: string): string | null => {
-    const obfuscatedValue = localStorage.getItem(name);
-    if (!obfuscatedValue) return null;
+const armazenamentoOfuscadoBase64 = {
+  getItem: (nome: string): string | null => {
+    const valorOfuscado = localStorage.getItem(nome);
+    if (!valorOfuscado) return null;
     
     try {
-      return atob(obfuscatedValue);
+      return atob(valorOfuscado);
     } catch {
       return null;
     }
   },
   
-  setItem: (name: string, value: string): void => {
-    const obfuscatedValue = btoa(value);
-    localStorage.setItem(name, obfuscatedValue);
+  setItem: (nome: string, valor: string): void => {
+    const valorOfuscado = btoa(valor);
+    localStorage.setItem(nome, valorOfuscado);
   },
   
-  removeItem: (name: string): void => {
-    localStorage.removeItem(name);
+  removeItem: (nome: string): void => {
+    localStorage.removeItem(nome);
   },
 };
 
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<EstadoAutenticacao>()(
   persist(
     (set) => ({
       token: null,
-      user: null,
-      isAuthenticated: false,
+      usuario: null,
+      estaAutenticado: false,
       
-      login: (token, user) => set({ 
+      fazerLogin: (token, usuario) => set({ 
         token, 
-        user, 
-        isAuthenticated: true 
+        usuario, 
+        estaAutenticado: true 
       }),
       
-      logout: () => set({ 
+      fazerLogout: () => set({ 
         token: null, 
-        user: null, 
-        isAuthenticated: false 
+        usuario: null, 
+        estaAutenticado: false 
       }),
     }),
     {
       name: 'ecommerce-auth-storage',
       storage: {
-        getItem: (name) => {
-          const stateStr = base64ObfuscatedStorage.getItem(name);
-          return stateStr ? JSON.parse(stateStr) : null;
+        getItem: (nome) => {
+          const estadoStr = armazenamentoOfuscadoBase64.getItem(nome);
+          return estadoStr ? JSON.parse(estadoStr) : null;
         },
-        setItem: (name, value) => {
-          base64ObfuscatedStorage.setItem(name, JSON.stringify(value));
+        setItem: (nome, valor) => {
+          armazenamentoOfuscadoBase64.setItem(nome, JSON.stringify(valor));
         },
-        removeItem: (name) => base64ObfuscatedStorage.removeItem(name),
+        removeItem: (nome) => armazenamentoOfuscadoBase64.removeItem(nome),
       },
     }
   )

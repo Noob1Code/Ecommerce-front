@@ -1,10 +1,10 @@
 import React from 'react';
 import { useAuthorization } from '../hooks/useAuthorization';
-import type { UserRole } from '../store/useAuthStore';
+import type { PerfilUsuario } from '../store/useAuthStore';
 
 interface RoleGuardProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  allowedRoles?: PerfilUsuario[];
   fallback?: React.ReactNode;
 }
 
@@ -13,9 +13,9 @@ export const RoleGuard = ({
   allowedRoles = [], 
   fallback = null 
 }: RoleGuardProps) => {
-  const { hasAnyRole, isAuthenticated } = useAuthorization();
+  const { temQualquerPerfil, estaAutenticado } = useAuthorization();
 
-  if (!isAuthenticated) {
+  if (!estaAutenticado) {
     return <>{fallback}</>;
   }
 
@@ -23,9 +23,9 @@ export const RoleGuard = ({
     return <>{children}</>;
   }
 
-  const isAuthorized = hasAnyRole(allowedRoles);
+  const ehAutorizado = temQualquerPerfil(allowedRoles);
 
-  if (!isAuthorized) {
+  if (!ehAutorizado) {
     return <>{fallback}</>;
   }
 

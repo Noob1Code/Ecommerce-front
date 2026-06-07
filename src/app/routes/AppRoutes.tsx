@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { Layout, ErrorBoundary } from '../layout';
 import { Spinner } from '../../shared/components/ui';
-import { RoleGuard } from '../../features/auth';
+import { RoleGuard, useAuthStore } from '../../features/auth';
 
 const RouteFallback = () => (
   <div className="flex min-h-[60vh] items-center justify-center">
@@ -10,13 +10,30 @@ const RouteFallback = () => (
   </div>
 );
 
-const ProductGrid = lazy(() => import('../../features/products').then(module => ({ default: module.ProductGrid })));
-const ProductDetail = lazy(() => import('../../features/products').then(module => ({ default: module.ProductDetail })));
-const ProductBackoffice = lazy(() => import('../../features/products').then(module => ({ default: module.ProductBackoffice })));
-const Cart = lazy(() => import('../../features/cart').then(module => ({ default: module.Cart })));
-const Checkout = lazy(() => import('../../features/checkout').then(module => ({ default: module.Checkout })));
-const Login = lazy(() => import('../../features/auth').then(module => ({ default: module.Login })));
-const Register = lazy(() => import('../../features/auth').then(module => ({ default: module.Register })));
+const GuardaVisitante = ({ children }: { children: React.ReactNode }) => {
+  const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
+  if (estaAutenticado) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
+const ProductGrid = lazy(() => import('../../features/products').then(m => ({ default: m.ProductGrid })));
+const ProductDetail = lazy(() => import('../../features/products').then(m => ({ default: m.ProductDetail })));
+const ProductBackoffice = lazy(() => import('../../features/products').then(m => ({ default: m.ProductBackoffice })));
+const Cart = lazy(() => import('../../features/cart').then(m => ({ default: m.Cart })));
+const Checkout = lazy(() => import('../../features/checkout').then(m => ({ default: m.Checkout })));
+const Login = lazy(() => import('../../features/auth').then(m => ({ default: m.Login })));
+const Register = lazy(() => import('../../features/auth').then(m => ({ default: m.Register })));
+const EmployeeRegister = lazy(() => import('../../features/auth').then(m => ({ default: m.EmployeeRegister })));
+
+const PainelEntregaMock = () => (
+  <div className="mx-auto max-w-7xl px-4 py-12"><h1 className="text-2xl font-bold">Módulo de Entregas</h1></div>
+);
+
+const PainelFaturamentoMock = () => (
+  <div className="mx-auto max-w-7xl px-4 py-12"><h1 className="text-2xl font-bold">Módulo Financeiro</h1></div>
+);
 
 const router = createBrowserRouter([
   {
@@ -63,7 +80,9 @@ const router = createBrowserRouter([
         path: 'login',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <Login />
+            <GuardaVisitante>
+              <Login />
+            </GuardaVisitante>
           </Suspense>
         ),
       },
@@ -71,7 +90,9 @@ const router = createBrowserRouter([
         path: 'register',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <Register />
+            <GuardaVisitante>
+              <Register />
+            </GuardaVisitante>
           </Suspense>
         ),
       },
@@ -79,28 +100,42 @@ const router = createBrowserRouter([
         path: 'backoffice',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            {/* Blindagem estrutural de rota: impede o carregamento do bundle caso o usuário não tenha privilégios */}
-            <RoleGuard 
-              allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}
-              fallback={
-                <div className="mx-auto max-w-xl px-4 py-16 text-center">
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-8 shadow-sm">
-                    <h2 className="text-xl font-bold text-red-700 mb-2">Acesso Negado</h2>
-                    <p className="text-sm text-red-600 mb-6">
-                      Sua conta ativa não possui privilégios operacionais para acessar este nó do sistema.
-                    </p>
-                    <button 
-                      type="button"
-                      onClick={() => window.location.assign('/')}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      Voltar para a Página Inicial
-                    </button>
-                  </div>
-                </div>
-              }
-            >
+            {/* CORREÇÃO: Apenas ADMIN e ESTOQUE entram no Backoffice de Produtos */}
+            <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']} fallback={<Navigate to="/" replace />}>
               <ProductBackoffice />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice/funcionarios',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            {/* CORREÇÃO DO ERRO DA URL: Se o cacatua tentar forçar a URL, ele é ejetado de volta para o /backoffice de produtos */}
+            <RoleGuard allowedRoles={['ROLE_ADMIN']} fallback={<Navigate to="/backoffice" replace />}>
+              <EmployeeRegister />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice/entregas',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            {/* CORREÇÃO DAS OUTRAS ROLES: Travado rigidamente apenas para ADMIN e ENTREGA */}
+            <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ENTREGA']} fallback={<Navigate to="/" replace />}>
+              <PainelEntregaMock />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice/faturamento',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            {/* CORREÇÃO DAS OUTRAS ROLES: Travado rigidamente apenas para ADMIN e FATURAMENTO */}
+            <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_FATURAMENTO']} fallback={<Navigate to="/" replace />}>
+              <PainelFaturamentoMock />
             </RoleGuard>
           </Suspense>
         ),

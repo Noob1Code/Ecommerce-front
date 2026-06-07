@@ -1,5 +1,9 @@
 export { Login } from './components/Login';
 export { Register } from './components/Register';
-export { useAuthStore } from './store/useAuthStore';
-export { useAuthorization } from './hooks/useAuthorization';
 export { RoleGuard } from './components/RoleGuard';
+export { EmployeeRegister } from './components/EmployeeRegister';
+export { useAuthStore } from './store/useAuthStore';
+export { useLogin } from './hooks/useLogin';
+export { useRegister } from './hooks/useRegister';
+export { useEmployeeRegister } from './hooks/useEmployeeRegister';
+export { cadastrarFuncionarioApi } from './api/authApi';

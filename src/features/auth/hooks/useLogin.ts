@@ -1,24 +1,23 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { loginUserApi } from '../api/authApi';
+import { logarUsuarioApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const useLogin = () => {
   const navigate = useNavigate();
-  const loginUser = useAuthStore((state) => state.login);
+  const fazerLogin = useAuthStore((state) => state.fazerLogin);
 
-  const { mutate: login, isPending, error } = useMutation({
-    mutationFn: loginUserApi,
-    onSuccess: (result) => {
-      // Store both the explicit JWT and normalized domain profile data synchronously
-      loginUser(result.token, result.user);
+  const { mutate: login, isPending: estaCarregando, error: erro } = useMutation({
+    mutationFn: logarUsuarioApi,
+    onSuccess: (resultado) => {
+      fazerLogin(resultado.token, resultado.usuario);
       navigate('/');
     },
   });
 
   return {
     login,
-    isLoading: isPending,
-    error: error ? error.message : null,
+    estaCarregando,
+    erro: erro ? erro.message : null,
   };
 };

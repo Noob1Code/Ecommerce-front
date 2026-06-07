@@ -1,27 +1,25 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { registerCustomerApi, type RegisterInput } from '../api/authApi';
+import { cadastrarClienteApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const useRegister = () => {
   const navigate = useNavigate();
-  const loginUser = useAuthStore((state) => state.login);
+  const fazerLogin = useAuthStore((state) => state.fazerLogin);
 
-  const { mutate: registerCustomer, isPending, error } = useMutation({
-    mutationFn: registerCustomerApi,
-    onSuccess: (user) => {
-      // Simulate automatic authentication extraction upon successful registration sequence
-      // In production, backend registration returns a payload containing both the token and the user
-      const simulatedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.simulated_token_string';
+  const { mutate: registrarCliente, isPending: estaCarregando, error: erro } = useMutation({
+    mutationFn: cadastrarClienteApi,
+    onSuccess: (usuarioCard) => {
+      const tokenSimulado = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.simulated_token_string';
       
-      loginUser(simulatedToken, user);
+      fazerLogin(tokenSimulado, usuarioCard);
       navigate('/');
     },
   });
 
   return {
-    registerCustomer,
-    isLoading: isPending,
-    error: error ? error.message : null,
+    registrarCliente,
+    estaCarregando,
+    erro: erro ? erro.message : null,
   };
 };
