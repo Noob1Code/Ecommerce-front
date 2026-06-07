@@ -1,50 +1,44 @@
+import { useMemo } from 'react';
 import { useProducts } from '../hooks/useProducts';
 import { ProductCard } from './ProductCard';
-import { Spinner, ErrorMessage, EmptyState, Button } from '../../../shared/components/ui';
+import { Spinner, ErrorMessage, EmptyState } from '../../../shared/components/ui';
 
 export const ProductGrid = () => {
   const { products, isLoading, error } = useProducts();
 
+  // Performance Optimization & Visibilidade: Filtra para exibir APENAS produtos ativos na vitrine
+  const activeProducts = useMemo(() => {
+    return products.filter((product) => product.isActive);
+  }, [products]);
+
   if (isLoading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[40vh] items-center justify-center">
         <Spinner className="h-10 w-10 text-blue-600" />
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <ErrorMessage 
-          message={error || 'An unexpected error occurred while fetching products.'}
-          onRetry={() => window.location.reload()} 
-        />
-      </div>
-    );
+    return <ErrorMessage message={error} />;
   }
 
-  if (!products || products.length === 0) {
+  if (activeProducts.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <EmptyState 
-          title="No products found" 
-          description="We couldn't find any products at the moment. Please check back later."
-          action={
-            <Button variant="secondary" onClick={() => window.location.reload()}>
-              Refresh
-            </Button>
-          }
+          title="No available products found" 
+          description="There are no active products available in the catalog showroom at the moment." 
         />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-      <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-6">Our Products</h2>
-      <div className="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
-        {products.map((product) => (
+    // CORREÇÃO VISUAL: Inserido contêiner de limite de largura máxima e centralização automática (mx-auto)
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+        {activeProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>

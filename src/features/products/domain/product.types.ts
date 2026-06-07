@@ -9,7 +9,6 @@ export interface BackendProdutoVariacaoIDsDTO {
 export interface BackendProdutoAtributoResponseDTO {
   id: string;
   atributoId: string;
-  attributeNome?: string;
   atributoNome: string;
 }
 
@@ -19,7 +18,7 @@ export interface BackendProdutoResponseDTO {
   descricao: string;
   ativo: boolean;
   criadoEm: string;
-  variacoes: BackendProdutoVariacaoIDsDTO[];
+  variacoes: BackendProdutoVariacaoResponseDTO[];
   atributos: BackendProdutoAtributoResponseDTO[];
 }
 
@@ -29,9 +28,10 @@ export interface BackendAtributoResponseDTO {
 }
 
 export interface BackendVariacaoOpcaoResponseDTO {
-  id: string;
-  atributo: BackendAtributoResponseDTO;
-  valor: string;
+  id: string; //
+  produtoAtributoId: string; //
+  atributoNome: string; //
+  valor: string; //
 }
 
 export interface BackendImagemVariacaoResponseDTO {
@@ -48,6 +48,38 @@ export interface BackendProdutoVariacaoResponseDTO {
   estoque: number;
   opcoes: BackendVariacaoOpcaoResponseDTO[];
   imagens: BackendImagemVariacaoResponseDTO[];
+}
+
+/**
+ * Raw Backend DTO Request Payloads (For Creating/Updating Catalog Entities)
+ */
+
+export interface BackendAtributoRequestDTO {
+  nome: string;
+}
+
+export interface BackendImagemVariacaoRequestDTO {
+  urlImagem: string;
+  ordem: number;
+}
+
+export interface BackendVariacaoOpcaoRequestDTO {
+  produtoAtributoId: string; //
+  valor: string; //
+}
+
+export interface BackendProdutoRequestDTO {
+  nome: string;
+  description: string; // Atenção: O Request do seu amigo usa "description" em inglês
+  atributosIds: string[];
+}
+
+export interface BackendProdutoVariacaoRequestDTO {
+  sku: string;
+  preco: number;
+  estoque: number;
+  opcoes: BackendVariacaoOpcaoRequestDTO[];
+  imagens: BackendImagemVariacaoRequestDTO[];
 }
 
 /**

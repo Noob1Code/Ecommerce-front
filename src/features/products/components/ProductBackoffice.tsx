@@ -75,11 +75,11 @@ export const ProductBackoffice = () => {
         <div className="mb-8 max-w-md">
           <div className="flex items-center justify-between mb-1.5">
             <label htmlFor="search" className="block text-sm font-semibold text-gray-700">
-              Filter Active Items
+              Filter Items By Name
             </label>
             {searchQuery && (
               <span className="text-xs bg-blue-50 text-blue-700 font-medium px-2 py-0.5 rounded border border-blue-100">
-                Catálogo shortcut active
+                Search filter active
               </span>
             )}
           </div>
@@ -110,7 +110,7 @@ export const ProductBackoffice = () => {
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 border border-dashed border-gray-300 rounded-xl bg-gray-50">
-            <p className="text-sm text-gray-500 font-medium">No active products found matching requirements.</p>
+            <p className="text-sm text-gray-500 font-medium">No products found matching requirements.</p>
           </div>
         )}
 
@@ -121,42 +121,72 @@ export const ProductBackoffice = () => {
             const isProductDirty = currentName !== product.name || currentDesc !== product.description;
 
             return (
-              <Card key={product.id} className={`p-6 border bg-white shadow-sm rounded-xl transition-all ${isProductDirty ? 'border-amber-400 ring-1 ring-amber-400' : 'border-gray-200'}`}>
+              <Card 
+                key={product.id} 
+                className={`p-6 border shadow-sm rounded-xl transition-all ${
+                  !product.isActive 
+                    ? 'border-gray-200 bg-gray-50/50 opacity-65' // Feedback visual para item desativado
+                    : isProductDirty 
+                      ? 'border-amber-400 ring-1 ring-amber-400 bg-white' 
+                      : 'border-gray-200 bg-white'
+                }`}
+              >
                 {/* Product Metadata Editable Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100 pb-5 mb-5 items-start">
                   <div className="md:col-span-1">
-                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Product Container Name</label>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Product Container Name
+                      </label>
+                      {!product.isActive && (
+                        <span className="inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-800 uppercase tracking-wider">
+                          Inactive
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={currentName}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !product.isActive} // Trava modificações se inativo
                       onChange={(e) => handleMetadataChange(product.id, 'name', e.target.value)}
-                      className="w-full text-base font-bold text-gray-900 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-gray-50/50"
+                      className={`w-full text-base font-bold text-gray-900 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none ${
+                        !product.isActive ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-gray-50/50'
+                      }`}
                     />
                     <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {product.id}</p>
                   </div>
 
                   <div className="md:col-span-1">
-                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Catalog Description</label>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">
+                      Catalog Description
+                    </label>
                     <textarea
                       value={currentDesc}
                       rows={2}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !product.isActive} // Trava modificações se inativo
                       onChange={(e) => handleMetadataChange(product.id, 'description', e.target.value)}
-                      className="w-full text-sm text-gray-600 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-gray-50/50 resize-none leading-tight"
+                      className={`w-full text-sm text-gray-600 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none leading-tight ${
+                        !product.isActive ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50/50'
+                      }`}
                     />
                   </div>
 
                   <div className="md:col-span-1 flex justify-end pt-5 md:pt-4">
                     <RoleGuard allowedRoles={['ROLE_ADMIN']}>
-                      <button 
-                        type="button"
-                        onClick={() => handleProductInactivation(product.id, product.name)}
-                        className="text-xs font-semibold text-red-600 hover:text-white hover:bg-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2 transition-all shadow-sm"
-                        title="Performs logical soft delete via PATCH mapping"
-                      >
-                        Inactivate Product (Soft)
-                      </button>
+                      {product.isActive ? (
+                        <button 
+                          type="button"
+                          onClick={() => handleProductInactivation(product.id, product.name)}
+                          className="text-xs font-semibold text-red-600 hover:text-white hover:bg-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2 transition-all shadow-sm"
+                          title="Performs logical soft delete via PATCH mapping"
+                        >
+                          Inactivate Product (Soft)
+                        </button>
+                      ) : (
+                        <span className="text-xs font-bold text-gray-400 bg-gray-100 border border-gray-200 rounded-lg px-5 py-2 select-none cursor-not-allowed uppercase tracking-wider">
+                          Inactivated
+                        </span>
+                      )}
                     </RoleGuard>
                   </div>
                 </div>
@@ -181,10 +211,19 @@ export const ProductBackoffice = () => {
                         const numericStock = effectiveStock === '' ? 0 : Number(effectiveStock);
 
                         return (
-                          <tr key={sku.id} className={`transition-colors ${isSkuDirty ? 'bg-amber-50/40 hover:bg-amber-50/70' : 'hover:bg-gray-50/50'}`}>
+                          <tr 
+                            key={sku.id} 
+                            className={`transition-colors ${
+                              !product.isActive 
+                                ? 'bg-gray-50/30 text-gray-400' 
+                                : isSkuDirty 
+                                  ? 'bg-amber-50/40 hover:bg-amber-50/70' 
+                                  : 'hover:bg-gray-50/50'
+                            }`}
+                          >
                             <td className="px-4 py-3 font-mono font-semibold text-gray-700">
                               {sku.skuCode}
-                              {isSkuDirty && (
+                              {isSkuDirty && product.isActive && (
                                 <span className="ml-2 inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 animate-pulse">
                                   Pending Stock
                                 </span>
@@ -201,7 +240,7 @@ export const ProductBackoffice = () => {
                               <div className="flex items-center justify-center gap-2">
                                 <button
                                   type="button"
-                                  disabled={isSubmitting || numericStock <= 0}
+                                  disabled={isSubmitting || numericStock <= 0 || !product.isActive}
                                   onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: Math.max(0, numericStock - 1) }))}
                                   className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40 select-none"
                                 >
@@ -212,7 +251,7 @@ export const ProductBackoffice = () => {
                                   type="number"
                                   min={0}
                                   value={effectiveStock}
-                                  disabled={isSubmitting}
+                                  disabled={isSubmitting || !product.isActive}
                                   onChange={(e) => {
                                     const val = e.target.value;
                                     if (val === '') setStockChanges((prev) => ({ ...prev, [sku.id]: '' }));
@@ -222,16 +261,20 @@ export const ProductBackoffice = () => {
                                     }
                                   }}
                                   onBlur={() => { if (effectiveStock === '') setStockChanges((prev) => ({ ...prev, [sku.id]: 0 })); }}
-                                  className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                                    isSkuDirty ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold' : 'border-gray-300'
+                                  className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    !product.isActive
+                                      ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                      : isSkuDirty 
+                                        ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold bg-white' 
+                                        : 'border-gray-300 bg-white'
                                   }`}
                                 />
 
                                 <button
                                   type="button"
-                                  disabled={isSubmitting}
+                                  disabled={isSubmitting || !product.isActive}
                                   onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: numericStock + 1 }))}
-                                  className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold"
+                                  className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40"
                                 >
                                   +
                                 </button>
@@ -241,9 +284,9 @@ export const ProductBackoffice = () => {
                               <RoleGuard allowedRoles={['ROLE_ADMIN']}>
                                 <button
                                   type="button"
-                                  disabled={isSubmitting}
+                                  disabled={isSubmitting || !product.isActive}
                                   onClick={() => handleSkuPhysicalDeletion(sku.id, sku.skuCode)}
-                                  className="text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md px-2.5 py-1.5 transition-colors"
+                                  className="text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md px-2.5 py-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   title="Triggers physical record deletion from database storage"
                                 >
                                   Delete Variation (Hard)
