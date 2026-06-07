@@ -45,6 +45,24 @@ export const updateSkuStockInApi = async (skuId: string, newStock: number): Prom
   });
 };
 
+export const activateProductInApi = async (id: string): Promise<void> => {
+  if (USE_MOCKS) {
+    return productsMockService.activateProduct(id);
+  }
+
+  await httpClient.patch(`${PRODUCT_ENDPOINTS.detail(id)}/activate`);
+};
+
+export const updateSkuPriceInApi = async (skuId: string, newPrice: number): Promise<void> => {
+  if (USE_MOCKS) {
+    return productsMockService.updateSkuPrice(skuId, newPrice);
+  }
+
+  await httpClient.put(PRODUCT_ENDPOINTS.variation.detail(skuId), {
+    preco: newPrice
+  });
+};
+
 export const deleteProductInApi = async (id: string): Promise<void> => {
   if (USE_MOCKS) {
     return productsMockService.softDeleteProduct(id);
