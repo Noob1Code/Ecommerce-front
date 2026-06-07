@@ -26,4 +26,9 @@ module.exports = {
     }
   ]
 };
-// rodar o comando para verificar se esta corretamente usando os modulos de forma certa --> npm run architecture:verify
+/*
+ rodar o comando para verificar se esta corretamente usando os modulos de forma certa --> 
+ npm run type-check  (Execute o teste estático global para validarmos as alterações)
+ npm run architecture:verify (E execute a barreira de governança que implementámos anteriormente para validar os limites de camadas)
+
+ */

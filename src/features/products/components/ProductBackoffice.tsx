@@ -125,7 +125,7 @@ export const ProductBackoffice = () => {
                 key={product.id} 
                 className={`p-6 border shadow-sm rounded-xl transition-all ${
                   !product.isActive 
-                    ? 'border-gray-200 bg-gray-50/50 opacity-65' // Feedback visual para item desativado
+                    ? 'border-gray-200 bg-gray-50/50 opacity-65' 
                     : isProductDirty 
                       ? 'border-amber-400 ring-1 ring-amber-400 bg-white' 
                       : 'border-gray-200 bg-white'
@@ -135,7 +135,8 @@ export const ProductBackoffice = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100 pb-5 mb-5 items-start">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <label className="block text-xs font-bold uppercase tracking-wide text-gray-500">
+                      {/* CORREÇÃO ACCESSIBILITY: Vinculado o rótulo ao input dinâmico por id via htmlFor */}
+                      <label htmlFor={`name-${product.id}`} className="block text-xs font-bold uppercase tracking-wide text-gray-500">
                         Product Container Name
                       </label>
                       {!product.isActive && (
@@ -146,8 +147,9 @@ export const ProductBackoffice = () => {
                     </div>
                     <input
                       type="text"
+                      id={`name-${product.id}`}
                       value={currentName}
-                      disabled={isSubmitting || !product.isActive} // Trava modificações se inativo
+                      disabled={isSubmitting || !product.isActive} 
                       onChange={(e) => handleMetadataChange(product.id, 'name', e.target.value)}
                       className={`w-full text-base font-bold text-gray-900 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none ${
                         !product.isActive ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-gray-50/50'
@@ -157,13 +159,15 @@ export const ProductBackoffice = () => {
                   </div>
 
                   <div className="md:col-span-1">
-                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">
+                    {/* CORREÇÃO ACCESSIBILITY: Vinculado o rótulo à descrição por id via htmlFor */}
+                    <label htmlFor={`desc-${product.id}`} className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">
                       Catalog Description
                     </label>
                     <textarea
+                      id={`desc-${product.id}`} // CORREÇÃO ACCESSIBILITY: ID dinâmico por produto
                       value={currentDesc}
                       rows={2}
-                      disabled={isSubmitting || !product.isActive} // Trava modificações se inativo
+                      disabled={isSubmitting || !product.isActive} 
                       onChange={(e) => handleMetadataChange(product.id, 'description', e.target.value)}
                       className={`w-full text-sm text-gray-600 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none leading-tight ${
                         !product.isActive ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50/50'
@@ -238,8 +242,10 @@ export const ProductBackoffice = () => {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center justify-center gap-2">
+                                {/* CORREÇÃO ACCESSIBILITY: Inserido rótulos de acessibilidade descritivos ocultos para botões sem texto */}
                                 <button
                                   type="button"
+                                  aria-label={`Decrease stock for SKU ${sku.skuCode}`}
                                   disabled={isSubmitting || numericStock <= 0 || !product.isActive}
                                   onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: Math.max(0, numericStock - 1) }))}
                                   className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40 select-none"
@@ -249,6 +255,7 @@ export const ProductBackoffice = () => {
                                 
                                 <input
                                   type="number"
+                                  aria-label={`Stock volume for SKU ${sku.skuCode}`}
                                   min={0}
                                   value={effectiveStock}
                                   disabled={isSubmitting || !product.isActive}
@@ -272,6 +279,7 @@ export const ProductBackoffice = () => {
 
                                 <button
                                   type="button"
+                                  aria-label={`Increase stock for SKU ${sku.skuCode}`}
                                   disabled={isSubmitting || !product.isActive}
                                   onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: numericStock + 1 }))}
                                   className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40"

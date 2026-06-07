@@ -3,7 +3,6 @@ import { useCheckoutController } from '../hooks/useCheckoutController';
 import { Card, Button, Spinner } from '../../../shared/components/ui';
 
 export const Checkout = () => {
-  // Camada de Lógica: Extrai de forma limpa o estado transacional do controlador intermediário
   const {
     items,
     user,
@@ -13,7 +12,6 @@ export const Checkout = () => {
     handleSubmit,
   } = useCheckoutController();
 
-  // Tratamento prioritário e limpo para estado reativo de carrinho vazio
   if (isEmpty) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
@@ -34,9 +32,7 @@ export const Checkout = () => {
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Review Order</h1>
       
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-        {/* Left Side: Order Items List & Customer Snapshot */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Customer Identification Profile */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs">
             <h2 className="text-sm font-bold uppercase tracking-wide text-gray-400 mb-3">Customer Profile</h2>
             <div className="text-sm text-gray-900 space-y-1">
@@ -50,7 +46,6 @@ export const Checkout = () => {
             </div>
           </Card>
 
-          {/* Detailed Items Breakdown Table */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-4">
             <h2 className="text-sm font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">
               Items Summary ({items.length})
@@ -63,8 +58,9 @@ export const Checkout = () => {
                     <p className="text-xs text-gray-400 font-mono mt-0.5">SKU: {item.selectedSku.skuCode}</p>
                     <p className="text-xs text-gray-500 mt-0.5">Qty: {item.quantity}x</p>
                   </div>
+                  {/* CORREÇÃO: Subtotal individual de itens no resumo formatado em BRL */}
                   <span className="font-semibold text-gray-900">
-                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                       item.selectedSku.price * item.quantity
                     )}
                   </span>
@@ -74,7 +70,6 @@ export const Checkout = () => {
           </Card>
         </div>
 
-        {/* Right Side: Financial Settlement Summary Card Panel */}
         <div className="lg:col-span-5">
           <Card className="bg-white p-6 border border-gray-200 shadow-sm rounded-xl">
             <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Financial Summary</h2>

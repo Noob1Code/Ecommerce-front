@@ -18,9 +18,9 @@ export const useCheckoutController = () => {
   }, [items]);
 
   const formattedTotal = useMemo(() => {
-    return new Intl.NumberFormat('en-US', { 
+    return new Intl.NumberFormat('pt-BR', { 
       style: 'currency', 
-      currency: 'USD' 
+      currency: 'BRL' 
     }).format(cartTotal);
   }, [cartTotal]);
 

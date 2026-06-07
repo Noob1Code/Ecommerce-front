@@ -5,7 +5,7 @@ import type {
   ProductAttribute,
   SkuOption,
   SkuImage
-} from '../domain/product.types';
+} from './product.types';
 
 /**
  * Enterprise Domain Product Mapper
