@@ -140,7 +140,7 @@ export const useProductBackofficeController = () => {
         })
         .map(([id, meta]) => updateProductMetadataInApi(id, meta.name, meta.description));
 
-      await Promise.all([...stockPromises, ...metadataPromises]);
+      await Promise.all([...stockPromises, [...metadataPromises]]);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
 
       setStockChanges({});
@@ -168,6 +168,36 @@ export const useProductBackofficeController = () => {
     setSearchParams({}, { replace: true });
   };
 
+  // Métodos semânticos fechados de controle para evitar vazamento de estado primitivo para o JSX
+  const handleIncrementStock = (skuId: string, currentStock: number) => {
+    const effective = getSkuEffectiveStock(skuId, currentStock);
+    const numeric = effective === '' ? 0 : Number(effective);
+    setStockChanges((prev) => ({ ...prev, [skuId]: numeric + 1 }));
+  };
+
+  const handleDecrementStock = (skuId: string, currentStock: number) => {
+    const effective = getSkuEffectiveStock(skuId, currentStock);
+    const numeric = effective === '' ? 0 : Number(effective);
+    setStockChanges((prev) => ({ ...prev, [skuId]: Math.max(0, numeric - 1) }));
+  };
+
+  const handleQuantityInputChange = (skuId: string, value: string) => {
+    if (value === '') {
+      setStockChanges((prev) => ({ ...prev, [skuId]: '' }));
+    } else {
+      const parsed = parseInt(value, 10);
+      if (!isNaN(parsed) && parsed >= 0) {
+        setStockChanges((prev) => ({ ...prev, [skuId]: parsed }));
+      }
+    }
+  };
+
+  const handleQuantityInputBlur = (skuId: string) => {
+    if (stockChanges[skuId] === '') {
+      setStockChanges((prev) => ({ ...prev, [skuId]: 0 }));
+    }
+  };
+
   return {
     products,
     isLoading,
@@ -185,6 +215,9 @@ export const useProductBackofficeController = () => {
     handleBatchSubmit,
     handleSearchChange,
     clearSearch,
-    setStockChanges
+    handleIncrementStock,
+    handleDecrementStock,
+    handleQuantityInputChange,
+    handleQuantityInputBlur
   };
 };

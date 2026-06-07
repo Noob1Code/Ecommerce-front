@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useCartController } from '../hooks/useCartController';
-import { Card, Button } from '../../../shared/components/ui';
+import { Card, Button, Spinner, ErrorMessage } from '../../../shared/components/ui';
 
 export const Cart = () => {
   const {
     items,
     isEmpty,
+    isLoading,
+    error,
     totalItemsCount,
     formattedCartTotal,
     handleIncrement,
@@ -14,6 +16,22 @@ export const Cart = () => {
     handleClear,
     handleCheckoutRedirect,
   } = useCartController();
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner className="h-12 w-12 text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <ErrorMessage message={error} />
+      </div>
+    );
+  }
 
   if (isEmpty) {
     return (
@@ -98,7 +116,6 @@ export const Cart = () => {
                 </div>
 
                 <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 sm:gap-1 min-w-[100px]">
-                  {/* CORREÇÃO: Multiplicação do subtotal formatada estritamente em BRL */}
                   <span className="text-base font-black text-gray-900 hidden sm:block">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                       item.selectedSku.price * item.quantity

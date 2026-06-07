@@ -19,7 +19,10 @@ export const ProductBackoffice = () => {
     handleBatchSubmit,
     handleSearchChange,
     clearSearch,
-    setStockChanges
+    handleIncrementStock,
+    handleDecrementStock,
+    handleQuantityInputChange,
+    handleQuantityInputBlur
   } = useProductBackofficeController();
 
   if (isLoading) {
@@ -135,7 +138,6 @@ export const ProductBackoffice = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100 pb-5 mb-5 items-start">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2 mb-1">
-                      {/* CORREÇÃO ACCESSIBILITY: Vinculado o rótulo ao input dinâmico por id via htmlFor */}
                       <label htmlFor={`name-${product.id}`} className="block text-xs font-bold uppercase tracking-wide text-gray-500">
                         Product Container Name
                       </label>
@@ -145,26 +147,26 @@ export const ProductBackoffice = () => {
                         </span>
                       )}
                     </div>
-                    <input
+                    {/* SUBSTITUIÇÃO ARQUITETURAL: Tag nativa substituída pelo componente atómico reaproveitável */}
+                    <Input
                       type="text"
                       id={`name-${product.id}`}
                       value={currentName}
                       disabled={isSubmitting || !product.isActive} 
                       onChange={(e) => handleMetadataChange(product.id, 'name', e.target.value)}
-                      className={`w-full text-base font-bold text-gray-900 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none ${
-                        !product.isActive ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-gray-50/50'
+                      className={`text-base font-bold text-gray-900 border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none ${
+                        !product.isActive ? 'text-gray-500 cursor-not-allowed' : 'bg-gray-50/50'
                       }`}
                     />
                     <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {product.id}</p>
                   </div>
 
                   <div className="md:col-span-1">
-                    {/* CORREÇÃO ACCESSIBILITY: Vinculado o rótulo à descrição por id via htmlFor */}
                     <label htmlFor={`desc-${product.id}`} className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">
                       Catalog Description
                     </label>
                     <textarea
-                      id={`desc-${product.id}`} // CORREÇÃO ACCESSIBILITY: ID dinâmico por produto
+                      id={`desc-${product.id}`} 
                       value={currentDesc}
                       rows={2}
                       disabled={isSubmitting || !product.isActive} 
@@ -242,12 +244,11 @@ export const ProductBackoffice = () => {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center justify-center gap-2">
-                                {/* CORREÇÃO ACCESSIBILITY: Inserido rótulos de acessibilidade descritivos ocultos para botões sem texto */}
                                 <button
                                   type="button"
                                   aria-label={`Decrease stock for SKU ${sku.skuCode}`}
                                   disabled={isSubmitting || numericStock <= 0 || !product.isActive}
-                                  onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: Math.max(0, numericStock - 1) }))}
+                                  onClick={() => handleDecrementStock(sku.id, sku.stock)}
                                   className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40 select-none"
                                 >
                                   -
@@ -259,15 +260,8 @@ export const ProductBackoffice = () => {
                                   min={0}
                                   value={effectiveStock}
                                   disabled={isSubmitting || !product.isActive}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === '') setStockChanges((prev) => ({ ...prev, [sku.id]: '' }));
-                                    else {
-                                      const parsed = parseInt(val, 10);
-                                      if (!isNaN(parsed) && parsed >= 0) setStockChanges((prev) => ({ ...prev, [sku.id]: parsed }));
-                                    }
-                                  }}
-                                  onBlur={() => { if (effectiveStock === '') setStockChanges((prev) => ({ ...prev, [sku.id]: 0 })); }}
+                                  onChange={(e) => handleQuantityInputChange(sku.id, e.target.value)}
+                                  onBlur={() => handleQuantityInputBlur(sku.id)}
                                   className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                                     !product.isActive
                                       ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
@@ -281,7 +275,7 @@ export const ProductBackoffice = () => {
                                   type="button"
                                   aria-label={`Increase stock for SKU ${sku.skuCode}`}
                                   disabled={isSubmitting || !product.isActive}
-                                  onClick={() => setStockChanges((prev) => ({ ...prev, [sku.id]: numericStock + 1 }))}
+                                  onClick={() => handleIncrementStock(sku.id, sku.stock)}
                                   className="h-8 w-8 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold disabled:opacity-40"
                                 >
                                   +
