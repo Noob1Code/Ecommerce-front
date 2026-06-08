@@ -15,6 +15,7 @@ export interface UsuarioAutenticado {
   perfis: PerfilUsuario[];
   matricula?: string;
   cpf?: string;
+  telefone?: string; // CORREÇÃO: Propriedade mapeada para sincronizar com o ClienteResponseDTO.java
 }
 
 interface EstadoAutenticacao {
