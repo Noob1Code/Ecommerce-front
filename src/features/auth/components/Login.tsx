@@ -4,22 +4,22 @@ import { useLogin } from '../hooks/useLogin';
 import { Button, Input, Card, Spinner, ErrorMessage } from '../../../shared/components/ui';
 
 export const Login = () => {
-  const { login, isLoading, error } = useLogin();
+  const { login, estaCarregando, erro } = useLogin();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [senha, setSenha] = useState('');
+  const [erroValidacao, setErroValidacao] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setValidationError(null);
+    setErroValidacao(null);
 
-    if (!email || !password) {
-      setValidationError('Please populate all mandatory authentication fields.');
+    if (!email || !senha) {
+      setErroValidacao('Por favor, preencha todos os campos obrigatórios de autenticação.');
       return;
     }
 
-    login({ email, password });
+    login({ email, senha });
   };
 
   return (
@@ -27,25 +27,25 @@ export const Login = () => {
       <Card className="w-full max-w-md p-8 space-y-6 shadow-xl bg-white border border-gray-100 rounded-xl">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
-            Sign In
+            Acessar Conta
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Access your secure e-commerce application account
+            Insira suas credenciais para acessar o sistema
           </p>
         </div>
 
-        {validationError && (
-          <ErrorMessage message={validationError} onRetry={() => setValidationError(null)} />
+        {erroValidacao && (
+          <ErrorMessage message={erroValidacao} onRetry={() => setErroValidacao(null)} />
         )}
 
-        {error && (
-          <ErrorMessage message={error} />
+        {erro && (
+          <ErrorMessage message={erro} />
         )}
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address *
+              Endereço de E-mail *
             </label>
             <Input
               id="email-address"
@@ -56,29 +56,29 @@ export const Login = () => {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                setValidationError(null);
+                setErroValidacao(null);
               }}
-              disabled={isLoading}
-              placeholder="john.doe@example.com"
+              disabled={estaCarregando}
+              placeholder="seu.nome@provedor.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password *
+            <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-1">
+              Senha de Acesso *
             </label>
             <Input
-              id="password"
-              name="password"
+              id="senha"
+              name="senha"
               type="password"
               autoComplete="current-password"
               required
-              value={password}
+              value={senha}
               onChange={(e) => {
-                setPassword(e.target.value);
-                setValidationError(null);
+                setSenha(e.target.value);
+                setErroValidacao(null);
               }}
-              disabled={isLoading}
+              disabled={estaCarregando}
               placeholder="••••••••"
             />
           </div>
@@ -86,17 +86,17 @@ export const Login = () => {
           <div className="pt-2">
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={estaCarregando}
               className="w-full flex justify-center py-3 text-sm font-semibold uppercase tracking-wider"
               variant="primary"
             >
-              {isLoading ? (
+              {estaCarregando ? (
                 <div className="flex items-center space-x-2">
                   <Spinner className="h-4 w-4 text-white" />
-                  <span>Authenticating...</span>
+                  <span>Autenticando usuário...</span>
                 </div>
               ) : (
-                'Sign In'
+                'Entrar no Sistema'
               )}
             </Button>
           </div>
@@ -104,14 +104,14 @@ export const Login = () => {
 
         <div className="text-center pt-4 border-t border-gray-100 flex flex-col space-y-2">
           <p className="text-sm text-gray-600">
-            Don't possess an account yet?{' '}
+            Ainda não possui uma conta?{' '}
             <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-              Create Account
+              Cadastre-se aqui
             </Link>
           </p>
           <div>
             <Link to="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              &larr; Return to store catalog
+              &larr; Voltar para a vitrine do catálogo
             </Link>
           </div>
         </div>

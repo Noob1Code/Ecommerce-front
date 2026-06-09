@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-// CORREÇÃO ARQUITETURAL: Importando a partir do arquivo de fachada da feature (index.ts público)
 import { useAuthStore } from '../../auth';
 import { customerApi } from '../api/customerApi';
 
@@ -7,26 +6,38 @@ export const useCustomerProfileController = () => {
   const usuario = useAuthStore((state) => state.usuario);
   const fazerLogin = useAuthStore((state) => state.fazerLogin);
   const token = useAuthStore((state) => state.token);
-
-  // Buffers locais controlados do formulário
+  const ehCliente = usuario?.perfis.includes('ROLE_CLIENTE') ?? false;
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
   const [cpf, setCpf] = useState('');
-  
-  const [estaCarregando, setEstaCarregando] = useState(false);
+  const [matricula, setMatricula] = useState('');
+  const [senha, setSenha] = useState('');
+  const [estaCarregando, setEstaCarregando] = useState(true);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
 
-  // Sincroniza os buffers locais com os metadados estáveis da sessão do usuário
   useEffect(() => {
-    if (usuario) {
-      setNome(usuario.nome || '');
-      setEmail(usuario.email || '');
-      setTelefone(usuario.telefone || '');
-      setCpf(usuario.cpf || '');
-    }
-  }, [usuario]);
+    const carregarDadosCompletosServidor = async () => {
+      if (!usuario) return;
+
+      try {
+        setEstaCarregando(true);
+        const dadosPerfil = await customerApi.obterPerfil(usuario.id, ehCliente);
+        setNome(dadosPerfil.nome || '');
+        setEmail(dadosPerfil.email || '');
+        setTelefone(dadosPerfil.telefone || '');
+        setCpf(dadosPerfil.cpf || '');
+        setMatricula(dadosPerfil.matricula || '');
+      } catch (err) {
+        setMensagemErro('Não foi possível sincronizar seus dados cadastrais com o servidor.');
+      } finally {
+        setEstaCarregando(false);
+      }
+    };
+
+    carregarDadosCompletosServidor();
+  }, [usuario, ehCliente]);
 
   const handleSalvarAlteracoes = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,23 +49,37 @@ export const useCustomerProfileController = () => {
       return;
     }
 
+    if (ehCliente && (!telefone.trim() || !cpf.trim())) {
+      setMensagemErro('Para clientes, o Telefone e o CPF são obrigatórios.');
+      return;
+    }
+
+    if (!ehCliente && !matricula.trim()) {
+      setMensagemErro('Para funcionários, a Matrícula Funcional é obrigatória.');
+      return;
+    }
+
     setEstaCarregando(true);
     try {
-      if (!usuario) throw new Error('Nenhuma sessão de usuário localizada.');
+      if (!usuario) throw new Error('Nenhuma sessão de usuário ativa localizada.');
 
-      // Persiste a mutação na camada de dados
-      await customerApi.atualizarPerfil(usuario.id, { nome, email, telefone, cpf });
+      const dadosAtualizados = ehCliente
+        ? { nome, email, telefone, cpf, senha: senha || undefined }
+        : { nome, email, matricula, senha: senha || undefined, perfis: usuario.perfis };
 
-      // Atualiza sincronizadamente o estado e o disco local através da store global
+      await customerApi.atualizarPerfil(usuario.id, dadosAtualizados);
+
       fazerLogin(token || '', {
         ...usuario,
         nome,
         email,
-        telefone,
-        cpf
+        telefone: ehCliente ? telefone : undefined,
+        cpf: ehCliente ? cpf : undefined,
+        matricula: !ehCliente ? matricula : undefined,
       });
 
       setMensagemSucesso('Seus dados cadastrais foram atualizados com sucesso!');
+      setSenha('');
     } catch (err) {
       setMensagemErro('Ocorreu uma falha ao tentar atualizar suas informações de conta.');
     } finally {
@@ -62,14 +87,24 @@ export const useCustomerProfileController = () => {
     }
   };
 
-  const handleCancelar = () => {
-    if (usuario) {
-      setNome(usuario.nome || '');
-      setEmail(usuario.email || '');
-      setTelefone(usuario.telefone || '');
-      setCpf(usuario.cpf || '');
-      setMensagemSucesso(null);
-      setMensagemErro(null);
+  const handleCancelar = async () => {
+    if (!usuario) return;
+    setMensagemSucesso(null);
+    setMensagemErro(null);
+
+    try {
+      setEstaCarregando(true);
+      const dadosPerfil = await customerApi.obterPerfil(usuario.id, ehCliente);
+      setNome(dadosPerfil.nome || '');
+      setEmail(dadosPerfil.email || '');
+      setTelefone(dadosPerfil.telefone || '');
+      setCpf(dadosPerfil.cpf || '');
+      setMatricula(dadosPerfil.matricula || '');
+      setSenha('');
+    } catch (err) {
+      setMensagemErro('Ocorreu um erro ao tentar restaurar os dados originais.');
+    } finally {
+      setEstaCarregando(false);
     }
   };
 
@@ -78,6 +113,9 @@ export const useCustomerProfileController = () => {
     email,
     telefone,
     cpf,
+    matricula,
+    senha,
+    ehCliente,
     estaCarregando,
     mensagemSucesso,
     mensagemErro,
@@ -85,6 +123,8 @@ export const useCustomerProfileController = () => {
     setEmail,
     setTelefone,
     setCpf,
+    setMatricula,
+    setSenha,
     handleSalvarAlteracoes,
     handleCancelar
   };

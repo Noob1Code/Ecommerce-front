@@ -1,2 +1,4 @@
 export { Cart } from './components/Cart';
-export { useCartStore, type CartItem } from './store/useCartStore';
+export { useCartController } from './hooks/useCartController';
+export { useCartStore } from './store/useCartStore';
+export { cartApi } from './api/cartApi';

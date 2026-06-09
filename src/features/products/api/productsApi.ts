@@ -68,7 +68,7 @@ export const deleteProductInApi = async (id: string): Promise<void> => {
     return productsMockService.softDeleteProduct(id);
   }
 
-  await httpClient.patch(`${PRODUCT_ENDPOINTS.detail(id)}/delete`);
+  await httpClient.patch(PRODUCT_ENDPOINTS.delete(id));
 };
 
 export const deleteSkuInApi = async (skuId: string): Promise<void> => {
@@ -76,5 +76,5 @@ export const deleteSkuInApi = async (skuId: string): Promise<void> => {
     return productsMockService.hardDeleteSku(skuId);
   }
 
-  await httpClient.delete(PRODUCT_ENDPOINTS.variation.detail(skuId));
+  await httpClient.patch(PRODUCT_ENDPOINTS.variation.delete(skuId));
 };

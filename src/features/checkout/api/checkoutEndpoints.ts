@@ -1,3 +1,3 @@
 export const CHECKOUT_ENDPOINTS = {
-  createOrder: '/api/pedido',
+  createOrder: '/api/pedidos',
 } as const;

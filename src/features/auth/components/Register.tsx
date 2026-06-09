@@ -4,52 +4,52 @@ import { useRegister } from '../hooks/useRegister';
 import { Button, Input, Card, Spinner, ErrorMessage } from '../../../shared/components/ui';
 
 export const Register = () => {
-  const { registerCustomer, isLoading, error } = useRegister();
+  const { registrarCliente, estaCarregando, erro } = useRegister();
 
-  const [formData, setFormData] = useState({
-    name: '',
+  const [formulario, setFormulario] = useState({
+    nome: '',
     email: '',
-    password: '',
-    confirmPassword: '',
+    senha: '',
+    confirmarSenha: '',
     cpf: '',
-    phone: '',
+    telefone: '',
   });
 
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [erroValidacao, setErroValidacao] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormulario((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setValidationError(null);
+    setErroValidacao(null);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email || !formData.password) {
-      setValidationError('Please populate all mandatory fields.');
+    if (!formulario.nome || !formulario.email || !formulario.senha) {
+      setErroValidacao('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setValidationError('Passwords do not match.');
+    if (formulario.senha !== formulario.confirmarSenha) {
+      setErroValidacao('As senhas informadas não coincidem.');
       return;
     }
 
-    if (formData.password.length < 6) {
-      setValidationError('Password must be at least 6 characters long.');
+    if (formulario.senha.length < 6) {
+      setErroValidacao('A senha provisória deve conter no mínimo 6 caracteres.');
       return;
     }
 
-    registerCustomer({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      cpf: formData.cpf || undefined,
-      phone: formData.phone || undefined,
+    registrarCliente({
+      nome: formulario.nome,
+      email: formulario.email,
+      senha: formulario.senha,
+      cpf: formulario.cpf || undefined,
+      telefone: formulario.telefone || undefined,
     });
   };
 
@@ -57,130 +57,132 @@ export const Register = () => {
     <div className="flex min-h-[80vh] items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
       <Card className="w-full max-w-md p-8 space-y-6 shadow-xl bg-white border border-gray-100 rounded-xl">
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Create Account</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Criar Nova Conta</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Join us to start configuration management shopping
+            Cadastre-se para realizar pedidos e acompanhar suas compras
           </p>
         </div>
 
-        {validationError && (
-          <ErrorMessage message={validationError} onRetry={() => setValidationError(null)} />
+        {erroValidacao && (
+          <div className="p-3 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
+            {erroValidacao}
+          </div>
         )}
 
-        {error && (
-          <ErrorMessage message={error} />
+        {erro && (
+          <ErrorMessage message={erro} />
         )}
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name *
+            <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
+              Nome Completo *
             </label>
             <Input
-              id="name"
-              name="name"
+              id="nome"
+              name="nome"
               type="text"
               required
-              value={formData.name}
+              value={formulario.nome}
               onChange={handleChange}
-              disabled={isLoading}
-              placeholder="John Doe"
+              disabled={estaCarregando}
+              placeholder="Ex: João Silva da Costa"
             />
           </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address *
+              Endereço de E-mail *
             </label>
             <Input
               id="email"
               name="email"
               type="email"
               required
-              value={formData.email}
+              value={formulario.email}
               onChange={handleChange}
-              disabled={isLoading}
-              placeholder="john.doe@example.com"
+              disabled={estaCarregando}
+              placeholder="exemplo@provedor.com"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-1">
-                CPF (Optional)
+                CPF (Opcional)
               </label>
               <Input
                 id="cpf"
                 name="cpf"
                 type="text"
-                value={formData.cpf}
+                value={formulario.cpf}
                 onChange={handleChange}
-                disabled={isLoading}
+                disabled={estaCarregando}
                 placeholder="000.000.000-00"
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone (Optional)
+              <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-1">
+                Telefone (Opcional)
               </label>
               <Input
-                id="phone"
-                name="phone"
+                id="telefone"
+                name="telefone"
                 type="text"
-                value={formData.phone}
+                value={formulario.telefone}
                 onChange={handleChange}
-                disabled={isLoading}
-                placeholder="(00) 00000-0000"
+                disabled={estaCarregando}
+                placeholder="(00) 99999-9999"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password *
+            <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-1">
+              Senha *
             </label>
             <Input
-              id="password"
-              name="password"
+              id="senha"
+              name="senha"
               type="password"
               required
-              value={formData.password}
+              value={formulario.senha}
               onChange={handleChange}
-              disabled={isLoading}
-              placeholder="••••••••"
+              disabled={estaCarregando}
+              placeholder="No mínimo 6 caracteres"
             />
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password *
+            <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 mb-1">
+              Confirmar Senha *
             </label>
             <Input
-              id="confirmPassword"
-              name="confirmPassword"
+              id="confirmarSenha"
+              name="confirmarSenha"
               type="password"
               required
-              value={formData.confirmPassword}
+              value={formulario.confirmarSenha}
               onChange={handleChange}
-              disabled={isLoading}
-              placeholder="••••••••"
+              disabled={estaCarregando}
+              placeholder="Repita a sua senha"
             />
           </div>
 
           <div className="pt-2">
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={estaCarregando}
               className="w-full flex justify-center py-3 text-sm font-semibold uppercase tracking-wider"
               variant="primary"
             >
-              {isLoading ? (
+              {estaCarregando ? (
                 <div className="flex items-center space-x-2">
                   <Spinner className="h-4 w-4 text-white" />
-                  <span>Creating Account...</span>
+                  <span>Criando conta cadastral...</span>
                 </div>
               ) : (
-                'Sign Up'
+                'Finalizar Cadastro'
               )}
             </Button>
           </div>
@@ -188,9 +190,9 @@ export const Register = () => {
 
         <div className="text-center pt-4 border-t border-gray-100">
           <p className="text-sm text-gray-600">
-            Already possess an account?{' '}
+            Já possui uma conta ativa?{' '}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-              Sign In
+              Fazer login
             </Link>
           </p>
         </div>

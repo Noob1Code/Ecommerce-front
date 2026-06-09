@@ -24,14 +24,14 @@ export const CustomerOrders = () => {
   }
 
   if (pedidos.length === 0) {
-    return <EmptyState title="Nenhum pedido localizado" description="Você ainda não realizou nenhuma compra em nossa plataforma." />;
+    return <EmptyState title="Nenhum pedido localizado" description="Sua conta de cliente ainda não registrou transações comerciais." />;
   }
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-6 border-b border-gray-200 pb-5">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Meus Pedidos</h1>
-        <p className="mt-2 text-sm text-gray-500">Acompanhe o status e faturamento de suas aquisições comerciais.</p>
+        <h1 className="text-3xl font-black tracking-tight text-gray-900">Meus Pedidos</h1>
+        <p className="mt-2 text-sm text-gray-500">Monitore o status, histórico e faturamento das suas compras de hardware.</p>
       </div>
 
       <div className="space-y-4">
@@ -43,45 +43,50 @@ export const CustomerOrders = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Código do Pedido</p>
-                    <p className="text-sm font-mono font-bold text-gray-900 mt-0.5">{pedido.id}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Código Localizador</p>
+                    <p className="text-xs font-mono font-bold text-gray-900 mt-0.5 truncate max-w-[160px]" title={pedido.id}>{pedido.id}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data da Compra</p>
-                    <p className="text-sm font-medium text-gray-700 mt-0.5">{new Date(pedido.data).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data de Emissão</p>
+                    <p className="text-sm font-semibold text-gray-700 mt-0.5">{new Date(pedido.criadoEm).toLocaleDateString('pt-BR')}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Valor Total</p>
-                    <p className="text-sm font-bold text-gray-900 mt-0.5">R$ {pedido.valorTotal.toFixed(2)}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Liquidado</p>
+                    <p className="text-sm font-black text-blue-600 mt-0.5">R$ {pedido.valorTotal.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Status Atual</p>
-                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold border mt-1 ${obterClasseStatus(pedido.status)}`}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Status Operacional</p>
+                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold border mt-1 uppercase tracking-wide ${obterClasseStatus(pedido.status)}`}>
                       {pedido.status}
                     </span>
                   </div>
                 </div>
                 <div className="flex justify-end items-center sm:pl-4">
-                  <Button variant="secondary" onClick={() => handleAlternarDetalhes(pedido.id)} className="text-xs py-1.5 px-3">
-                    {ehExpandido ? 'Ocultar Itens' : 'Ver Detalhes'}
+                  <Button variant="secondary" onClick={() => handleAlternarDetalhes(pedido.id)} className="text-xs py-1.5 px-3 font-bold">
+                    {ehExpandido ? 'Ocultar Sub-itens' : 'Ver Detalhes'}
                   </Button>
                 </div>
               </div>
 
-              {/* Accordion: Detalhes dos sub-itens comprados */}
+              {/* Accordion Enriquecido: Lê diretamente o PedidoVariacaoExibicaoDTO do Java */}
               {ehExpandido && (
-                <div className="mt-5 border-t border-gray-100 pt-4 bg-gray-50/50 rounded-lg p-4 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Produtos Comprados</h4>
-                  {pedido.itens.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-4 text-sm bg-white p-3 rounded-lg border border-gray-100">
+                <div className="mt-5 border-t border-gray-100 pt-4 bg-gray-50/50 rounded-xl p-4 space-y-3 animate-in fade-in duration-200">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Discriminação das Variações Adquiridas</h4>
+                  {pedido.itens.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-4 text-sm bg-white p-3 rounded-xl border border-gray-100 shadow-2xs">
                       <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center border text-gray-400 font-mono text-[9px]">IMG</div>
+                        <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center border text-gray-400 font-mono text-[9px]">BOX</div>
                         <div>
-                          <p className="font-bold text-gray-900">{item.nome}</p>
-                          <p className="text-xs text-gray-500">Qtd: {item.quantidade} x R$ {item.precoUnitario.toFixed(2)}</p>
+                          {/* CORREÇÃO CRÍTICA: Lendo propriedades de dentro do objeto enriquecido item.variacao */}
+                          <p className="font-bold text-gray-900">{item.variacao.nomeProduto}</p>
+                          <p className="text-xs text-gray-500 font-medium">{item.variacao.detalhes}</p>
+                          <p className="text-[10px] text-gray-400 font-mono mt-0.5">SKU: {item.variacao.sku} | Qtd: {item.quantidade}x</p>
                         </div>
                       </div>
-                      <span className="font-semibold text-gray-900">R$ {(item.quantidade * item.precoUnitario).toFixed(2)}</span>
+                      <div className="text-right">
+                        <span className="font-bold text-gray-900 block">R$ {item.subtotal.toFixed(2)}</span>
+                        <span className="text-[10px] text-gray-400 font-medium">Un: R$ {item.precoUnitario.toFixed(2)}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -6,4 +6,9 @@ export { useAuthStore } from './store/useAuthStore';
 export { useLogin } from './hooks/useLogin';
 export { useRegister } from './hooks/useRegister';
 export { useEmployeeRegister } from './hooks/useEmployeeRegister';
-export { cadastrarFuncionarioApi } from './api/authApi';
+
+export { 
+  cadastrarFuncionarioApi,
+  type ClienteResponseDTO,
+  type FuncionarioResponseDTO 
+} from './api/authApi';

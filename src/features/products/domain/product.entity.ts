@@ -30,7 +30,6 @@ export const createSkuEntity = (data: Partial<ProductSku>): ProductSku => {
   const normalizedPrice = Math.max(0, data.price || 0);
   const normalizedStock = Math.max(0, data.stock || 0);
 
-  // Auto-sort images by their display order sequence
   const sortedImages = data.images 
     ? [...data.images].sort((a, b) => a.order - b.order) 
     : [];
@@ -42,7 +41,10 @@ export const createSkuEntity = (data: Partial<ProductSku>): ProductSku => {
     stock: normalizedStock,
     options: data.options || [],
     images: sortedImages,
-    formattedPrice: `$${normalizedPrice.toFixed(2)}`,
+    formattedPrice: new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(normalizedPrice),
   };
 };
 

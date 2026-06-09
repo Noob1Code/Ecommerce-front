@@ -1,7 +1,3 @@
-/**
- * Raw Backend DTO Contracts (Mirroring the Java modular monolith response keys)
- */
-
 export interface BackendProdutoVariacaoIDsDTO {
   id: string;
 }
@@ -28,10 +24,9 @@ export interface BackendAtributoResponseDTO {
 }
 
 export interface BackendVariacaoOpcaoResponseDTO {
-  id: string; //
-  produtoAtributoId: string; //
-  atributoNome: string; //
-  valor: string; //
+  id: string;
+  atributo: BackendAtributoResponseDTO;
+  valor: string;
 }
 
 export interface BackendImagemVariacaoResponseDTO {
@@ -50,10 +45,6 @@ export interface BackendProdutoVariacaoResponseDTO {
   imagens: BackendImagemVariacaoResponseDTO[];
 }
 
-/**
- * Raw Backend DTO Request Payloads (For Creating/Updating Catalog Entities)
- */
-
 export interface BackendAtributoRequestDTO {
   nome: string;
 }
@@ -64,13 +55,13 @@ export interface BackendImagemVariacaoRequestDTO {
 }
 
 export interface BackendVariacaoOpcaoRequestDTO {
-  produtoAtributoId: string; //
-  valor: string; //
+  atributoId: string;
+  valor: string;
 }
 
 export interface BackendProdutoRequestDTO {
   nome: string;
-  description: string; // Atenção: O Request do seu amigo usa "description" em inglês
+  descricao: string;
   atributosIds: string[];
 }
 
@@ -81,10 +72,6 @@ export interface BackendProdutoVariacaoRequestDTO {
   opcoes: BackendVariacaoOpcaoRequestDTO[];
   imagens: BackendImagemVariacaoRequestDTO[];
 }
-
-/**
- * Clean Frontend Domain Interfaces (Strict Language Uniformity - English Only)
- */
 
 export interface ProductAttribute {
   id: string;

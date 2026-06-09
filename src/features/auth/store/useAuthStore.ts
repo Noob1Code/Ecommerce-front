@@ -5,7 +5,6 @@ export type PerfilUsuario =
   | 'ROLE_CLIENTE'
   | 'ROLE_ADMIN'
   | 'ROLE_ESTOQUE'
-  | 'ROLE_ENTREGA'
   | 'ROLE_FATURAMENTO';
 
 export interface UsuarioAutenticado {
@@ -13,9 +12,9 @@ export interface UsuarioAutenticado {
   nome: string;
   email: string;
   perfis: PerfilUsuario[];
-  matricula?: string;
   cpf?: string;
-  telefone?: string; // CORREÇÃO: Propriedade mapeada para sincronizar com o ClienteResponseDTO.java
+  telefone?: string;
+  matricula?: string;
 }
 
 interface EstadoAutenticacao {
