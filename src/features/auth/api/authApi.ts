@@ -1,7 +1,7 @@
 import { httpClient } from '../../../services/api';
 import type { UsuarioAutenticado, PerfilUsuario } from '../store/useAuthStore';
 
-const USAR_MOCKS = true;
+const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 600;
 
 export interface ClienteRequestDTO {
