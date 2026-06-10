@@ -1,7 +1,7 @@
 import { httpClient } from '../../../services/api';
 import { CHECKOUT_ENDPOINTS } from './checkoutEndpoints';
 
-const USAR_MOCKS = true;
+const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 1000;
 
 export interface BackendItemPedidoRequestDTO {

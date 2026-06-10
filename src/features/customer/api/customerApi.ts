@@ -1,7 +1,7 @@
 import { httpClient } from '../../../services/api';
 import type { ClienteResponseDTO, FuncionarioResponseDTO } from '../../auth';
 
-const USAR_MOCKS = true;
+const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 500;
 
 export interface BackendPedidoClienteExibicaoDTO {

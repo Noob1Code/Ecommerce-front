@@ -3,7 +3,7 @@ import { PRODUCT_ENDPOINTS } from './productsEndpoints';
 import { productsMockService } from './productsMockService';
 import type { BackendProdutoDetalhadoPayload } from './mockData';
 
-const USE_MOCKS = true;
+const USE_MOCKS = false;
 
 export const fetchProductsFromApi = async (): Promise<BackendProdutoDetalhadoPayload[]> => {
   if (USE_MOCKS) {

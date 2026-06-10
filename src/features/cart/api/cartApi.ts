@@ -1,7 +1,7 @@
 import { httpClient } from '../../../services/api';
 import { CART_ENDPOINTS } from './cartEndpoints';
 
-const USAR_MOCKS = true;
+const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 400;
 
 export interface BackendItemCarrinhoRequestDTO {
