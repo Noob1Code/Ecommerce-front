@@ -1,4 +1,4 @@
-export { ProductGrid } from './components/ProductGrid';
+export { ProductGrid } from './components/ProductGrid'; 
 export { ProductDetail } from './components/ProductDetail';
 export { ProductBackoffice } from './components/ProductBackoffice';
 export { useProducts } from './hooks/useProducts';

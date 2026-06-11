@@ -5,6 +5,10 @@ import type { BackendProdutoDetalhadoPayload } from './mockData';
 
 const USE_MOCKS = false;
 
+// ==========================================
+// DATA TRANSFER OBJECTS (DTO) INTERFACES
+// ==========================================
+
 export interface ProductRequestDTO {
   nome: string;
   descricao: string;
@@ -19,18 +23,30 @@ export interface ProductResponseDTO {
   atributosIds: string[];
 }
 
+export interface SkuOptionRequestDTO {
+  atributoId: string;
+  valor: string;
+}
+
+export interface SkuImageRequestDTO {
+  urlImagem: string;
+  ordem: number;
+}
+
 export interface ProductVariationRequestDTO {
+  sku: string;
   preco: number;
   estoque: number;
-  sku: string;
-  customizacao: string;
+  opcoes: SkuOptionRequestDTO[];
+  imagens: SkuImageRequestDTO[];
 }
 
 export interface ProductVariationUpdateDTO {
+  sku?: string;
   preco?: number;
   estoque?: number;
-  sku?: string;
-  customizacao?: string;
+  opcoes?: SkuOptionRequestDTO[];
+  imagens?: SkuImageRequestDTO[];
 }
 
 export interface ProductVariationResponseDTO {
@@ -53,6 +69,10 @@ export interface AttributeResponseDTO {
   valores: string[];
   ativo: boolean;
 }
+
+// ==========================================
+// CORE CORE-CATALOG API OPERATIONS
+// ==========================================
 
 export const fetchProductsFromApi = async (): Promise<BackendProdutoDetalhadoPayload[]> => {
   if (USE_MOCKS) {
@@ -107,6 +127,10 @@ export const deleteProductInApi = async (id: string): Promise<void> => {
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.delete(id));
 };
 
+// ==========================================
+// SKUs / PRODUCT VARIATIONS OPERATIONS
+// ==========================================
+
 export const fetchAllSkuVariationsFromApi = async (): Promise<ProductVariationResponseDTO[]> => {
   const response = await httpClient.get<ProductVariationResponseDTO[]>(PRODUCT_ENDPOINTS.variation.base);
   return response.data;
@@ -148,6 +172,10 @@ export const deleteSkuInApi = async (skuId: string): Promise<void> => {
 
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.variation.delete(skuId));
 };
+
+// ==========================================
+// ATTRIBUTE ENGINE OPERATIONS
+// ==========================================
 
 export const fetchAttributesFromApi = async (): Promise<AttributeResponseDTO[]> => {
   const response = await httpClient.get<AttributeResponseDTO[]>(PRODUCT_ENDPOINTS.attribute.base);

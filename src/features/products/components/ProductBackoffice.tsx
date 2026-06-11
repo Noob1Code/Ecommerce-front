@@ -1,6 +1,11 @@
+// src/features/products/components/ProductBackoffice.tsx
+
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProductBackofficeController } from '../hooks/useProductBackofficeController';
 import { useAuthStore, RoleGuard } from '../../auth';
+import { CreateProductForm } from './CreateProductForm';
+import { CreateSkuForm } from './CreateSkuForm'; // Alteração: Injetado o componente visual de criação de SKUs
 import { Spinner, ErrorMessage, Card, Button, Input } from '../../../shared/components/ui';
 
 export const ProductBackoffice = () => {
@@ -9,6 +14,10 @@ export const ProductBackoffice = () => {
   const ehAdmin = usuarioLogado?.perfis.includes('ROLE_ADMIN') ?? false;
   const ehEstoque = usuarioLogado?.perfis.includes('ROLE_ESTOQUE') ?? false;
   const podeEditarMetadados = ehAdmin || ehEstoque;
+
+  // Estados locais responsáveis pelo controle reativo de exibição dos formulários
+  const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
+  const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null); // Alteração: Controla qual produto pai está adicionando SKU
 
   const {
     estaCarregando,
@@ -73,7 +82,19 @@ export const ProductBackoffice = () => {
             </p>
           </div>
           <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-3">
-            {/* Botão de Recursos Humanos: Protegido rigidamente apenas para ROLE_ADMIN */}
+            
+            <Button
+              type="button"
+              variant={exibirFormCriacao ? 'secondary' : 'primary'}
+              onClick={() => setExibirFormCriacao((prev) => !prev)}
+              disabled={estaEnviando}
+              className={`px-4 py-3 text-sm font-bold uppercase tracking-wider shadow-md transition-all ${
+                !exibirFormCriacao ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700' : ''
+              }`}
+            >
+              {exibirFormCriacao ? 'Fechar Cadastro' : 'Cadastrar Produto'}
+            </Button>
+
             <RoleGuard allowedRoles={['ROLE_ADMIN']}>
               <Button
                 type="button"
@@ -98,6 +119,12 @@ export const ProductBackoffice = () => {
             </Button>
           </div>
         </div>
+
+        {exibirFormCriacao && (
+          <div className="mb-10 transition-all duration-300">
+            <CreateProductForm onClose={() => setExibirFormCriacao(false)} />
+          </div>
+        )}
 
         {/* Filtros */}
         <div className="mb-8 flex flex-col sm:flex-row gap-4 items-end max-w-3xl">
@@ -180,7 +207,6 @@ export const ProductBackoffice = () => {
                         </span>
                       )}
                     </div>
-                    {/* ALINHAMENTO DE PERMISSÃO: O campo agora aceita a digitação do estoquista (podeEditarMetadados) */}
                     <Input
                       type="text"
                       id={`name-${product.id}`}
@@ -198,7 +224,6 @@ export const ProductBackoffice = () => {
                     <label htmlFor={`desc-${product.id}`} className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">
                       Descrição do Catálogo
                     </label>
-                    {/* ALINHAMENTO DE PERMISSÃO: A caixa de descrição agora aceita a digitação do estoquista (podeEditarMetadados) */}
                     <textarea
                       id={`desc-${product.id}`} 
                       value={descricaoAtual}
@@ -211,8 +236,23 @@ export const ProductBackoffice = () => {
                     />
                   </div>
 
-                  {/* Tanto ADMIN quanto ESTOQUE podem alterar o status do produto pai */}
-                  <div className="md:col-span-1 flex justify-end pt-5 md:pt-4">
+                  <div className="md:col-span-1 flex justify-end items-center pt-5 md:pt-4 gap-2">
+                    {/* Alteração: Botão de Gatilho para Inserção Dinâmica de SKUs Vinculados */}
+                    <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
+                      <button
+                        type="button"
+                        disabled={estaEnviando || !product.isActive}
+                        onClick={() => setProdutoIdParaNovoSku(produtoIdParaNovoSku === product.id ? null : product.id)}
+                        className={`text-xs font-semibold rounded-lg px-4 py-2 transition-all shadow-sm border ${
+                          produtoIdParaNovoSku === product.id
+                            ? 'text-gray-700 bg-gray-100 border-gray-200 hover:bg-gray-200'
+                            : 'text-blue-600 bg-blue-50 border-blue-100 hover:bg-blue-600 hover:text-white'
+                        } disabled:opacity-40`}
+                      >
+                        {produtoIdParaNovoSku === product.id ? 'Fechar SKU' : 'Adicionar SKU'}
+                      </button>
+                    </RoleGuard>
+
                     <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
                       <button 
                         type="button"
@@ -229,6 +269,16 @@ export const ProductBackoffice = () => {
                   </div>
                 </div>
 
+                {/* Alteração: Renderização Condicional da Seção Exclusiva de Inserção de Novo SKU */}
+                {produtoIdParaNovoSku === product.id && product.isActive && (
+                  <div className="mb-6 border-b border-dashed border-blue-200 pb-6">
+                    <CreateSkuForm 
+                      product={product} 
+                      onClose={() => setProdutoIdParaNovoSku(null)} 
+                    />
+                  </div>
+                )}
+
                 {/* Sub-tabela de Variações de SKU */}
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -243,7 +293,7 @@ export const ProductBackoffice = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 bg-white">
-                      {product.skus.map((sku) => {
+                      {product.skus && product.skus.map((sku) => {
                         const estoqueEfetivo = obterEstoqueEfetivoSku(sku.id, sku.stock);
                         const precoEfetivo = obterPrecoEfetivoSku(sku.id, sku.price);
                         
@@ -272,11 +322,10 @@ export const ProductBackoffice = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 text-gray-600 text-xs">
-                              {sku.options.map((opt) => `${opt.attributeName}: ${opt.value}`).join(' | ')}
+                              {sku.options && sku.options.map((opt) => `${opt.attributeName}: ${opt.value}`).join(' | ')}
                             </td>
                             <td className="px-4 py-3 font-medium text-gray-400 line-through">{sku.formattedPrice}</td>
                             
-                            {/* Ajuste de Preços: Permitido para ADMIN e ESTOQUE conforme regras RBAC */}
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1">
                                 <input
@@ -334,7 +383,6 @@ export const ProductBackoffice = () => {
                               </div>
                             </td>
                             
-                            {/* Tanto ADMIN quanto ESTOQUE podem remover fisicamente a variação de SKU */}
                             <td className="px-4 py-3 text-right">
                               <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
                                 <button
