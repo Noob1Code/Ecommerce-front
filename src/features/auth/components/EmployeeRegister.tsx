@@ -19,11 +19,9 @@ export const EmployeeRegister = () => {
     handleVoltar,
   } = useEmployeeRegister();
 
-  // Matriz de metadados das roles para renderização em lote na interface
   const listaPerfisDisponiveis: { id: PerfilUsuario; rotulo: string; descricao: string }[] = [
     { id: 'ROLE_ESTOQUE', rotulo: 'Estoque', descricao: 'Controle de mercadorias e SKUs' },
     { id: 'ROLE_FATURAMENTO', rotulo: 'Faturamento', descricao: 'Emissão de notas e relatórios financeiros' },
-    { id: 'ROLE_ENTREGA', rotulo: 'Logística / Entrega', descricao: 'Despacho e controle de frotas' },
     { id: 'ROLE_ADMIN', rotulo: 'Administrador Geral', descricao: 'Acesso total e gerenciamento de equipe' },
   ];
 

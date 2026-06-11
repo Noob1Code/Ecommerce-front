@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useCartStore } from '../../cart';
 import { useAuthStore } from '../../auth';
 import { useProducts } from '../../products';
-import { createOrderApi } from '../api/checkoutApi';
+import { createOrderApi, type BackendCheckoutResponseDTO } from '../api/checkoutApi';
 import { mapCheckoutToApi } from '../domain/checkout.mapper';
 import type { Product, ProductSku } from '../../products/domain/product.types';
 
@@ -18,10 +18,12 @@ interface EnrichedCheckoutItem {
 export const useCheckoutController = () => {
   const navigate = useNavigate();
   const { products } = useProducts();
-  
   const rawItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore((state) => state.usuario);
+  const [metodoPagamento, setMetodoPagamento] = useState<string>('PIX');
+  const [parcelas, setParcelas] = useState<number>(1);
+  const [sucessoCheckout, setSucessoCheckout] = useState<BackendCheckoutResponseDTO | null>(null);
 
   const enrichedItems = useMemo<EnrichedCheckoutItem[]>(() => {
     if (!products || products.length === 0) return [];
@@ -52,7 +54,7 @@ export const useCheckoutController = () => {
       .filter((item): item is EnrichedCheckoutItem => item !== null);
   }, [rawItems, products]);
 
-  const isEmpty = enrichedItems.length === 0;
+  const isEmpty = enrichedItems.length === 0 && !sucessoCheckout;
 
   const cartTotal = useMemo(() => {
     return enrichedItems.reduce((acc, item) => acc + item.selectedSku.price * item.quantity, 0);
@@ -67,13 +69,12 @@ export const useCheckoutController = () => {
 
   const { mutate: placeOrder, isPending } = useMutation({
     mutationFn: createOrderApi,
-    onSuccess: () => {
+    onSuccess: (dadosRetorno) => {
       clearCart();
-      alert('Order placed successfully matching modular sales guidelines! Thank you.');
-      navigate('/');
+      setSucessoCheckout(dadosRetorno);
     },
     onError: () => {
-      alert('An error occurred while communicating order fulfillment details to the backend.');
+      alert('Ocorreu uma falha ao tentar transmitir a intenção de compra ao servidor.');
     }
   });
 
@@ -81,14 +82,24 @@ export const useCheckoutController = () => {
     e.preventDefault();
 
     if (!user) {
-      alert('Authentication required. Please sign in before finalizing transaction protocols.');
+      alert('Sessão expirada ou inválida. Por favor, efetue o login antes de fechar a compra.');
       navigate('/login');
       return;
     }
 
-    const orderPayload = mapCheckoutToApi(user.id, enrichedItems);
+    const payloadMapeado = mapCheckoutToApi(
+      user.id, 
+      metodoPagamento, 
+      parcelas, 
+      enrichedItems.map(i => ({ skuId: i.skuId, quantity: i.quantity, price: i.selectedSku.price }))
+    );
 
-    placeOrder(orderPayload);
+    placeOrder(payloadMapeado);
+  };
+
+  const concluirFluxo = () => {
+    setSucessoCheckout(null);
+    navigate('/meus-pedidos');
   };
 
   return {
@@ -97,6 +108,12 @@ export const useCheckoutController = () => {
     isEmpty,
     formattedTotal,
     isPending,
+    metodoPagamento,
+    parcelas,
+    sucessoCheckout,
+    setMetodoPagamento,
+    setParcelas,
     handleSubmit,
+    concluirFluxo
   };
 };

@@ -1,4 +1,5 @@
 export const AUTH_ENDPOINTS = {
   login: '/auth/login',
-  register: '/auth/register',
+  registerCliente: '/iam/cliente',
+  registerFuncionario: '/iam/funcionario',
 } as const;

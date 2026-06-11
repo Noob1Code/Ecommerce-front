@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Product } from '../domain/product.types';
-import { useCartStore } from '../../cart';
+import { useCartController } from '../../cart';
 import { RoleGuard } from '../../auth';
 import { Button, Card } from '../../../shared/components/ui';
 
@@ -11,7 +11,8 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
-  const addItem = useCartStore((state) => state.addItem);
+  
+  const { handleAddToCart: addToCart } = useCartController();
   const [isAdded, setIsAdded] = useState(false);
 
   const defaultSku = product.skus && product.skus.length > 0 ? product.skus[0] : null;
@@ -23,13 +24,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const displayPrice = defaultSku ? defaultSku.formattedPrice : '$0.00';
   const isOutOfStock = defaultSku ? defaultSku.stock <= 0 : true;
 
-  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleAddToCartClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!defaultSku || isOutOfStock) return;
 
-    addItem(defaultSku.id, defaultSku.stock);
+    addToCart(defaultSku.id, defaultSku.stock);
     setIsAdded(true);
 
     window.setTimeout(() => {
@@ -47,7 +48,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     <Card className="group flex flex-col transition-all hover:shadow-md relative">
       <div className="relative h-64 overflow-hidden bg-gray-100 rounded-t-lg">
         
-        {/* CORREÇÃO DO FLUXO: Tanto ADMIN quanto ESTOQUE podem visualizar e clicar para ir ao backoffice */}
+        {/* Controle de acesso visual: Apenas gestores administrativos visualizam as ferramentas rápidas de backoffice */}
         <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
           <button
             type="button"
@@ -72,7 +73,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         
         <Button
           variant="icon"
-          onClick={handleAddToCart}
+          onClick={handleAddToCartClick}
           disabled={isOutOfStock}
           className="absolute bottom-3 right-3 z-10"
           aria-label={isOutOfStock ? "Esgotado" : "Adicionar ao carrinho"}

@@ -29,10 +29,6 @@ const EmployeeRegister = lazy(() => import('../../features/auth').then(m => ({ d
 const CustomerProfile = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerProfile })));
 const CustomerOrders = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerOrders })));
 
-const PainelEntregaMock = () => (
-  <div className="mx-auto max-w-7xl px-4 py-12"><h1 className="text-2xl font-bold">Módulo de Entregas</h1></div>
-);
-
 const PainelFaturamentoMock = () => (
   <div className="mx-auto max-w-7xl px-4 py-12"><h1 className="text-2xl font-bold">Módulo Financeiro</h1></div>
 );
@@ -132,17 +128,6 @@ const router = createBrowserRouter([
             {/* CORREÇÃO DO ERRO DA URL: Se o cacatua tentar forçar a URL, ele é ejetado de volta para o /backoffice de produtos */}
             <RoleGuard allowedRoles={['ROLE_ADMIN']} fallback={<Navigate to="/backoffice" replace />}>
               <EmployeeRegister />
-            </RoleGuard>
-          </Suspense>
-        ),
-      },
-      {
-        path: 'backoffice/entregas',
-        element: (
-          <Suspense fallback={<RouteFallback />}>
-            {/* CORREÇÃO DAS OUTRAS ROLES: Travado rigidamente apenas para ADMIN e ENTREGA */}
-            <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ENTREGA']} fallback={<Navigate to="/" replace />}>
-              <PainelEntregaMock />
             </RoleGuard>
           </Suspense>
         ),

@@ -7,19 +7,14 @@ import type {
   SkuImage
 } from './product.types';
 
-/**
- * Enterprise Domain Product Mapper
- * Transforms raw incoming backend payload DTO graphs natively into type-safe, 
- * clean frontend core domain entities without leaking network structural contracts.
- */
 export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => {
   const mappedSkus: ProductSku[] = (payload.variacoes || []).map((skuDto) => {
-    // CORREÇÃO: Mapeando os campos planos vindos diretamente do VariacaoOpcaoResponseDTO.java
+    
     const mappedOptions: SkuOption[] = (skuDto.opcoes || []).map((opt) => ({
       id: opt.id,
-      attributeId: opt.produtoAtributoId, // Corrigido de opt.atributo.id
-      attributeName: opt.atributoNome,   // Corrigido de opt.atributo.nome
-      value: opt.valor,                  // Mapeia "valor" para "value"
+      attributeId: opt.atributo.id,
+      attributeName: opt.atributo.nome,
+      value: opt.valor,
     }));
 
     const mappedImages: SkuImage[] = (skuDto.imagens || []).map((img) => ({
@@ -36,7 +31,6 @@ export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => 
       stock: skuDto.estoque,
       options: mappedOptions,
       images: mappedImages,
-      // Alinhado para a moeda do ecossistema do projeto (BRL)
       formattedPrice: new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
