@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/useCartStore';
 import { useProducts } from '../../products';
+import { useCartMutations } from './useCartMutations';
 import type { Product, ProductSku } from '../../products/domain/product.types';
 
 export interface EnrichedCartItem {
@@ -15,8 +16,9 @@ export interface EnrichedCartItem {
 export const useCartController = () => {
   const navigate = useNavigate();
   const { products, isLoading, error } = useProducts();
-  
+  const { addToCartMutation, updateQuantityMutation, removeFromCartMutation, clearCartMutation } = useCartMutations();
   const rawItems = useCartStore((state) => state.items);
+  const addItem = useCartStore((state) => state.addItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
@@ -68,34 +70,54 @@ export const useCartController = () => {
     }).format(cartTotal);
   }, [cartTotal]);
 
+  const handleAddToCart = (skuId: string, maxStock: number) => {
+    if (maxStock <= 0) return;
+    addItem(skuId, maxStock);
+    addToCartMutation.mutate({ variationId: skuId, quantity: 1 });
+  };
+
   const handleIncrement = (skuId: string, currentQuantity: number, maxStock: number) => {
     if (currentQuantity >= maxStock) {
       alert(`Action Aborted: Selected variation stock ceiling reached. Maximum units available: ${maxStock}`);
       return;
     }
-    updateQuantity(skuId, currentQuantity + 1, maxStock);
+    const targetQuantity = currentQuantity + 1;
+    updateQuantity(skuId, targetQuantity, maxStock);
+    updateQuantityMutation.mutate({ variationId: skuId, quantity: targetQuantity });
   };
 
   const handleDecrement = (skuId: string, currentQuantity: number) => {
     if (currentQuantity <= 1) {
-      removeItem(skuId);
+      handleRemove(skuId);
       return;
     }
+    
     let maxStock = 999999;
     const match = enrichedItems.find((i) => i.skuId === skuId);
     if (match) {
       maxStock = match.selectedSku.stock;
     }
-    updateQuantity(skuId, currentQuantity - 1, maxStock);
+    
+    const targetQuantity = currentQuantity - 1;
+    updateQuantity(skuId, targetQuantity, maxStock);
+    updateQuantityMutation.mutate({ variationId: skuId, quantity: targetQuantity });
   };
 
+  /**
+   * Remove o item por completo.
+   */
   const handleRemove = (skuId: string) => {
     removeItem(skuId);
+    removeFromCartMutation.mutate(skuId);
   };
 
+  /**
+   * Limpa todo o carrinho.
+   */
   const handleClear = () => {
     if (window.confirm('Are you sure you want to drop all selected items from your cart?')) {
       clearCart();
+      clearCartMutation.mutate();
     }
   };
 
@@ -106,11 +128,12 @@ export const useCartController = () => {
   return {
     items: enrichedItems,
     isEmpty,
-    isLoading,
+    isLoading: isLoading || addToCartMutation.isPending || updateQuantityMutation.isPending || removeFromCartMutation.isPending || clearCartMutation.isPending,
     error,
     totalItemsCount,
     cartTotal,
     formattedCartTotal,
+    handleAddToCart,
     handleIncrement,
     handleDecrement,
     handleRemove,

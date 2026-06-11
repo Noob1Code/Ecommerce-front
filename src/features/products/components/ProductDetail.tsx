@@ -1,14 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProduct } from '../hooks/useProduct';
 import { useVariantSelector } from '../hooks/useVariantSelector';
-import { useCartStore } from '../../cart';
+import { useCartController } from '../../cart';
 import { Button, Spinner, ErrorMessage } from '../../../shared/components/ui';
 
 export const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const addItem = useCartStore((state) => state.addItem);
-
+  const { handleAddToCart } = useCartController();
   const { product, isLoading, error } = useProduct(id);
   
   const {
@@ -36,13 +35,9 @@ export const ProductDetail = () => {
     );
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCartClick = () => {
     if (!resolvedSku) return;
-    
-    // CORREÇÃO CRÍTICA: Fornecendo o segundo argumento (resolvedSku.stock) exigido pelo useCartStore
-    addItem(resolvedSku.id, resolvedSku.stock);
-    
-    alert('Mercadoria adicionada à sacola de compras com sucesso!');
+    handleAddToCart(resolvedSku.id, resolvedSku.stock);
     navigate('/cart');
   };
 
@@ -50,7 +45,7 @@ export const ProductDetail = () => {
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">
         
-        {/* Bloco Esquerdo: Galeria de Imagens */}
+        {/* Bloco Esquerdo: Galeria de Imagens baseada na Variação Ativa */}
         <div className="flex flex-col space-y-4">
           <div className="aspect-square w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center shadow-xs">
             <img
@@ -60,7 +55,7 @@ export const ProductDetail = () => {
             />
           </div>
           
-          {/* Miniaturas de Preview */}
+          {/* Miniaturas de Preview da Variação Selecionada */}
           {resolvedSku && resolvedSku.images && resolvedSku.images.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
               {resolvedSku.images.map((img) => (
@@ -72,7 +67,7 @@ export const ProductDetail = () => {
           )}
         </div>
 
-        {/* Bloco Direito: Detalhes, Preços e Seletores */}
+        {/* Bloco Direito: Detalhes, Preços e Seletores Dinâmicos de Atributos */}
         <div className="flex flex-col justify-between">
           <div className="space-y-4">
             <h1 className="text-3xl font-black tracking-tight text-gray-900">{product.name}</h1>
@@ -88,7 +83,7 @@ export const ProductDetail = () => {
               </p>
             </div>
 
-            {/* Seleção Dinâmica baseada nos atributos do Backend */}
+            {/* Seleção Dinâmica baseada nos atributos injetados via DTO do Backend */}
             <div className="mt-6 space-y-4 border-t border-gray-100 pt-4">
               {product.attributes.map((attr) => (
                 <div key={attr.id} className="space-y-2">
@@ -125,7 +120,7 @@ export const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Botão de Compra baseado no Estoque Real */}
+          {/* Botão de Compra e Validação Baseado no Estoque Real do SKU do Servidor */}
           <div className="mt-10 border-t border-gray-100 pt-6">
             {resolvedSku ? (
               <div className="space-y-3">
@@ -141,7 +136,7 @@ export const ProductDetail = () => {
                   type="button"
                   variant="primary"
                   disabled={resolvedSku.stock === 0}
-                  onClick={handleAddToCart}
+                  onClick={handleAddToCartClick}
                   className="w-full py-4 text-sm font-bold uppercase tracking-wider shadow-md bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-200 disabled:text-gray-400"
                 >
                   {resolvedSku.stock > 0 ? 'Adicionar ao Carrinho' : 'Indisponível'}

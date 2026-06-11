@@ -1,5 +1,6 @@
 import { httpClient } from '../../../services/api';
 import type { ClienteResponseDTO, FuncionarioResponseDTO } from '../../auth';
+import { CUSTOMER_ENDPOINTS } from './customerEndpoints';
 
 const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 500;
@@ -92,11 +93,12 @@ export const customerApi = {
         }, TEMPO_ESPERA_MS);
       });
     }
+    
     if (ehCliente) {
-      const resposta = await httpClient.get<ClienteResponseDTO>(`/api/iam/cliente/${usuarioId}`);
+      const resposta = await httpClient.get<ClienteResponseDTO>(`${CUSTOMER_ENDPOINTS.cliente}/${usuarioId}`);
       return { nome: resposta.data.nome, email: resposta.data.email, telefone: resposta.data.telefone, cpf: resposta.data.cpf };
     } else {
-      const resposta = await httpClient.get<FuncionarioResponseDTO>(`/api/iam/funcionario/${usuarioId}`);
+      const resposta = await httpClient.get<FuncionarioResponseDTO>(`${CUSTOMER_ENDPOINTS.funcionario}/${usuarioId}`);
       return { nome: resposta.data.nome, email: resposta.data.email, matricula: resposta.data.matricula };
     }
   },
@@ -104,12 +106,13 @@ export const customerApi = {
   atualizarPerfil: async (usuarioId: string, dados: any): Promise<void> => {
     if (USAR_MOCKS) return new Promise<void>((resolve) => setTimeout(resolve, TEMPO_ESPERA_MS));
     const senhaSubmissao = dados.senha || 'Mudar@123';
+    
     if ('matricula' in dados) {
       const payload = { nome: dados.nome, email: dados.email, senha: senhaSubmissao, matricula: dados.matricula, roles: dados.perfis };
-      await httpClient.put(`/api/iam/funcionario/${usuarioId}`, payload);
+      await httpClient.put(`${CUSTOMER_ENDPOINTS.funcionario}/${usuarioId}`, payload);
     } else {
       const payload = { nome: dados.nome, email: dados.email, telefone: dados.telefone || '', senha: senhaSubmissao, cpf: dados.cpf || '' };
-      await httpClient.put(`/api/iam/cliente/${usuarioId}`, payload);
+      await httpClient.put(`${CUSTOMER_ENDPOINTS.cliente}/${usuarioId}`, payload);
     }
   },
 
@@ -117,7 +120,8 @@ export const customerApi = {
     if (USAR_MOCKS) {
       return new Promise((resolve) => setTimeout(() => resolve(historicoPedidosMock), TEMPO_ESPERA_MS));
     }
-    const response = await httpClient.get<BackendPedidoDetalhadoResponseDTO[]>('/api/pedido/meus-pedidos');
+    
+    const response = await httpClient.get<BackendPedidoDetalhadoResponseDTO[]>(CUSTOMER_ENDPOINTS.orders);
     return response.data;
   }
 };

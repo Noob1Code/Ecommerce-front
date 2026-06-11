@@ -1,5 +1,6 @@
 import { httpClient } from '../../../services/api';
 import type { UsuarioAutenticado, PerfilUsuario } from '../store/useAuthStore';
+import { AUTH_ENDPOINTS } from './authEndpoints';
 
 const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 600;
@@ -101,7 +102,7 @@ export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Prom
     cpf: entrada.cpf || '',
   };
 
-  const resposta = await httpClient.post<ClienteResponseDTO>('/api/iam/cliente', dto);
+  const resposta = await httpClient.post<ClienteResponseDTO>(AUTH_ENDPOINTS.registerCliente, dto);
 
   return {
     id: resposta.data.id,
@@ -136,7 +137,7 @@ export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionari
     roles: entrada.perfis,
   };
 
-  const resposta = await httpClient.post<FuncionarioResponseDTO>('/api/iam/funcionario', dto);
+  const resposta = await httpClient.post<FuncionarioResponseDTO>(AUTH_ENDPOINTS.registerFuncionario, dto);
 
   return {
     id: resposta.data.id,
@@ -176,7 +177,7 @@ export const logarUsuarioApi = async (entrada: EntradaLogin): Promise<ResultadoA
     password: entrada.senha,
   };
 
-  const resposta = await httpClient.post<TokenResponseDTO>('/auth/login', dto);
+  const resposta = await httpClient.post<TokenResponseDTO>(AUTH_ENDPOINTS.login, dto);
 
   return {
     token: resposta.data.token,

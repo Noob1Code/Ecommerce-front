@@ -21,17 +21,30 @@ export interface BackendCarrinhoResponseDTO {
 }
 
 export const cartApi = {
-  adicionarItemAoCarrinho: async (variacaoId: string, quantidade: number): Promise<void> => {
+  adicionarItemAoCarrinho: async (variacaoId: string, quantity: number): Promise<void> => {
     if (USAR_MOCKS) {
       return new Promise<void>((resolve) => setTimeout(resolve, TEMPO_ESPERA_MS));
     }
 
     const payload: BackendItemCarrinhoRequestDTO = {
       variacaoId,
-      quantidade
+      quantidade: quantity
     };
 
     await httpClient.post<void>(CART_ENDPOINTS.addItems, payload);
+  },
+
+  atualizarQuantidadeNoCarrinho: async (variacaoId: string, quantity: number): Promise<void> => {
+    if (USAR_MOCKS) {
+      return new Promise<void>((resolve) => setTimeout(resolve, TEMPO_ESPERA_MS));
+    }
+
+    const payload: BackendItemCarrinhoRequestDTO = {
+      variacaoId,
+      quantidade: quantity
+    };
+
+    await httpClient.put<void>(CART_ENDPOINTS.addItems, payload);
   },
 
   obterCarrinhoDoServidor: async (): Promise<BackendCarrinhoResponseDTO> => {
@@ -49,5 +62,21 @@ export const cartApi = {
 
     const response = await httpClient.get<BackendCarrinhoResponseDTO>(CART_ENDPOINTS.base);
     return response.data;
+  },
+
+  removerItemDoCarrinho: async (variacaoId: string): Promise<void> => {
+    if (USAR_MOCKS) {
+      return new Promise<void>((resolve) => setTimeout(resolve, TEMPO_ESPERA_MS));
+    }
+
+    await httpClient.delete<void>(CART_ENDPOINTS.removeItem(variacaoId));
+  },
+
+  limparCarrinhoNoServidor: async (): Promise<void> => {
+    if (USAR_MOCKS) {
+      return new Promise<void>((resolve) => setTimeout(resolve, TEMPO_ESPERA_MS));
+    }
+
+    await httpClient.delete<void>(CART_ENDPOINTS.base);
   }
 };

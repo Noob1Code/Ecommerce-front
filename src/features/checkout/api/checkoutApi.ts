@@ -66,12 +66,12 @@ export const createOrderApi = async (payload: BackendPedidoRequestDTO): Promise<
           statusCobranca: 'AGUARDANDO_PAGAMENTO',
           mensagem: 'Pedido gerado com sucesso no ecossistema modular.',
           pixCopiaECola: payload.metodoPagamento === 'PIX' ? '00020101021226830014br.gov.bcb.pix2561mock-pix-copia-e-cola-modular-store-token-key-2026' : null,
-          linhaDigitavel: payload.metodoPagamento === 'BOLETO' ? '34191.79001 01043.513184 91020.150008 7 98760000035000' : null
+          linhaDigitavel: payload.metodoPagamento === 'BOLETO' ? '00190.00009 01234.567890 01234.567890 9 92340000044990' : null
         });
       }, TEMPO_ESPERA_MS);
     });
   }
 
-  const response = await httpClient.post<BackendCheckoutResponseDTO>(CHECKOUT_ENDPOINTS.createOrder, payload);
+  const response = await httpClient.post<BackendCheckoutResponseDTO>(CHECKOUT_ENDPOINTS.base, payload);
   return response.data;
 };
