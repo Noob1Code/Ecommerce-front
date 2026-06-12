@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProducts } from '../../products/hooks/useProducts';
+//  CORREÇÃO CIRÚRGICA: Consumindo o hook pela fachada pública legalizada para o Dependency Cruiser passar direto.
+import { useProducts } from '../../products';
 import type { Product, ProductSku } from '../../products/domain/product.types';
 import { useCartStore } from '../store/useCartStore';
 import { useCartMutations } from './useCartMutations';

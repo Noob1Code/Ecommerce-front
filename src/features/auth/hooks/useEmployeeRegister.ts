@@ -50,7 +50,7 @@ export const useEmployeeRegister = () => {
       setSenha('');
       setMatricula('');
       setPerfisSelecionados(['ROLE_ESTOQUE']);
-    } catch (err) {
+    } catch {
       alert('Ocorreu um erro ao processar o cadastro do funcionário no Spring Boot.');
     } finally {
       setCarregando(false);

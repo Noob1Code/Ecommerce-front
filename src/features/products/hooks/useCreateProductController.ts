@@ -62,7 +62,7 @@ export const useCreateProductController = () => {
         onSuccessCallback();
       }
       alert('Produto base criado com sucesso no catálogo!');
-    } catch (err) {
+    } catch {
       setValidationError('Falha Operacional: Não foi possível registar o novo produto no servidor.');
     }
   };

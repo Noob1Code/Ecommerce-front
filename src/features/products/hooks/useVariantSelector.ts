@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Product, ProductSku } from '../domain/product.types';
 
 interface UseVariantSelectorResult {
@@ -11,26 +11,26 @@ interface UseVariantSelectorResult {
 }
 
 export const useVariantSelector = (product: Product | null | undefined): UseVariantSelectorResult => {
+  // Guardamos o ID do produto anterior para identificar quando houve troca de página/produto
+  const [prevProductId, setPrevProductId] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [activeImageUrl, setActiveImageUrl] = useState<string>('/fallback-image.jpg');
 
-  useEffect(() => {
-    if (product && product.skus && product.skus.length > 0) {
-      const defaultSku = product.skus[0];
-      const initialOptions: Record<string, string> = {};
-
-      defaultSku.options.forEach((opt) => {
+  // ⚡ SINCRONIZAÇÃO SÍNCRONA DE ESTADO (Substitui o primeiro useEffect antigo)
+  // Quando o produto carrega ou muda, reinicializa as opções padrões do primeiro SKU instantaneamente
+  // no mesmo ciclo de renderização, eliminando flashes visuais na tela.
+  if (product && product.id !== prevProductId) {
+    setPrevProductId(product.id);
+    
+    const initialOptions: Record<string, string> = {};
+    if (product.skus && product.skus.length > 0) {
+      product.skus[0].options.forEach((opt) => {
         initialOptions[opt.attributeId] = opt.value;
       });
-
-      setSelectedOptions(initialOptions);
-
-      if (defaultSku.images && defaultSku.images.length > 0) {
-        setActiveImageUrl(defaultSku.images[0].imageUrl);
-      }
     }
-  }, [product]);
+    setSelectedOptions(initialOptions);
+  }
 
+  // 🧠 Estado Derivado 1: Resolve o SKU ativo com base nas opções que o usuário clicou
   const resolvedSku = useMemo(() => {
     if (!product || !product.skus) return null;
 
@@ -39,11 +39,21 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
     ) || null;
   }, [selectedOptions, product]);
 
-  useEffect(() => {
+  // 🎨 Estado Derivado 2: Remove totalmente o useState e o segundo useEffect da imagem!
+  // A URL da imagem ativa agora é calculada dinamicamente. Quando o resolvedSku muda pelo clique,
+  // a imagem atualiza no exato milissegundo, evitando renderizações em cascata lentas.
+  const activeImageUrl = useMemo(() => {
     if (resolvedSku && resolvedSku.images && resolvedSku.images.length > 0) {
-      setActiveImageUrl(resolvedSku.images[0].imageUrl);
+      return resolvedSku.images[0].imageUrl;
     }
-  }, [resolvedSku]);
+    if (product && product.skus && product.skus.length > 0) {
+      const defaultSku = product.skus[0];
+      if (defaultSku.images && defaultSku.images.length > 0) {
+        return defaultSku.images[0].imageUrl;
+      }
+    }
+    return '/fallback-image.jpg';
+  }, [resolvedSku, product]);
 
   const handleOptionChange = (attributeId: string, value: string) => {
     setSelectedOptions((prev) => ({

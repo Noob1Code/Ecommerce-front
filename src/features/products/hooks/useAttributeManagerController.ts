@@ -62,7 +62,7 @@ export const useAttributeManagerController = () => {
                 alert('Novo eixo de atributo cadastrado com sucesso!');
             }
             handleCancelarEdicao();
-        } catch (err) {
+        } catch {
             setErroValidacao('Falha Operacional: Erro de comunicação com o servidor de faturamento.');
         }
     };
@@ -73,7 +73,7 @@ export const useAttributeManagerController = () => {
         try {
             await deleteAttributeMutation.mutateAsync(id);
             alert('Status do atributo modificado com sucesso!');
-        } catch (err) {
+        } catch {
             alert('Falha ao tentar remover o atributo selecionado.');
         }
     };

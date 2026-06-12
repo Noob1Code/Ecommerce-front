@@ -29,7 +29,7 @@ export const useCustomerProfileController = () => {
         setTelefone(dadosPerfil.telefone || '');
         setCpf(dadosPerfil.cpf || '');
         setMatricula(dadosPerfil.matricula || '');
-      } catch (err) {
+      } catch {
         setMensagemErro('Não foi possível sincronizar seus dados cadastrais com o servidor.');
       } finally {
         setEstaCarregando(false);
@@ -80,7 +80,7 @@ export const useCustomerProfileController = () => {
 
       setMensagemSucesso('Seus dados cadastrais foram atualizados com sucesso!');
       setSenha('');
-    } catch (err) {
+    } catch {
       setMensagemErro('Ocorreu uma falha ao tentar atualizar suas informações de conta.');
     } finally {
       setEstaCarregando(false);
@@ -101,7 +101,7 @@ export const useCustomerProfileController = () => {
       setCpf(dadosPerfil.cpf || '');
       setMatricula(dadosPerfil.matricula || '');
       setSenha('');
-    } catch (err) {
+    } catch {
       setMensagemErro('Ocorreu um erro ao tentar restaurar os dados originais.');
     } finally {
       setEstaCarregando(false);

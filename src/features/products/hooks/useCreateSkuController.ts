@@ -100,7 +100,7 @@ export const useCreateSkuController = (productId: string) => {
         onSuccessCallback();
       }
       alert('Nova variação de SKU associada e gravada com sucesso!');
-    } catch (err) {
+    } catch  {
       setValidationError('Falha Operacional: Ocorreu um erro de comunicação ao tentar registrar o SKU no servidor.');
     }
   };

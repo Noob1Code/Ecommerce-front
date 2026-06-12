@@ -93,7 +93,7 @@ export const useProductBackofficeController = () => {
       }
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
       alert(`Status do produto alterado com sucesso!`);
-    } catch (err) {
+    } catch {
       alert('Falha ao modificar o status operacional do ativo.');
     }
   };
@@ -114,7 +114,7 @@ export const useProductBackofficeController = () => {
       });
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
       alert('Variação de SKU removida permanentemente dos registros.');
-    } catch (err) {
+    } catch  {
       alert('Falha ao deletar fisicamente o SKU.');
     }
   };
@@ -210,7 +210,7 @@ export const useProductBackofficeController = () => {
       setAlteracoesPreco({});
       setAlteracoesMetadados({});
       alert('Todas as configurações em lote e preços foram salvos com sucesso!');
-    } catch (err) {
+    } catch  {
       alert('Ocorreu um erro ao aplicar as updates em lote.');
     } finally {
       setEstaEnviando(false);

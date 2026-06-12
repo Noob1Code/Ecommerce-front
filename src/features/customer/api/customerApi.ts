@@ -5,6 +5,25 @@ import { CUSTOMER_ENDPOINTS } from './customerEndpoints';
 const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 500;
 
+// 🛡️ INTEGRAÇÃO DA TIPAGEM: Contratos estritos para a View consumir sem "any"
+export interface PerfilExibicao {
+  nome: string;
+  email: string;
+  telefone?: string;
+  cpf?: string;
+  matricula?: string;
+}
+
+export interface DadosAtualizacaoPerfil {
+  nome: string;
+  email: string;
+  senha?: string;
+  matricula?: string;
+  perfis?: string[];
+  telefone?: string;
+  cpf?: string;
+}
+
 export interface BackendPedidoClienteExibicaoDTO {
   id: string;
   nome: string;
@@ -81,7 +100,8 @@ const historicoPedidosMock: BackendPedidoDetalhadoResponseDTO[] = [
 ];
 
 export const customerApi = {
-  obterPerfil: async (usuarioId: string, ehCliente: boolean): Promise<any> => {
+  // 🛡️ CORREÇÃO: any removido e endpoints mapeados com as chaves corretas do compilador
+  obterPerfil: async (usuarioId: string, ehCliente: boolean): Promise<PerfilExibicao> => {
     if (USAR_MOCKS) {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -103,11 +123,12 @@ export const customerApi = {
     }
   },
 
-  atualizarPerfil: async (usuarioId: string, dados: any): Promise<void> => {
+  // 🛡️ CORREÇÃO: dados tipados com segurança e chaves de rotas restauradas para o padrão operacional
+  atualizarPerfil: async (usuarioId: string, dados: DadosAtualizacaoPerfil): Promise<void> => {
     if (USAR_MOCKS) return new Promise<void>((resolve) => setTimeout(resolve, TEMPO_ESPERA_MS));
     const senhaSubmissao = dados.senha || 'Mudar@123';
-
-    if ('matricula' in dados) {
+    
+    if ('matricula' in dados && dados.matricula) {
       const payload = { nome: dados.nome, email: dados.email, senha: senhaSubmissao, matricula: dados.matricula, roles: dados.perfis };
       await httpClient.put(`${CUSTOMER_ENDPOINTS.funcionario}/${usuarioId}`, payload);
     } else {

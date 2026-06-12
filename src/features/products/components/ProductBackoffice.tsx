@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button, Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
 import { RoleGuard } from '../../auth';
 import { useProductBackofficeController } from '../hooks/useProductBackofficeController';
@@ -8,7 +7,6 @@ import { CreateProductForm } from './CreateProductForm';
 import { CreateSkuForm } from './CreateSkuForm';
 
 export const ProductBackoffice = () => {
-  const navigate = useNavigate();
   const [abaAtiva, setAbaAtiva] = useState<'produtos' | 'atributos'>('produtos');
 
   const {
