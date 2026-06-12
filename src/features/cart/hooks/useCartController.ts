@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProducts } from '../../products';
+import { useProducts } from '../../products/hooks/useProducts';
 import type { Product, ProductSku } from '../../products/domain/product.types';
 import { useCartStore } from '../store/useCartStore';
 import { useCartMutations } from './useCartMutations';
