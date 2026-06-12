@@ -1,14 +1,14 @@
+export { EmployeeRegister } from './components/EmployeeRegister';
 export { Login } from './components/Login';
 export { Register } from './components/Register';
 export { RoleGuard } from './components/RoleGuard';
-export { EmployeeRegister } from './components/EmployeeRegister';
-export { useAuthStore } from './store/useAuthStore';
+export { useEmployeeRegister } from './hooks/useEmployeeRegister';
 export { useLogin } from './hooks/useLogin';
 export { useRegister } from './hooks/useRegister';
-export { useEmployeeRegister } from './hooks/useEmployeeRegister';
+export { useAuthStore } from './store/useAuthStore';
 
-export { 
+export {
   cadastrarFuncionarioApi,
   type ClienteResponseDTO,
-  type FuncionarioResponseDTO 
+  type FuncionarioResponseDTO
 } from './api/authApi';

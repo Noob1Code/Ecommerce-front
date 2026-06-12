@@ -1,7 +1,6 @@
-// src/shared/components/ui/Card.tsx
 import { type HTMLAttributes, forwardRef } from 'react';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {}
+interface CardProps extends HTMLAttributes<HTMLDivElement> { }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className = '', children, ...props }, ref) => {

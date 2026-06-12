@@ -1,23 +1,12 @@
-// src/features/products/components/ProductBackoffice.tsx
-
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button, Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
+import { RoleGuard } from '../../auth';
 import { useProductBackofficeController } from '../hooks/useProductBackofficeController';
-import { useAuthStore, RoleGuard } from '../../auth';
 import { CreateProductForm } from './CreateProductForm';
-import { CreateSkuForm } from './CreateSkuForm'; // Alteração: Injetado o componente visual de criação de SKUs
-import { Spinner, ErrorMessage, Card, Button, Input } from '../../../shared/components/ui';
+import { CreateSkuForm } from './CreateSkuForm';
 
 export const ProductBackoffice = () => {
   const navigate = useNavigate();
-  const usuarioLogado = useAuthStore((state) => state.usuario);
-  const ehAdmin = usuarioLogado?.perfis.includes('ROLE_ADMIN') ?? false;
-  const ehEstoque = usuarioLogado?.perfis.includes('ROLE_ESTOQUE') ?? false;
-  const podeEditarMetadados = ehAdmin || ehEstoque;
-
-  // Estados locais responsáveis pelo controle reativo de exibição dos formulários
-  const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
-  const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null); // Alteração: Controla qual produto pai está adicionando SKU
 
   const {
     estaCarregando,
@@ -43,7 +32,12 @@ export const ProductBackoffice = () => {
     handleIncrementarEstoque,
     handleDecrementarEstoque,
     handleMudancaEstoqueInput,
-    handleBlurEstoqueInput
+    handleBlurEstoqueInput,
+    exibirFormCriacao,
+    setExibirFormCriacao,
+    produtoIdParaNovoSku,
+    setProdutoIdParaNovoSku,
+    podeEditarMetadados
   } = useProductBackofficeController();
 
   if (estaCarregando) {
@@ -55,8 +49,8 @@ export const ProductBackoffice = () => {
   }
 
   return (
-    <RoleGuard 
-      allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']} 
+    <RoleGuard
+      allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}
       fallback={
         <div className="mx-auto max-w-xl px-4 py-16 text-center">
           <div className="bg-red-50 border border-red-200 rounded-xl p-8 shadow-sm">
@@ -72,7 +66,7 @@ export const ProductBackoffice = () => {
       }
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        
+
         {/* Barra Superior de Título */}
         <div className="sm:flex sm:items-center sm:justify-between border-b border-gray-200 pb-5 mb-6 gap-4">
           <div>
@@ -82,15 +76,14 @@ export const ProductBackoffice = () => {
             </p>
           </div>
           <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-3">
-            
+
             <Button
               type="button"
               variant={exibirFormCriacao ? 'secondary' : 'primary'}
               onClick={() => setExibirFormCriacao((prev) => !prev)}
               disabled={estaEnviando}
-              className={`px-4 py-3 text-sm font-bold uppercase tracking-wider shadow-md transition-all ${
-                !exibirFormCriacao ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700' : ''
-              }`}
+              className={`px-4 py-3 text-sm font-bold uppercase tracking-wider shadow-md transition-all ${!exibirFormCriacao ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700' : ''
+                }`}
             >
               {exibirFormCriacao ? 'Fechar Cadastro' : 'Cadastrar Produto'}
             </Button>
@@ -111,9 +104,8 @@ export const ProductBackoffice = () => {
               variant={contagemModificados > 0 ? 'primary' : 'secondary'}
               disabled={contagemModificados === 0 || estaEnviando}
               onClick={handleEnvioEmLote}
-              className={`px-5 py-3 text-sm font-bold uppercase tracking-wider transition-all shadow-md ${
-                contagemModificados > 0 ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' : ''
-              }`}
+              className={`px-5 py-3 text-sm font-bold uppercase tracking-wider transition-all shadow-md ${contagemModificados > 0 ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' : ''
+                }`}
             >
               {estaEnviando ? 'Salvando alterações...' : `Salvar Alterações (${contagemModificados} modificações)`}
             </Button>
@@ -184,15 +176,14 @@ export const ProductBackoffice = () => {
             const produtoModificado = nomeAtual !== product.name || descricaoAtual !== product.description;
 
             return (
-              <Card 
-                key={product.id} 
-                className={`p-6 border shadow-sm rounded-xl transition-all ${
-                  !product.isActive 
-                    ? 'border-red-200 bg-red-50/20' 
-                    : produtoModificado 
-                      ? 'border-amber-400 ring-1 ring-amber-400 bg-white' 
+              <Card
+                key={product.id}
+                className={`p-6 border shadow-sm rounded-xl transition-all ${!product.isActive
+                    ? 'border-red-200 bg-red-50/20'
+                    : produtoModificado
+                      ? 'border-amber-400 ring-1 ring-amber-400 bg-white'
                       : 'border-gray-200 bg-white'
-                }`}
+                  }`}
               >
                 {/* Edição de Metadados do Produto Pai */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100 pb-5 mb-5 items-start">
@@ -211,11 +202,10 @@ export const ProductBackoffice = () => {
                       type="text"
                       id={`name-${product.id}`}
                       value={nomeAtual}
-                      disabled={estaEnviando || !product.isActive || !podeEditarMetadados} 
+                      disabled={estaEnviando || !product.isActive || !podeEditarMetadados}
                       onChange={(e) => handleMudancaMetadados(product.id, 'name', e.target.value)}
-                      className={`text-base font-bold text-gray-900 border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none ${
-                        (!product.isActive || !podeEditarMetadados) ? 'text-gray-500 bg-gray-100 cursor-not-allowed' : 'bg-gray-50/50'
-                      }`}
+                      className={`text-base font-bold text-gray-900 border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none ${(!product.isActive || !podeEditarMetadados) ? 'text-gray-500 bg-gray-100 cursor-not-allowed' : 'bg-gray-50/50'
+                        }`}
                     />
                     <p className="text-[10px] text-gray-400 font-mono mt-1">ID: {product.id}</p>
                   </div>
@@ -225,43 +215,40 @@ export const ProductBackoffice = () => {
                       Descrição do Catálogo
                     </label>
                     <textarea
-                      id={`desc-${product.id}`} 
+                      id={`desc-${product.id}`}
                       value={descricaoAtual}
                       rows={2}
-                      disabled={estaEnviando || !product.isActive || !podeEditarMetadados} 
+                      disabled={estaEnviando || !product.isActive || !podeEditarMetadados}
                       onChange={(e) => handleMudancaMetadados(product.id, 'description', e.target.value)}
-                      className={`w-full text-sm text-gray-600 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none leading-tight ${
-                        (!product.isActive || !podeEditarMetadados) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50/50'
-                      }`}
+                      className={`w-full text-sm text-gray-600 px-2.5 py-1.5 rounded-md border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none leading-tight ${(!product.isActive || !podeEditarMetadados) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50/50'
+                        }`}
                     />
                   </div>
 
                   <div className="md:col-span-1 flex justify-end items-center pt-5 md:pt-4 gap-2">
-                    {/* Alteração: Botão de Gatilho para Inserção Dinâmica de SKUs Vinculados */}
+                    {/* Botão de Gatilho para Inserção Dinâmica de SKUs Vinculados */}
                     <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
                       <button
                         type="button"
                         disabled={estaEnviando || !product.isActive}
                         onClick={() => setProdutoIdParaNovoSku(produtoIdParaNovoSku === product.id ? null : product.id)}
-                        className={`text-xs font-semibold rounded-lg px-4 py-2 transition-all shadow-sm border ${
-                          produtoIdParaNovoSku === product.id
+                        className={`text-xs font-semibold rounded-lg px-4 py-2 transition-all shadow-sm border ${produtoIdParaNovoSku === product.id
                             ? 'text-gray-700 bg-gray-100 border-gray-200 hover:bg-gray-200'
                             : 'text-blue-600 bg-blue-50 border-blue-100 hover:bg-blue-600 hover:text-white'
-                        } disabled:opacity-40`}
+                          } disabled:opacity-40`}
                       >
                         {produtoIdParaNovoSku === product.id ? 'Fechar SKU' : 'Adicionar SKU'}
                       </button>
                     </RoleGuard>
 
                     <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
-                      <button 
+                      <button
                         type="button"
                         onClick={() => handleAlternarStatusProduto(product.id, product.name, product.isActive)}
-                        className={`text-xs font-semibold hover:text-white rounded-lg px-4 py-2 transition-all shadow-sm border ${
-                          product.isActive
+                        className={`text-xs font-semibold hover:text-white rounded-lg px-4 py-2 transition-all shadow-sm border ${product.isActive
                             ? 'text-red-600 bg-red-50 border-red-100 hover:bg-red-600'
                             : 'text-green-600 bg-green-50 border-green-100 hover:bg-green-600'
-                        }`}
+                          }`}
                       >
                         {product.isActive ? 'Inativar Produto (Soft)' : 'Reativar Produto (Ativar)'}
                       </button>
@@ -269,12 +256,12 @@ export const ProductBackoffice = () => {
                   </div>
                 </div>
 
-                {/* Alteração: Renderização Condicional da Seção Exclusiva de Inserção de Novo SKU */}
+                {/* Renderização Condicional da Seção Exclusiva de Inserção de Novo SKU */}
                 {produtoIdParaNovoSku === product.id && product.isActive && (
                   <div className="mb-6 border-b border-dashed border-blue-200 pb-6">
-                    <CreateSkuForm 
-                      product={product} 
-                      onClose={() => setProdutoIdParaNovoSku(null)} 
+                    <CreateSkuForm
+                      product={product}
+                      onClose={() => setProdutoIdParaNovoSku(null)}
                     />
                   </div>
                 )}
@@ -296,22 +283,21 @@ export const ProductBackoffice = () => {
                       {product.skus && product.skus.map((sku) => {
                         const estoqueEfetivo = obterEstoqueEfetivoSku(sku.id, sku.stock);
                         const precoEfetivo = obterPrecoEfetivoSku(sku.id, sku.price);
-                        
+
                         const estoqueModificado = alteracoesEstoque[sku.id] !== undefined && alteracoesEstoque[sku.id] !== sku.stock;
                         const precoModificado = alteracoesPreco[sku.id] !== undefined && alteracoesPreco[sku.id] !== sku.price;
-                        
+
                         const estoqueNumerico = estoqueEfetivo === '' ? 0 : Number(estoqueEfetivo);
 
                         return (
-                          <tr 
-                            key={sku.id} 
-                            className={`transition-colors ${
-                              !product.isActive 
-                                ? 'bg-gray-50/30 text-gray-400' 
-                                : (estoqueModificado || precoModificado) 
-                                  ? 'bg-amber-50/40 hover:bg-amber-50/70' 
+                          <tr
+                            key={sku.id}
+                            className={`transition-colors ${!product.isActive
+                                ? 'bg-gray-50/30 text-gray-400'
+                                : (estoqueModificado || precoModificado)
+                                  ? 'bg-amber-50/40 hover:bg-amber-50/70'
                                   : 'hover:bg-gray-50/50'
-                            }`}
+                              }`}
                           >
                             <td className="px-4 py-3 font-mono font-semibold text-gray-700">
                               {sku.skuCode}
@@ -325,7 +311,7 @@ export const ProductBackoffice = () => {
                               {sku.options && sku.options.map((opt) => `${opt.attributeName}: ${opt.value}`).join(' | ')}
                             </td>
                             <td className="px-4 py-3 font-medium text-gray-400 line-through">{sku.formattedPrice}</td>
-                            
+
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1">
                                 <input
@@ -335,11 +321,10 @@ export const ProductBackoffice = () => {
                                   disabled={estaEnviando || !product.isActive}
                                   onChange={(e) => handleMudancaPreco(sku.id, e.target.value)}
                                   placeholder="0.00"
-                                  className={`w-24 px-2 py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 text-left ${
-                                    precoModificado 
-                                      ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold bg-white' 
+                                  className={`w-24 px-2 py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 text-left ${precoModificado
+                                      ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold bg-white'
                                       : 'border-gray-300 bg-white'
-                                  }`}
+                                    }`}
                                 />
                               </div>
                             </td>
@@ -355,7 +340,7 @@ export const ProductBackoffice = () => {
                                 >
                                   -
                                 </button>
-                                
+
                                 <input
                                   type="number"
                                   aria-label={`Volume de estoque de ${sku.skuCode}`}
@@ -364,11 +349,10 @@ export const ProductBackoffice = () => {
                                   disabled={estaEnviando || !product.isActive}
                                   onChange={(e) => handleMudancaEstoqueInput(sku.id, e.target.value)}
                                   onBlur={() => handleBlurEstoqueInput(sku.id)}
-                                  className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                                    estoqueModificado 
-                                      ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold bg-white' 
+                                  className={`w-20 text-center py-1 text-sm font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500 ${estoqueModificado
+                                      ? 'border-amber-500 ring-2 ring-amber-500 text-amber-950 font-bold bg-white'
                                       : 'border-gray-300 bg-white'
-                                  }`}
+                                    }`}
                                 />
 
                                 <button
@@ -382,7 +366,7 @@ export const ProductBackoffice = () => {
                                 </button>
                               </div>
                             </td>
-                            
+
                             <td className="px-4 py-3 text-right">
                               <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
                                 <button

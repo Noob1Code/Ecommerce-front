@@ -1,5 +1,5 @@
+import { Button, Card, Input, Spinner } from '../../../shared/components/ui';
 import { useCreateSkuController } from '../hooks/useCreateSkuController';
-import { Button, Input, Card, Spinner } from '../../../shared/components/ui';
 
 interface CreateSkuFormProps {
   product: {
@@ -36,8 +36,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const requiredAttributeIds = product.attributes?.map((attr) => attr.attributeId) || [];
-    handleSaveSku(requiredAttributeIds, () => {
+    handleSaveSku(product.attributes, () => {
       onClose();
     });
   };
@@ -66,7 +65,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        
+
         {/* Banner de Erros de Validação Local ou de Servidor */}
         {validationError && (
           <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg flex items-center space-x-2">
@@ -126,7 +125,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           </div>
         </div>
 
-        {/* Linha 2: Eixos de Atributos Vinculados (Mapeamento Dinâmico do Java Request DTO) */}
+        {/* Linha 2: Eixos de Atributos Vinculados */}
         {product.attributes && product.attributes.length > 0 && (
           <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-3">
             <span className="block text-[11px] font-bold uppercase tracking-wide text-gray-500 border-b border-gray-100 pb-1">
@@ -153,12 +152,12 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           </div>
         )}
 
-        {/* Linha 3: Gerenciador de Galeria de Fotos (Imagens do SKU) */}
+        {/* Linha 3: Gerenciador de Galeria de Fotos */}
         <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-3">
           <span className="block text-[11px] font-bold uppercase tracking-wide text-gray-500 border-b border-gray-100 pb-1">
             Galeria de Imagens da Variação
           </span>
-          
+
           <div className="flex gap-2">
             <div className="flex-1">
               <Input
@@ -216,7 +215,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           >
             Cancelar
           </Button>
-          
+
           <Button
             type="submit"
             variant="primary"

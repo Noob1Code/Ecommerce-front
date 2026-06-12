@@ -1,6 +1,5 @@
 import { useCheckoutController } from '../hooks/useCheckoutController';
-// CORREÇÃO: Spinner agora é utilizado no JSX abaixo, eliminando o alerta de import não utilizado
-import { Card, Button, Spinner } from '../../../shared/components/ui';
+import { Button, Card, Spinner } from '../../../shared/components/ui';
 
 export const Checkout = () => {
   const {
@@ -17,8 +16,6 @@ export const Checkout = () => {
     handleSubmit,
     concluirFluxo
   } = useCheckoutController();
-
-  // TELA DE SUCESSO: Apresenta os dados de faturamento do CheckoutResponseDTO
   if (sucessoCheckout) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 text-center">
@@ -77,10 +74,10 @@ export const Checkout = () => {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-black tracking-tight text-gray-900 mb-8">Revisar e Fechar Pedido</h1>
-      
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-7 space-y-6">
-          
+
           {/* Perfil do Comprador */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs">
             <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Dados do Comprador</h2>
@@ -99,9 +96,8 @@ export const Checkout = () => {
                   key={tipo}
                   type="button"
                   onClick={() => setMetodoPagamento(tipo)}
-                  className={`p-3 rounded-xl border text-center font-bold text-xs transition-all ${
-                    metodoPagamento === tipo ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`p-3 rounded-xl border text-center font-bold text-xs transition-all ${metodoPagamento === tipo ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   {tipo === 'CREDITO' ? 'Cartão de Crédito' : tipo}
                 </button>

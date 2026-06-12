@@ -1,6 +1,6 @@
+import { Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
 import { useCatalogController } from '../hooks/useCatalogController';
 import { ProductCard } from './ProductCard';
-import { Spinner, ErrorMessage, Input, Card } from '../../../shared/components/ui';
 
 export const ProductGrid = () => {
   const {
@@ -29,8 +29,6 @@ export const ProductGrid = () => {
   if (error) {
     return <ErrorMessage message={error} />;
   }
-
-  // Faixas de preço pré-definidas no padrão de navegação do Mercado Livre
   const quickPriceRanges = [
     { id: 'under-100', label: 'Até R$100', min: '0', max: '100' },
     { id: '100-500', label: 'R$100 a R$500', min: '100', max: '500' },
@@ -39,7 +37,7 @@ export const ProductGrid = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      
+
       {/* BARRA SUPERIOR: Campo de pesquisa integrado com ícone de Lupa */}
       <div className="mb-8 max-w-2xl mx-auto">
         <div className="relative rounded-xl shadow-sm">
@@ -61,7 +59,7 @@ export const ProductGrid = () => {
 
       {/* GRID PRINCIPAL: Layout dividido em Coluna de Filtros (Esquerda) e Resultados (Direita) */}
       <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
-        
+
         {/* SIDEBAR: Painel Facetado de Filtros de Preço */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs">
@@ -89,11 +87,10 @@ export const ProductGrid = () => {
                       <button
                         type="button"
                         onClick={() => handleSelectPriceRange(range.id, range.min, range.max)}
-                        className={`text-left w-full transition-colors ${
-                          isSelected 
-                            ? 'text-blue-600 font-bold' 
+                        className={`text-left w-full transition-colors ${isSelected
+                            ? 'text-blue-600 font-bold'
                             : 'text-gray-600 hover:text-blue-600'
-                        }`}
+                          }`}
                       >
                         {range.label}
                       </button>

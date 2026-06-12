@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Product, ProductSku } from '../domain/product.types';
 
 interface UseVariantSelectorResult {
@@ -18,7 +18,7 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
     if (product && product.skus && product.skus.length > 0) {
       const defaultSku = product.skus[0];
       const initialOptions: Record<string, string> = {};
-      
+
       defaultSku.options.forEach((opt) => {
         initialOptions[opt.attributeId] = opt.value;
       });
@@ -54,7 +54,7 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
 
   const getOptionGroupValues = (attributeId: string): string[] => {
     if (!product || !product.skus) return [];
-    
+
     const valuesSet = new Set<string>();
     product.skus.forEach((sku) => {
       const match = sku.options.find((o) => o.attributeId === attributeId);

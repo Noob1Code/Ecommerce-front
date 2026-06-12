@@ -1,6 +1,6 @@
-import type { 
-  BackendProdutoAtributoResponseDTO, 
-  BackendProdutoVariacaoResponseDTO 
+import type {
+  BackendProdutoAtributoResponseDTO,
+  BackendProdutoVariacaoResponseDTO
 } from '../domain/product.types';
 
 export interface BackendProdutoDetalhadoPayload {

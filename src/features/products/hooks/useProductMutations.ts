@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  createProductInApi, 
-  createSkuVariationInApi, 
-  type ProductRequestDTO, 
-  type ProductVariationRequestDTO 
+import {
+  createProductInApi,
+  createSkuVariationInApi,
+  type ProductRequestDTO,
+  type ProductVariationRequestDTO
 } from '../api/productsApi';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
 

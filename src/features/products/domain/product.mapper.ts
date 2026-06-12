@@ -1,15 +1,15 @@
 import type {
   BackendProdutoResponseDTO,
   Product,
-  ProductSku,
   ProductAttribute,
-  SkuOption,
-  SkuImage
+  ProductSku,
+  SkuImage,
+  SkuOption
 } from './product.types';
 
 export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => {
   const mappedSkus: ProductSku[] = (payload.variacoes || []).map((skuDto) => {
-    
+
     const mappedOptions: SkuOption[] = (skuDto.opcoes || []).map((opt) => ({
       id: opt.id,
       attributeId: opt.atributo.id,

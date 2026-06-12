@@ -1,5 +1,5 @@
 import { httpClient } from '../../../services/api';
-import type { UsuarioAutenticado, PerfilUsuario } from '../store/useAuthStore';
+import type { PerfilUsuario, UsuarioAutenticado } from '../store/useAuthStore';
 import { AUTH_ENDPOINTS } from './authEndpoints';
 
 const USAR_MOCKS = false;

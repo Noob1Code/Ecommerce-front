@@ -28,7 +28,7 @@ export const productsMockService = {
   updateSkuStock: async (skuId: string, newStock: number): Promise<void> => {
     await delay(MOCK_DELAY_MS);
     let isUpdated = false;
-    
+
     mockBackendProducts.forEach((product) => {
       const skuMatch = product.variacoes.find((v) => v.id === skuId);
       if (skuMatch) {
@@ -39,8 +39,6 @@ export const productsMockService = {
 
     if (!isUpdated) throw new Error('SKU target row identifier not found inside collection state');
   },
-
-  // NOVO MÉTODO DO MOCK: Realiza a mutação real de reativação comercial mudando para true
   activateProduct: async (id: string): Promise<void> => {
     await delay(MOCK_DELAY_MS);
     const index = mockBackendProducts.findIndex((p) => p.id === id);
@@ -48,8 +46,6 @@ export const productsMockService = {
       mockBackendProducts[index].ativo = true;
     }
   },
-
-  // NOVO MÉTODO DO MOCK: Realiza a mutação real de preços percorrendo a lista de variações brutas
   updateSkuPrice: async (skuId: string, newPrice: number): Promise<void> => {
     await delay(MOCK_DELAY_MS);
     let isUpdated = false;
@@ -76,7 +72,7 @@ export const productsMockService = {
   hardDeleteSku: async (skuId: string): Promise<void> => {
     await delay(MOCK_DELAY_MS);
     let isDeleted = false;
-    
+
     mockBackendProducts.forEach((product) => {
       const variantIndex = product.variacoes.findIndex((v) => v.id === skuId);
       if (variantIndex !== -1) {

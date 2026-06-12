@@ -1,14 +1,11 @@
-// src/features/products/components/CreateProductForm.tsx
-
+import { Button, Card, Input, Spinner } from '../../../shared/components/ui';
 import { useCreateProductController } from '../hooks/useCreateProductController';
-import { Button, Input, Card, Spinner } from '../../../shared/components/ui';
 
 interface CreateProductFormProps {
   onClose: () => void;
 }
 
 export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
-  // Injeta o controlador de formulário isolando a lógica de negócio do JSX
   const {
     name,
     description,
@@ -23,13 +20,9 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
     handleCreateSubmit,
   } = useCreateProductController();
 
-  /**
-   * Intercepta a submissão e executa o disparo do payload através do controlador.
-   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleCreateSubmit(() => {
-      // Executa o fechamento do modal ou seção em caso de sucesso no salvamento
       onClose();
     });
   };
@@ -57,7 +50,7 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        
+
         {/* Mensagens operacionais de erro de validação ou de rede */}
         {(validationError || error) && (
           <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg flex items-center space-x-2">
@@ -127,11 +120,10 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
                 return (
                   <label
                     key={attr.id}
-                    className={`flex items-start p-2.5 rounded-lg border transition-all cursor-pointer select-none ${
-                      isChecked
+                    className={`flex items-start p-2.5 rounded-lg border transition-all cursor-pointer select-none ${isChecked
                         ? 'border-blue-500 bg-blue-50/40 text-blue-900 ring-1 ring-blue-500'
                         : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className="flex h-5 items-center">
                       <input
@@ -144,7 +136,6 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
                     </div>
                     <div className="ml-3 text-xs">
                       <span className="font-bold block">{attr.nome}</span>
-                      {/* CORREÇÃO CRÍTICA: Uso de Encadeamento Opcional (?.) com Fallback text para impedir o crash */}
                       <span className="text-[10px] text-gray-400 line-clamp-1 mt-0.5">
                         Opções: {attr.valores?.join(', ') || 'Nenhum valor cadastrado'}
                       </span>
@@ -167,7 +158,7 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
           >
             Cancelar
           </Button>
-          
+
           <Button
             type="submit"
             variant="primary"

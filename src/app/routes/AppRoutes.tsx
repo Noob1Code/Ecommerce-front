@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { Layout, ErrorBoundary } from '../layout';
-import { Spinner } from '../../shared/components/ui';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { RoleGuard, useAuthStore } from '../../features/auth';
+import { Spinner } from '../../shared/components/ui';
+import { ErrorBoundary, Layout } from '../layout';
 
 const RouteFallback = () => (
   <div className="flex min-h-[60vh] items-center justify-center">

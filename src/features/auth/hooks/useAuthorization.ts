@@ -1,5 +1,5 @@
-import { useAuthStore } from '../store/useAuthStore';
 import type { PerfilUsuario } from '../store/useAuthStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 export const useAuthorization = () => {
   const usuario = useAuthStore((state) => state.usuario);

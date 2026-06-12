@@ -1,8 +1,12 @@
-// src/features/products/hooks/useCreateSkuController.ts
-
 import { useState } from 'react';
-import { useProductMutations } from './useProductMutations';
 import type { ProductVariationRequestDTO } from '../api/productsApi';
+import { useProductMutations } from './useProductMutations';
+
+interface AtributoDoProduto {
+  id: string;
+  attributeId: string;
+  attributeName: string;
+}
 
 export const useCreateSkuController = (productId: string) => {
   const [sku, setSku] = useState('');
@@ -24,7 +28,7 @@ export const useCreateSkuController = (productId: string) => {
 
   const handleAddImageUrl = () => {
     if (!currentImageUrl.trim()) return;
-    
+
     if (!currentImageUrl.startsWith('http://') && !currentImageUrl.startsWith('https://')) {
       setValidationError('Erro de Validação: A URL da imagem inserida deve ser um link HTTP ou HTTPS válido.');
       return;
@@ -49,7 +53,7 @@ export const useCreateSkuController = (productId: string) => {
     setValidationError(null);
   };
 
-  const handleSaveSku = async (requiredAttributeIds: string[], onSuccessCallback?: () => void) => {
+  const handleSaveSku = async (atributosDoProduto: AtributoDoProduto[], onSuccessCallback?: () => void) => {
     if (!sku.trim() || !price.trim() || !stock.trim()) {
       setValidationError('Erro de Validação: Os campos Código SKU, Preço de Venda e Volume de Estoque são de preenchimento obrigatório.');
       return;
@@ -67,12 +71,14 @@ export const useCreateSkuController = (productId: string) => {
       setValidationError('Erro de Validação: O Volume de Estoque físico não pode assumir valores numéricos negativos.');
       return;
     }
-
+    const requiredAttributeIds = atributosDoProduto?.map((attr) => attr.attributeId) || [];
     const missingAttributes = requiredAttributeIds.filter((id) => !selectedOptions[id] || !selectedOptions[id].trim());
+
     if (missingAttributes.length > 0) {
       setValidationError('Erro de Validação: É obrigatório definir uma opção para cada um dos eixos de atributo do produto pai.');
       return;
     }
+
     const payload: ProductVariationRequestDTO = {
       sku: sku.trim(),
       preco: numericPrice,

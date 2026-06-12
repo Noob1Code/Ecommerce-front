@@ -6,9 +6,9 @@ interface CheckoutItemInput {
   price: number;
 }
 export const mapCheckoutToApi = (
-  userId: string, 
-  metodoPagamento: string, 
-  parcelas: number, 
+  userId: string,
+  metodoPagamento: string,
+  parcelas: number,
   items: CheckoutItemInput[]
 ): BackendPedidoRequestDTO => {
   return {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button, Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
 import { useLogin } from '../hooks/useLogin';
-import { Button, Input, Card, Spinner, ErrorMessage } from '../../../shared/components/ui';
 
 export const Login = () => {
   const { login, estaCarregando, erro } = useLogin();

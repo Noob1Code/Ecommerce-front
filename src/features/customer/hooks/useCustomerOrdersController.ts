@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { customerApi, type BackendPedidoDetalhadoResponseDTO } from '../api/customerApi';
 
 export const useCustomerOrdersController = () => {

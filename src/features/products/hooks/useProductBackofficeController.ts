@@ -1,16 +1,17 @@
-import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
-import { useProducts } from './useProducts';
+import { useAuthStore } from '../../auth';
 import {
-  updateSkuStockInApi,
-  updateProductMetadataInApi,
+  activateProductInApi,
   deleteProductInApi,
   deleteSkuInApi,
-  activateProductInApi,
-  updateSkuPriceInApi
+  updateProductMetadataInApi,
+  updateSkuPriceInApi,
+  updateSkuStockInApi
 } from '../api/productsApi';
+import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
+import { useProducts } from './useProducts';
 
 export const useProductBackofficeController = () => {
   const queryClient = useQueryClient();
@@ -22,6 +23,12 @@ export const useProductBackofficeController = () => {
   const [alteracoesPreco, setAlteracoesPreco] = useState<Record<string, number | string>>({});
   const [alteracoesMetadados, setAlteracoesMetadados] = useState<Record<string, { name: string; description: string }>>({});
   const [estaEnviando, setEstaEnviando] = useState(false);
+  const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
+  const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null);
+  const usuarioLogado = useAuthStore((state) => state.usuario);
+  const ehAdmin = usuarioLogado?.perfis.includes('ROLE_ADMIN') ?? false;
+  const ehEstoque = usuarioLogado?.perfis.includes('ROLE_ESTOQUE') ?? false;
+  const podeEditarMetadados = ehAdmin || ehEstoque;
 
   const produtosFiltrados = useMemo(() => {
     if (!produtos) return [];
@@ -112,7 +119,7 @@ export const useProductBackofficeController = () => {
     }
   };
 
-  const obterContagemItensModificados = (): number => {
+  const contagemModificados = useMemo(() => {
     let contagem = 0;
     if (!produtos) return 0;
 
@@ -144,7 +151,7 @@ export const useProductBackofficeController = () => {
     });
 
     return contagem;
-  };
+  }, [produtos, alteracoesEstoque, alteracoesPreco, alteracoesMetadados]);
 
   const handleEnvioEmLote = async () => {
     setEstaEnviando(true);
@@ -190,7 +197,11 @@ export const useProductBackofficeController = () => {
           const original = produtos.find((p) => p.id === id);
           return original && (original.name !== meta.name || original.description !== meta.description);
         })
-        .map(([id, meta]) => updateProductMetadataInApi(id, meta.name, meta.description));
+        .map(([id, meta]) => {
+          const original = produtos.find((p) => p.id === id);
+          const atributosIds = original ? original.attributes.map((a) => a.attributeId) : [];
+          return updateProductMetadataInApi(id, meta.name, meta.description, atributosIds);
+        });
 
       await Promise.all([...promessasEstoque, ...promessasPreco, ...promessasMetadados]);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
@@ -205,8 +216,6 @@ export const useProductBackofficeController = () => {
       setEstaEnviando(false);
     }
   };
-
-  const contagemModificados = obterContagemItensModificados();
 
   const handleMudancaPesquisa = (valor: string) => {
     if (valor.trim()) {
@@ -274,6 +283,11 @@ export const useProductBackofficeController = () => {
     handleIncrementarEstoque,
     handleDecrementarEstoque,
     handleMudancaEstoqueInput,
-    handleBlurEstoqueInput
+    handleBlurEstoqueInput,
+    exibirFormCriacao,
+    setExibirFormCriacao,
+    produtoIdParaNovoSku,
+    setProdutoIdParaNovoSku,
+    podeEditarMetadados
   };
 };

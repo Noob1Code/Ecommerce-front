@@ -93,7 +93,7 @@ export const customerApi = {
         }, TEMPO_ESPERA_MS);
       });
     }
-    
+
     if (ehCliente) {
       const resposta = await httpClient.get<ClienteResponseDTO>(`${CUSTOMER_ENDPOINTS.cliente}/${usuarioId}`);
       return { nome: resposta.data.nome, email: resposta.data.email, telefone: resposta.data.telefone, cpf: resposta.data.cpf };
@@ -106,7 +106,7 @@ export const customerApi = {
   atualizarPerfil: async (usuarioId: string, dados: any): Promise<void> => {
     if (USAR_MOCKS) return new Promise<void>((resolve) => setTimeout(resolve, TEMPO_ESPERA_MS));
     const senhaSubmissao = dados.senha || 'Mudar@123';
-    
+
     if ('matricula' in dados) {
       const payload = { nome: dados.nome, email: dados.email, senha: senhaSubmissao, matricula: dados.matricula, roles: dados.perfis };
       await httpClient.put(`${CUSTOMER_ENDPOINTS.funcionario}/${usuarioId}`, payload);
@@ -120,7 +120,7 @@ export const customerApi = {
     if (USAR_MOCKS) {
       return new Promise((resolve) => setTimeout(() => resolve(historicoPedidosMock), TEMPO_ESPERA_MS));
     }
-    
+
     const response = await httpClient.get<BackendPedidoDetalhadoResponseDTO[]>(CUSTOMER_ENDPOINTS.orders);
     return response.data;
   }

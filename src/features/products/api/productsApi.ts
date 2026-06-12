@@ -1,7 +1,7 @@
 import { httpClient } from '../../../services/api';
+import type { BackendProdutoDetalhadoPayload } from './mockData';
 import { PRODUCT_ENDPOINTS } from './productsEndpoints';
 import { productsMockService } from './productsMockService';
-import type { BackendProdutoDetalhadoPayload } from './mockData';
 
 const USE_MOCKS = false;
 
@@ -97,7 +97,7 @@ export const createProductInApi = async (payload: ProductRequestDTO): Promise<Pr
   return response.data;
 };
 
-export const updateProductMetadataInApi = async (id: string, name: string, description: string): Promise<void> => {
+export const updateProductMetadataInApi = async (id: string, name: string, description: string, atributosIds: string[]): Promise<void> => {
   if (USE_MOCKS) {
     return productsMockService.updateMetadata(id, name, description);
   }
@@ -105,7 +105,7 @@ export const updateProductMetadataInApi = async (id: string, name: string, descr
   const payload: ProductRequestDTO = {
     nome: name,
     descricao: description,
-    atributosIds: []
+    atributosIds: atributosIds
   };
 
   await httpClient.put<void>(PRODUCT_ENDPOINTS.detail(id), payload);
@@ -146,8 +146,8 @@ export const updateSkuStockInApi = async (skuId: string, newStock: number): Prom
     return productsMockService.updateSkuStock(skuId, newStock);
   }
 
-  const payload: ProductVariationUpdateDTO = { 
-    estoque: newStock 
+  const payload: ProductVariationUpdateDTO = {
+    estoque: newStock
   };
 
   await httpClient.put<void>(PRODUCT_ENDPOINTS.variation.detail(skuId), payload);

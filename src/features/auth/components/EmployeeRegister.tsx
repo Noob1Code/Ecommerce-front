@@ -1,5 +1,5 @@
+import { Button, Card, Input } from '../../../shared/components/ui';
 import { useEmployeeRegister } from '../hooks/useEmployeeRegister';
-import { Card, Button, Input } from '../../../shared/components/ui';
 import type { PerfilUsuario } from '../store/useAuthStore';
 
 export const EmployeeRegister = () => {

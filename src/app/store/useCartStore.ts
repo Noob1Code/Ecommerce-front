@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Product } from '../../features/products';
+import type { Product } from '../../features/products/domain/product.types';
 
 export interface CartItem {
-  id: string; // SKU ID (Identificador único comprável)
-  productId: string; // Referência ao container do produto
-  name: string; // Nome combinado (Produto + Variantes)
+  id: string;
+  productId: string;
+  name: string;
   skuCode: string;
   price: number;
   imageUrl: string;
@@ -36,7 +36,6 @@ export const useCartStore = create<CartState>()(
         const existingItem = currentItems.find((item) => item.id === skuId);
 
         if (existingItem) {
-          // REGRA DE NEGÓCIO: Impede de adicionar se já atingiu o limite do estoque do SKU
           if (existingItem.quantity >= targetSku.stock) {
             return; 
           }
@@ -49,10 +48,7 @@ export const useCartStore = create<CartState>()(
             ),
           });
         } else {
-          // REGRA DE NEGÓCIO: Impede adição se o SKU estiver esgotado
           if (targetSku.stock <= 0) return;
-
-          // Monta o nome descritivo amigável para o carrinho combinando o nome e as opções do SKU
           const optionDetails = targetSku.options.map(o => o.value).join(' / ');
           const fullItemName = optionDetails ? `${product.name} (${optionDetails})` : product.name;
           const skuImage = targetSku.images.length > 0 ? targetSku.images[0].imageUrl : '/fallback-image.jpg';

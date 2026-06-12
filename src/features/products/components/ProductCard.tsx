@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { Product } from '../domain/product.types';
-import { useCartController } from '../../cart';
-import { RoleGuard } from '../../auth';
 import { Button, Card } from '../../../shared/components/ui';
+import { RoleGuard } from '../../auth';
+import { useCartController } from '../../cart';
+import type { Product } from '../domain/product.types';
 
 interface ProductCardProps {
   product: Product;
@@ -11,19 +11,14 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
-  
   const { handleAddToCart: addToCart } = useCartController();
   const [isAdded, setIsAdded] = useState(false);
-
   const defaultSku = product.skus && product.skus.length > 0 ? product.skus[0] : null;
-  
-  const displayImageUrl = defaultSku && defaultSku.images.length > 0 
-    ? defaultSku.images[0].imageUrl 
+  const displayImageUrl = defaultSku && defaultSku.images.length > 0
+    ? defaultSku.images[0].imageUrl
     : '/fallback-image.jpg';
-
   const displayPrice = defaultSku ? defaultSku.formattedPrice : '$0.00';
   const isOutOfStock = defaultSku ? defaultSku.stock <= 0 : true;
-
   const handleAddToCartClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -47,7 +42,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Card className="group flex flex-col transition-all hover:shadow-md relative">
       <div className="relative h-64 overflow-hidden bg-gray-100 rounded-t-lg">
-        
+
         {/* Controle de acesso visual: Apenas gestores administrativos visualizam as ferramentas rápidas de backoffice */}
         <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
           <button
@@ -70,7 +65,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
-        
+
         <Button
           variant="icon"
           onClick={handleAddToCartClick}
