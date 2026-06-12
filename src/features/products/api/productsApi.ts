@@ -1,9 +1,5 @@
 import { httpClient } from '../../../services/api';
-import type { BackendProdutoDetalhadoPayload } from './mockData';
 import { PRODUCT_ENDPOINTS } from './productsEndpoints';
-import { productsMockService } from './productsMockService';
-
-const USE_MOCKS = false;
 
 // ==========================================
 // DATA TRANSFER OBJECTS (DTO) INTERFACES
@@ -74,34 +70,12 @@ export interface AttributeResponseDTO {
 // CORE CORE-CATALOG API OPERATIONS
 // ==========================================
 
-export const fetchProductsFromApi = async (): Promise<BackendProdutoDetalhadoPayload[]> => {
-  if (USE_MOCKS) {
-    return productsMockService.getAll();
-  }
-
-  const response = await httpClient.get<BackendProdutoDetalhadoPayload[]>(PRODUCT_ENDPOINTS.base);
-  return response.data;
-};
-
-export const fetchProductByIdFromApi = async (id: string): Promise<BackendProdutoDetalhadoPayload> => {
-  if (USE_MOCKS) {
-    return productsMockService.getById(id);
-  }
-
-  const response = await httpClient.get<BackendProdutoDetalhadoPayload>(PRODUCT_ENDPOINTS.detail(id));
-  return response.data;
-};
-
 export const createProductInApi = async (payload: ProductRequestDTO): Promise<ProductResponseDTO> => {
   const response = await httpClient.post<ProductResponseDTO>(PRODUCT_ENDPOINTS.base, payload);
   return response.data;
 };
 
 export const updateProductMetadataInApi = async (id: string, name: string, description: string, atributosIds: string[]): Promise<void> => {
-  if (USE_MOCKS) {
-    return productsMockService.updateMetadata(id, name, description);
-  }
-
   const payload: ProductRequestDTO = {
     nome: name,
     descricao: description,
@@ -112,18 +86,10 @@ export const updateProductMetadataInApi = async (id: string, name: string, descr
 };
 
 export const activateProductInApi = async (id: string): Promise<void> => {
-  if (USE_MOCKS) {
-    return productsMockService.activateProduct(id);
-  }
-
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.delete(id));
 };
 
 export const deleteProductInApi = async (id: string): Promise<void> => {
-  if (USE_MOCKS) {
-    return productsMockService.softDeleteProduct(id);
-  }
-
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.delete(id));
 };
 
@@ -142,10 +108,6 @@ export const createSkuVariationInApi = async (productId: string, payload: Produc
 };
 
 export const updateSkuStockInApi = async (skuId: string, newStock: number): Promise<void> => {
-  if (USE_MOCKS) {
-    return productsMockService.updateSkuStock(skuId, newStock);
-  }
-
   const payload: ProductVariationUpdateDTO = {
     estoque: newStock
   };
@@ -154,10 +116,6 @@ export const updateSkuStockInApi = async (skuId: string, newStock: number): Prom
 };
 
 export const updateSkuPriceInApi = async (skuId: string, newPrice: number): Promise<void> => {
-  if (USE_MOCKS) {
-    return productsMockService.updateSkuPrice(skuId, newPrice);
-  }
-
   const payload: ProductVariationUpdateDTO = {
     preco: newPrice
   };
@@ -166,10 +124,6 @@ export const updateSkuPriceInApi = async (skuId: string, newPrice: number): Prom
 };
 
 export const deleteSkuInApi = async (skuId: string): Promise<void> => {
-  if (USE_MOCKS) {
-    return productsMockService.hardDeleteSku(skuId);
-  }
-
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.variation.delete(skuId));
 };
 

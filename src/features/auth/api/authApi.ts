@@ -2,7 +2,6 @@ import { httpClient } from '../../../services/api';
 import type { PerfilUsuario, UsuarioAutenticado } from '../store/useAuthStore';
 import { AUTH_ENDPOINTS } from './authEndpoints';
 
-const USAR_MOCKS = false;
 const TEMPO_ESPERA_MS = 600;
 
 export interface ClienteRequestDTO {
@@ -79,21 +78,6 @@ export interface ResultadoAutenticacao {
 }
 
 export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<UsuarioAutenticado> => {
-  if (USAR_MOCKS) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: 'mock-id-cliente-gerado',
-          nome: entrada.nome,
-          email: entrada.email,
-          perfis: ['ROLE_CLIENTE'],
-          cpf: entrada.cpf,
-          telefone: entrada.telefone
-        });
-      }, TEMPO_ESPERA_MS);
-    });
-  }
-
   const dto: ClienteRequestDTO = {
     nome: entrada.nome,
     email: entrada.email,
@@ -115,20 +99,7 @@ export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Prom
 };
 
 export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionario): Promise<UsuarioAutenticado> => {
-  if (USAR_MOCKS) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: 'mock-id-staff-gerado',
-          nome: entrada.nome,
-          email: entrada.email,
-          perfis: entrada.perfis,
-          matricula: entrada.matricula,
-        });
-      }, TEMPO_ESPERA_MS);
-    });
-  }
-
+  
   const dto: FuncionarioRequestDTO = {
     nome: entrada.nome,
     email: entrada.email,
@@ -149,28 +120,6 @@ export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionari
 };
 
 export const logarUsuarioApi = async (entrada: EntradaLogin): Promise<ResultadoAutenticacao> => {
-  if (USAR_MOCKS) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (entrada.email.includes('admin')) {
-          resolve({
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_admin_token',
-            usuario: { id: 'admin-id', nome: 'Admin Master', email: entrada.email, perfis: ['ROLE_ADMIN'] }
-          });
-        } else if (entrada.email.includes('estoque')) {
-          resolve({
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_estoque_token',
-            usuario: { id: 'estoque-id', nome: 'Operador de Estoque', email: entrada.email, perfis: ['ROLE_ESTOQUE'] }
-          });
-        } else {
-          resolve({
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_cliente_token',
-            usuario: { id: 'cliente-id', nome: 'Kayque Cliente', email: entrada.email, perfis: ['ROLE_CLIENTE'], cpf: '123.456.789-00', telefone: '(11) 99999-9999' }
-          });
-        }
-      }, TEMPO_ESPERA_MS);
-    });
-  }
 
   const dto: LoginRequestDTO = {
     username: entrada.email,
