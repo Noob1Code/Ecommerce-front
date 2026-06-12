@@ -1,26 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { customerApi, type BackendPedidoDetalhadoResponseDTO } from '../api/customerApi';
 
-export const useCustomerOrdersController = () => {
-  const [pedidos, setPedidos] = useState<BackendPedidoDetalhadoResponseDTO[]>([]);
-  const [estaCarregando, setEstaCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
+export const useCustomerOrdersController = (somenteMeus: boolean = true) => {
   const [pedidoExpandidoId, setPedidoExpandidoId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const carregarHistorico = async () => {
-      try {
-        setEstaCarregando(true);
-        const dados = await customerApi.obterMeusPedidos();
-        setPedidos(dados);
-      } catch (err) {
-        setErro('Não foi possível sincronizar o histórico de faturamento com o servidor.');
-      } finally {
-        setEstaCarregando(false);
+  const { data: pedidos = [], isLoading: estaCarregando, error } = useQuery<BackendPedidoDetalhadoResponseDTO[], Error>({
+    queryKey: ['customer', 'orders', somenteMeus ? 'meus' : 'todos'] as const,
+    queryFn: async () => {
+      if (somenteMeus) {
+        return customerApi.obterMeusPedidos();
+      } else {
+        return customerApi.obterTodosPedidos();
       }
-    };
-    carregarHistorico();
-  }, []);
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
   const handleAlternarDetalhes = (pedidoId: string) => {
     setPedidoExpandidoId((prev) => (prev === pedidoId ? null : pedidoId));
@@ -39,7 +33,7 @@ export const useCustomerOrdersController = () => {
   return {
     pedidos,
     estaCarregando,
-    erro,
+    erro: error ? 'Não foi possível sincronizar o histórico de faturamento com o servidor.' : null,
     pedidoExpandidoId,
     handleAlternarDetalhes,
     obterClasseStatus

@@ -123,5 +123,14 @@ export const customerApi = {
 
     const response = await httpClient.get<BackendPedidoDetalhadoResponseDTO[]>(CUSTOMER_ENDPOINTS.orders);
     return response.data;
+  },
+
+  obterTodosPedidos: async (): Promise<BackendPedidoDetalhadoResponseDTO[]> => {
+    if (USAR_MOCKS) {
+      return new Promise((resolve) => setTimeout(() => resolve(historicoPedidosMock), TEMPO_ESPERA_MS));
+    }
+
+    const response = await httpClient.get<BackendPedidoDetalhadoResponseDTO[]>(CUSTOMER_ENDPOINTS.allOrders);
+    return response.data;
   }
 };
