@@ -31,10 +31,6 @@ export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => 
       stock: skuDto.estoque,
       options: mappedOptions,
       images: mappedImages,
-      formattedPrice: new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(skuDto.preco),
     };
   });
 

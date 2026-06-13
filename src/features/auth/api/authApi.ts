@@ -95,7 +95,7 @@ export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Prom
 };
 
 export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionario): Promise<UsuarioAutenticado> => {
-  
+
   const dto: FuncionarioRequestDTO = {
     nome: entrada.nome,
     email: entrada.email,

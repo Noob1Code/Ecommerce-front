@@ -2,8 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  activateProductInApi,
-  deleteProductInApi,
+  alterarStatusProdutoEmApi,
   deleteSkuInApi,
   fetchAttributesFromApi,
   updateProductMetadataInApi,
@@ -31,6 +30,7 @@ export const useProductBackofficeController = () => {
   const [estaEnviando, setEstaEnviando] = useState(false);
   const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
   const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null);
+
   const { data: listaAtributosGlobais = [] } = useQuery({
     queryKey: ['products', 'global-attributes-list'] as const,
     queryFn: fetchAttributesFromApi,
@@ -81,6 +81,7 @@ export const useProductBackofficeController = () => {
       return { ...prev, [produtoId]: { ...atual, [chave]: valor } };
     });
   };
+
   const handleToggleAtributoProdutoPai = (produtoId: string, atributoId: string) => {
     setAlteracoesMetadados((prev) => {
       const original = produtos?.find((p) => p.id === produtoId);
@@ -107,8 +108,7 @@ export const useProductBackofficeController = () => {
     const msg = estaAtivo ? `Deseja inativar o produto: ${nomeProduto}?` : `Deseja reativar o produto: ${nomeProduto}?`;
     if (!window.confirm(msg)) return;
     try {
-      if (estaAtivo) await deleteProductInApi(produtoId);
-      else await activateProductInApi(produtoId);
+      await alterarStatusProdutoEmApi(produtoId);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
       alert('Status alterado com sucesso!');
     } catch {

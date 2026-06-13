@@ -1,14 +1,18 @@
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, ErrorMessage, Spinner } from '../../../shared/components/ui';
 import { useCartController } from '../../cart';
+import type { Product } from '../domain/product.types';
 import { useProduct } from '../hooks/useProduct';
 import { useVariantSelector } from '../hooks/useVariantSelector';
 
-export const ProductDetail = () => {
-  const { id } = useParams<{ id: string }>();
+interface ProductDetailContentProps {
+  product: Product;
+}
+
+const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
   const navigate = useNavigate();
   const { handleAddToCart } = useCartController();
-  const { product, isLoading, error } = useProduct(id);
 
   const {
     selectedOptions,
@@ -19,21 +23,13 @@ export const ProductDetail = () => {
     isCombinationAvailable,
   } = useVariantSelector(product);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Spinner className="h-12 w-12 text-blue-600" />
-      </div>
-    );
-  }
-
-  if (error || !product) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <ErrorMessage message={error || 'O item solicitado não foi localizado no servidor.'} />
-      </div>
-    );
-  }
+  const precoFormatado = useMemo(() => {
+    if (!resolvedSku) return '';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(resolvedSku.price);
+  }, [resolvedSku]);
 
   const handleAddToCartClick = () => {
     if (!resolvedSku) return;
@@ -73,7 +69,7 @@ export const ProductDetail = () => {
             <h1 className="text-3xl font-black tracking-tight text-gray-900">{product.name}</h1>
 
             <p className="text-3xl font-black text-blue-600">
-              {resolvedSku ? resolvedSku.formattedPrice : 'Selecione as opções'}
+              {resolvedSku ? precoFormatado : 'Selecione as opções'}
             </p>
 
             <div className="border-t border-gray-100 pt-4">
@@ -103,10 +99,10 @@ export const ProductDetail = () => {
                           disabled={!disponivel}
                           onClick={() => handleOptionChange(attr.attributeId, valor)}
                           className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${ativo
-                              ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
-                              : disponivel
-                                ? 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-2xs'
-                                : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
+                            : disponivel
+                              ? 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-2xs'
+                              : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through'
                             }`}
                         >
                           {valor}
@@ -152,4 +148,27 @@ export const ProductDetail = () => {
       </div>
     </div>
   );
+};
+
+export const ProductDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const { product, isLoading, error } = useProduct(id);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Spinner className="h-12 w-12 text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        <ErrorMessage message={error || 'O item solicitado não foi localizado no servidor.'} />
+      </div>
+    );
+  }
+
+  return <ProductDetailContent key={product.id} product={product} />;
 };

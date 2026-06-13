@@ -12,12 +12,6 @@ interface UseVariantSelectorResult {
 
 export const useVariantSelector = (product: Product | null | undefined): UseVariantSelectorResult => {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [prevProductId, setPrevProductId] = useState<string | null>(null);
-
-  if (product && product.id !== prevProductId) {
-    setPrevProductId(product.id);
-    setSelectedOptions({});
-  }
 
   const resolvedSku = useMemo(() => {
     if (!product || !product.skus) return null;

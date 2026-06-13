@@ -18,9 +18,18 @@ export const useCartMutations = () => {
     },
   });
 
-  const updateQuantityMutation = useMutation({
-    mutationFn: async ({ variationId, quantity }: CartQuantityPayload) => {
-      return cartApi.atualizarQuantidadeNoCarrinho(variationId, quantity);
+  const incrementItemMutation = useMutation({
+    mutationFn: async (variationId: string) => {
+      return cartApi.incrementarItemNoCarrinho(variationId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+  });
+
+  const decrementItemMutation = useMutation({
+    mutationFn: async (variationId: string) => {
+      return cartApi.decrementarItemNoCarrinho(variationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -47,7 +56,8 @@ export const useCartMutations = () => {
 
   return {
     addToCartMutation,
-    updateQuantityMutation,
+    incrementItemMutation,
+    decrementItemMutation,
     removeFromCartMutation,
     clearCartMutation,
   };
