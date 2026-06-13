@@ -12,6 +12,7 @@ interface CartState {
   removeItem: (skuId: string) => void;
   updateQuantity: (skuId: string, quantity: number, maxStock: number) => void;
   clearCart: () => void;
+  setItems: (items: CartStoreItem[]) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -72,13 +73,12 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: () => set({ items: [] }),
+      setItems: (items: CartStoreItem[]) => set({ items }),
     }),
     {
       name: 'ecommerce-cart-storage',
-      version: 1, // Definição da versão de schema estável para o vetor de SKUs do carrinho
+      version: 1,
       migrate: (persistedState: unknown, version: number): unknown => {
-        // Abordagem defensiva: caso os metadados gravados localmente pertençam a um contrato
-        // obsoleto ou inválido, limpa o carrinho para proteger as telas de checkout contra propriedades nulas.
         if (version < 1) {
           return {
             items: [],
