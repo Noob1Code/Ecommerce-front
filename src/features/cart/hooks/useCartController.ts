@@ -1,7 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../auth/store/useAuthStore';
 import { useProducts } from '../../products';
 import type { Product, ProductSku } from '../../products/domain/product.types';
+import { cartApi } from '../api/cartApi';
 import { useCartStore } from '../store/useCartStore';
 import { useCartMutations } from './useCartMutations';
 
@@ -15,20 +18,29 @@ export interface EnrichedCartItem {
 
 export const useCartController = () => {
   const navigate = useNavigate();
-  const { products, isLoading, error } = useProducts();
-  const { 
-    addToCartMutation, 
-    incrementItemMutation, 
-    decrementItemMutation, 
-    removeFromCartMutation, 
-    clearCartMutation 
+  const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
+  const { products, isLoading: isLoadingProducts, error: errorProducts } = useProducts();
+
+  const {
+    addToCartMutation,
+    incrementItemMutation,
+    decrementItemMutation,
+    removeFromCartMutation,
+    clearCartMutation
   } = useCartMutations();
-  
+
   const rawItems = useCartStore((state) => state.items);
   const addItem = useCartStore((state) => state.addItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
+
+  const { isFetching: isFetchingServerCart } = useQuery({
+    queryKey: ['cart', 'server-state'] as const,
+    queryFn: cartApi.obterCarrinhoDoServidor,
+    enabled: estaAutenticado,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const enrichedItems = useMemo<EnrichedCartItem[]>(() => {
     if (!products || products.length === 0) return [];
@@ -59,8 +71,7 @@ export const useCartController = () => {
       })
       .filter((item): item is EnrichedCartItem => item !== null);
   }, [rawItems, products]);
-
-  const isEmpty = enrichedItems.length === 0;
+  const isEmpty = enrichedItems.length === 0 && !isFetchingServerCart;
 
   const totalItemsCount = useMemo(() => {
     return enrichedItems.reduce((total, item) => total + item.quantity, 0);
@@ -79,6 +90,7 @@ export const useCartController = () => {
 
   const handleAddToCart = (skuId: string, maxStock: number) => {
     if (maxStock <= 0) return;
+
     const itemExistente = enrichedItems.find((item) => item.skuId === skuId);
     const quantidadeAtual = itemExistente ? itemExistente.quantity : 0;
 
@@ -93,7 +105,7 @@ export const useCartController = () => {
 
   const handleIncrement = (skuId: string, currentQuantity: number, maxStock: number) => {
     if (currentQuantity >= maxStock) {
-      alert(`Action Aborted: Selected variation stock ceiling reached. Maximum units available: ${maxStock}`);
+      alert(`Ação Abortada: Teto de estoque máximo atingido para esta variação. Unidades disponíveis: ${maxStock}`);
       return;
     }
     const targetQuantity = currentQuantity + 1;
@@ -124,7 +136,7 @@ export const useCartController = () => {
   };
 
   const handleClear = () => {
-    if (window.confirm('Are you sure you want to drop all selected items from your cart?')) {
+    if (window.confirm('Tem a certeza que deseja remover todos os itens selecionados do seu carrinho?')) {
       clearCart();
       clearCartMutation.mutate();
     }
@@ -137,13 +149,14 @@ export const useCartController = () => {
   return {
     items: enrichedItems,
     isEmpty,
-    isLoading: isLoading || 
-               addToCartMutation.isPending || 
-               incrementItemMutation.isPending || 
-               decrementItemMutation.isPending || 
-               removeFromCartMutation.isPending || 
-               clearCartMutation.isPending,
-    error,
+    isLoading: isLoadingProducts ||
+      isFetchingServerCart ||
+      addToCartMutation.isPending ||
+      incrementItemMutation.isPending ||
+      decrementItemMutation.isPending ||
+      removeFromCartMutation.isPending ||
+      clearCartMutation.isPending,
+    error: errorProducts,
     totalItemsCount,
     cartTotal,
     formattedCartTotal,

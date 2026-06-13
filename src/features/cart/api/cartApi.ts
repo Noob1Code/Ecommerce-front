@@ -6,9 +6,19 @@ export interface BackendItemCarrinhoRequestDTO {
   quantidade: number;
 }
 
+export interface BackendItemCatalogoCompletoDTO {
+  variacaoId: string;
+  nomeProduto: string;
+  preco: number;
+  estoque: number;
+  sku: string;
+  detalhes: string;
+}
+
 export interface BackendItemCarrinhoResponseDTO {
   id: string;
   quantidade: number;
+  produto: BackendItemCatalogoCompletoDTO | null; // Objeto de domínio enriquecido pelo servidor
 }
 
 export interface BackendCarrinhoResponseDTO {
@@ -23,7 +33,6 @@ export const cartApi = {
       variacaoId,
       quantidade: quantity
     };
-
     await httpClient.post<void>(CART_ENDPOINTS.addItems, payload);
   },
 

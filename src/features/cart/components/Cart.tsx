@@ -32,6 +32,7 @@ export const Cart = () => {
       </div>
     );
   }
+  
   if (isEmpty) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
@@ -96,8 +97,12 @@ export const Cart = () => {
                   <p className="mt-0.5 text-xs text-gray-500 font-medium">
                     {item.selectedSku.options.map((o) => `${o.attributeName}: ${o.value}`).join(' | ')}
                   </p>
+                  
+                  {/* Responsabilidade de Formatação Unificada na Camada Visuall */}
                   <span className="mt-2 inline-block text-sm font-bold text-gray-900">
-                    {item.selectedSku.formattedPrice}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                      item.selectedSku.price
+                    )}
                   </span>
                 </div>
               </div>
@@ -122,7 +127,7 @@ export const Cart = () => {
                   </button>
                 </div>
 
-                {/* Subtotal por Linha */}
+                {/* Subtotal por Linha Calculado Baseado no Preço Puro de Domínio */}
                 <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 sm:gap-1 min-w-[110px]">
                   <span className="text-base font-black text-gray-900 hidden sm:block">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(

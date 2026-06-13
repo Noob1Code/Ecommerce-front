@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../features/auth/store/useAuthStore';
+import { useSyncCart } from '../../features/cart';
 import { useCartStore } from '../../features/cart/store/useCartStore';
 
 export const Header = () => {
   const navigate = useNavigate();
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
   const usuario = useAuthStore((state) => state.usuario);
   const fazerLogout = useAuthStore((state) => state.fazerLogout);
-  const contagemItensCarrinho = useCartStore((state) => 
+  const limparCarrinhoLocal = useCartStore((state) => state.clearCart);
+  useSyncCart();
+
+  const contagemItensCarrinho = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0)
   );
 
@@ -27,6 +30,7 @@ export const Header = () => {
   const handleLogout = () => {
     if (window.confirm('Deseja realmente sair da sua conta?')) {
       fazerLogout();
+      limparCarrinhoLocal();
       setMenuAberto(false);
       navigate('/login');
     }
@@ -37,7 +41,7 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        
+
         {/* Lado Esquerdo: Logo e Navegação Principal */}
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center space-x-2">
@@ -45,7 +49,7 @@ export const Header = () => {
               Modular<span className="text-blue-600">Store</span>
             </span>
           </Link>
-          
+
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
             <Link to="/" className="hover:text-blue-600 transition-colors">Catálogo</Link>
           </nav>
@@ -53,10 +57,10 @@ export const Header = () => {
 
         {/* Lado Direito: Carrinho e Usuário */}
         <div className="flex items-center gap-2 sm:gap-4">
-          
+
           {/* Botão do Carrinho */}
-          <Link 
-            to="/cart" 
+          <Link
+            to="/cart"
             className="group relative flex items-center p-2 text-gray-600 hover:text-blue-600 transition-colors"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
@@ -82,20 +86,20 @@ export const Header = () => {
                     <span className="text-xs font-bold text-gray-900 line-clamp-1">{usuario.nome}</span>
                     <span className="text-[10px] text-gray-400 uppercase tracking-tighter">Minha Conta ▼</span>
                   </div>
-                  
+
                   {/* Círculo do Avatar */}
                   <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition-transform border-2 border-white ring-1 ring-gray-100">
                     {inicialNome}
                   </div>
                 </button>
 
-                {/* DROPDOWN MENU (O que aparece ao clicar) */}
+                {/* DROPDOWN MENU */}
                 {menuAberto && (
                   <div className="absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white p-2 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in duration-100">
                     <div className="px-3 py-2 border-b border-gray-100 mb-1">
                       <p className="text-[10px] font-bold text-gray-400 uppercase">Ações do Cliente</p>
                     </div>
-                    
+
                     <Link
                       to="/meus-pedidos"
                       onClick={() => setMenuAberto(false)}
