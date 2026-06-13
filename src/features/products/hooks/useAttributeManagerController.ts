@@ -1,96 +1,77 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { fetchAttributesFromApi, type AttributeRequestDTO, type AttributeResponseDTO } from '../api/productsApi';
-import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
 import { useProductMutations } from './useProductMutations';
 
 export const useAttributeManagerController = () => {
-    const [nome, setNome] = useState('');
-    const [valoresInput, setValoresInput] = useState('');
-    const [idEmEdicao, setIdEmEdicao] = useState<string | null>(null);
-    const [erroValidacao, setErroValidacao] = useState<string | null>(null);
-    const { createAttributeMutation, updateAttributeMutation, deleteAttributeMutation } = useProductMutations();
-    const { data: atributos = [], isLoading, error } = useQuery<AttributeResponseDTO[]>({
-        queryKey: [...PRODUCTS_QUERY_KEYS.all, 'attributes-manager'] as const,
-        queryFn: fetchAttributesFromApi,
-        staleTime: 1000 * 60 * 5,
-    });
+  const [nome, setNome] = useState('');
+  const [idEmEdicao, setIdEmEdicao] = useState<string | null>(null);
+  const [erroValidacao, setErroValidacao] = useState<string | null>(null);
 
-    const handleIniciarEdicao = (atributo: AttributeResponseDTO) => {
-        setIdEmEdicao(atributo.id);
-        setNome(atributo.nome);
-        setValoresInput(atributo.valores?.join(', ') || '');
-        setErroValidacao(null);
-    };
+  const { createAttributeMutation, updateAttributeMutation, deleteAttributeMutation } = useProductMutations();
 
-    const handleCancelarEdicao = () => {
-        setIdEmEdicao(null);
-        setNome('');
-        setValoresInput('');
-        setErroValidacao(null);
-    };
+  const { data: atributos = [], isLoading, error } = useQuery<AttributeResponseDTO[]>({
+    queryKey: ['products', 'attributes-manager-clean'],
+    queryFn: fetchAttributesFromApi,
+    staleTime: 1000 * 60 * 5,
+  });
 
-    const handleSalvarAtributo = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const handleIniciarEdicao = (atributo: AttributeResponseDTO) => {
+    setIdEmEdicao(atributo.id);
+    setNome(atributo.nome);
+    setErroValidacao(null);
+  };
 
-        if (!nome.trim() || !valoresInput.trim()) {
-            setErroValidacao('Erro de Validação: O nome do atributo e suas opções de valores são obrigatórios.');
-            return;
-        }
+  const handleCancelarEdicao = () => {
+    setIdEmEdicao(null);
+    setNome('');
+    setErroValidacao(null);
+  };
 
-        const valoresArray = valoresInput
-            .split(',')
-            .map((v) => v.trim())
-            .filter((v) => v.length > 0);
+  const handleSalvarAtributo = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-        if (valoresArray.length === 0) {
-            setErroValidacao('Erro de Validação: Insira ao menos um valor válido para o atributo.');
-            return;
-        }
+    if (!nome.trim()) {
+      setErroValidacao('O nome do atributo é obrigatório.');
+      return;
+    }
 
-        const payload: AttributeRequestDTO = {
-            nome: nome.trim(),
-            valores: valoresArray,
-        };
+    const payload: AttributeRequestDTO = { nome: nome.trim() };
 
-        try {
-            if (idEmEdicao) {
-                await updateAttributeMutation.mutateAsync({ id: idEmEdicao, payload });
-                alert('Atributo técnico atualizado com sucesso!');
-            } else {
-                await createAttributeMutation.mutateAsync(payload);
-                alert('Novo eixo de atributo cadastrado com sucesso!');
-            }
-            handleCancelarEdicao();
-        } catch {
-            setErroValidacao('Falha Operacional: Erro de comunicação com o servidor de faturamento.');
-        }
-    };
+    try {
+      if (idEmEdicao) {
+        await updateAttributeMutation.mutateAsync({ id: idEmEdicao, payload });
+      } else {
+        await createAttributeMutation.mutateAsync(payload);
+      }
+      handleCancelarEdicao();
+      alert('Atributo processado com sucesso!');
+    } catch {
+      setErroValidacao('Erro de salvamento no servidor.');
+    }
+  };
 
-    const handleExcluirAtributo = async (id: string, nomeAtributo: string) => {
-        if (!window.confirm(`Tem certeza que deseja inativar/deletar o atributo [${nomeAtributo}]?`)) return;
+  const handleExcluirAtributo = async (id: string, nomeAtributo: string) => {
+    if (!window.confirm(`Deseja deletar permanentemente o atributo ${nomeAtributo}?`)) return;
+    try {
+      await deleteAttributeMutation.mutateAsync(id);
+      alert('Atributo removido!');
+    } catch {
+      alert('Erro ao excluir.');
+    }
+  };
 
-        try {
-            await deleteAttributeMutation.mutateAsync(id);
-            alert('Status do atributo modificado com sucesso!');
-        } catch {
-            alert('Falha ao tentar remover o atributo selecionado.');
-        }
-    };
-
-    return {
-        atributos,
-        nome,
-        valoresInput,
-        idEmEdicao,
-        erroValidacao,
-        estaCarregando: isLoading || createAttributeMutation.isPending || updateAttributeMutation.isPending || deleteAttributeMutation.isPending,
-        erroServidor: error ? 'Erro ao sincronizar os atributos com o servidor.' : null,
-        setNome,
-        setValoresInput,
-        handleIniciarEdicao,
-        handleCancelarEdicao,
-        handleSalvarAtributo,
-        handleExcluirAtributo,
-    };
+  return {
+    atributos,
+    nome,
+    idEmEdicao,
+    erroValidacao,
+    estaCarregando: isLoading || createAttributeMutation.isPending || updateAttributeMutation.isPending || deleteAttributeMutation.isPending,
+    erroServidor: error ? 'Erro de rede.' : null,
+    setNome,
+    handleIniciarEdicao,
+    handleCancelarEdicao,
+    handleSalvarAtributo,
+    handleExcluirAtributo,
+  };
 };

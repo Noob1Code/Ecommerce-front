@@ -1,10 +1,6 @@
 import { httpClient } from '../../../services/api';
 import { PRODUCT_ENDPOINTS } from './productsEndpoints';
 
-// ==========================================
-// DATA TRANSFER OBJECTS (DTO) INTERFACES
-// ==========================================
-
 export interface ProductRequestDTO {
   nome: string;
   descricao: string;
@@ -56,32 +52,29 @@ export interface ProductVariationResponseDTO {
 
 export interface AttributeRequestDTO {
   nome: string;
-  valores: string[];
 }
 
 export interface AttributeResponseDTO {
   id: string;
   nome: string;
-  valores: string[];
-  ativo: boolean;
 }
-
-// ==========================================
-// CORE CORE-CATALOG API OPERATIONS
-// ==========================================
 
 export const createProductInApi = async (payload: ProductRequestDTO): Promise<ProductResponseDTO> => {
   const response = await httpClient.post<ProductResponseDTO>(PRODUCT_ENDPOINTS.base, payload);
   return response.data;
 };
 
-export const updateProductMetadataInApi = async (id: string, name: string, description: string, atributosIds: string[]): Promise<void> => {
+export const updateProductMetadataInApi = async (
+  id: string, 
+  name: string, 
+  description: string, 
+  atributosIds: string[]
+): Promise<void> => {
   const payload: ProductRequestDTO = {
     nome: name,
     descricao: description,
     atributosIds: atributosIds
   };
-
   await httpClient.put<void>(PRODUCT_ENDPOINTS.detail(id), payload);
 };
 
@@ -93,43 +86,35 @@ export const deleteProductInApi = async (id: string): Promise<void> => {
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.delete(id));
 };
 
-// ==========================================
-// SKUs / PRODUCT VARIATIONS OPERATIONS
-// ==========================================
-
 export const fetchAllSkuVariationsFromApi = async (): Promise<ProductVariationResponseDTO[]> => {
   const response = await httpClient.get<ProductVariationResponseDTO[]>(PRODUCT_ENDPOINTS.variation.base);
   return response.data;
 };
 
-export const createSkuVariationInApi = async (productId: string, payload: ProductVariationRequestDTO): Promise<ProductVariationResponseDTO> => {
-  const response = await httpClient.post<ProductVariationResponseDTO>(PRODUCT_ENDPOINTS.variation.create(productId), payload);
+export const createSkuVariationInApi = async (
+  productId: string, 
+  payload: ProductVariationRequestDTO
+): Promise<ProductVariationResponseDTO> => {
+  const response = await httpClient.post<ProductVariationResponseDTO>(
+    PRODUCT_ENDPOINTS.variation.create(productId), 
+    payload
+  );
   return response.data;
 };
 
 export const updateSkuStockInApi = async (skuId: string, newStock: number): Promise<void> => {
-  const payload: ProductVariationUpdateDTO = {
-    estoque: newStock
-  };
-
+  const payload: ProductVariationUpdateDTO = { estoque: newStock };
   await httpClient.put<void>(PRODUCT_ENDPOINTS.variation.detail(skuId), payload);
 };
 
 export const updateSkuPriceInApi = async (skuId: string, newPrice: number): Promise<void> => {
-  const payload: ProductVariationUpdateDTO = {
-    preco: newPrice
-  };
-
+  const payload: ProductVariationUpdateDTO = { preco: newPrice };
   await httpClient.put<void>(PRODUCT_ENDPOINTS.variation.detail(skuId), payload);
 };
 
 export const deleteSkuInApi = async (skuId: string): Promise<void> => {
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.variation.delete(skuId));
 };
-
-// ==========================================
-// ATTRIBUTE ENGINE OPERATIONS
-// ==========================================
 
 export const fetchAttributesFromApi = async (): Promise<AttributeResponseDTO[]> => {
   const response = await httpClient.get<AttributeResponseDTO[]>(PRODUCT_ENDPOINTS.attribute.base);
@@ -148,4 +133,14 @@ export const updateAttributeInApi = async (id: string, payload: AttributeRequest
 
 export const deleteAttributeInApi = async (id: string): Promise<void> => {
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.attribute.delete(id));
+};
+
+export const fetchProductsFromApi = async (): Promise<ProductResponseDTO[]> => {
+  const response = await httpClient.get<ProductResponseDTO[]>(PRODUCT_ENDPOINTS.base);
+  return response.data;
+};
+
+export const fetchProductByIdFromApi = async (id: string): Promise<ProductResponseDTO> => {
+  const response = await httpClient.get<ProductResponseDTO>(PRODUCT_ENDPOINTS.detail(id));
+  return response.data;
 };

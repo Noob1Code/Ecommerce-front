@@ -2,8 +2,6 @@ import { httpClient } from '../../../services/api';
 import type { PerfilUsuario, UsuarioAutenticado } from '../store/useAuthStore';
 import { AUTH_ENDPOINTS } from './authEndpoints';
 
-const TEMPO_ESPERA_MS = 600;
-
 export interface ClienteRequestDTO {
   nome: string;
   email: string;
@@ -45,10 +43,10 @@ export interface LoginRequestDTO {
 }
 
 export interface TokenResponseDTO {
-  token: string;    
-  id: string;       
-  nome: string;     
-  roles: string[];  
+  token: string;
+  id: string;
+  nome: string;
+  roles: string[];
 }
 
 export interface EntradaCadastroCliente {
@@ -77,7 +75,8 @@ export interface ResultadoAutenticacao {
   usuario: UsuarioAutenticado;
 }
 
-export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<UsuarioAutenticado> => {
+export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<ResultadoAutenticacao> => {
+
   const dto: ClienteRequestDTO = {
     nome: entrada.nome,
     email: entrada.email,
@@ -86,16 +85,13 @@ export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Prom
     cpf: entrada.cpf || '',
   };
 
-  const resposta = await httpClient.post<ClienteResponseDTO>(AUTH_ENDPOINTS.registerCliente, dto);
+  await httpClient.post<ClienteResponseDTO>(AUTH_ENDPOINTS.registerCliente, dto);
+  const resultadoLogin = await logarUsuarioApi({
+    email: entrada.email,
+    senha: entrada.senha
+  });
 
-  return {
-    id: resposta.data.id,
-    nome: resposta.data.nome,
-    email: resposta.data.email,
-    perfis: resposta.data.roles as PerfilUsuario[],
-    cpf: resposta.data.cpf,
-    telefone: resposta.data.telefone
-  };
+  return resultadoLogin;
 };
 
 export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionario): Promise<UsuarioAutenticado> => {

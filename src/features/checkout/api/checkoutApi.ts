@@ -1,8 +1,6 @@
 import { httpClient } from '../../../services/api';
 import { CHECKOUT_ENDPOINTS } from './checkoutEndpoints';
 
-const TEMPO_ESPERA_MS = 1000;
-
 export interface BackendItemPedidoRequestDTO {
   variacaoId: string;
   quantidade: number;

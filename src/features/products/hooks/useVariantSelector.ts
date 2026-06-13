@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Product, ProductSku } from '../domain/product.types';
 
 interface UseVariantSelectorResult {
@@ -11,55 +11,53 @@ interface UseVariantSelectorResult {
 }
 
 export const useVariantSelector = (product: Product | null | undefined): UseVariantSelectorResult => {
-  // Guardamos o ID do produto anterior para identificar quando houve troca de página/produto
-  const [prevProductId, setPrevProductId] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [prevProductId, setPrevProductId] = useState<string | null>(null);
 
-  // ⚡ SINCRONIZAÇÃO SÍNCRONA DE ESTADO (Substitui o primeiro useEffect antigo)
-  // Quando o produto carrega ou muda, reinicializa as opções padrões do primeiro SKU instantaneamente
-  // no mesmo ciclo de renderização, eliminando flashes visuais na tela.
   if (product && product.id !== prevProductId) {
     setPrevProductId(product.id);
-    
-    const initialOptions: Record<string, string> = {};
-    if (product.skus && product.skus.length > 0) {
-      product.skus[0].options.forEach((opt) => {
-        initialOptions[opt.attributeId] = opt.value;
-      });
-    }
-    setSelectedOptions(initialOptions);
+    setSelectedOptions({});
   }
 
-  // 🧠 Estado Derivado 1: Resolve o SKU ativo com base nas opções que o usuário clicou
   const resolvedSku = useMemo(() => {
     if (!product || !product.skus) return null;
 
-    return product.skus.find((sku) =>
-      sku.options.every((opt) => selectedOptions[opt.attributeId] === opt.value)
-    ) || null;
+    return product.skus.find((sku) => {
+      const numOpcoesSelecionadas = Object.keys(selectedOptions).length;
+      
+      if (sku.options.length !== numOpcoesSelecionadas) return false;
+
+      return sku.options.every((opt) => selectedOptions[opt.attributeId] === opt.value);
+    }) || null;
   }, [selectedOptions, product]);
 
-  // 🎨 Estado Derivado 2: Remove totalmente o useState e o segundo useEffect da imagem!
-  // A URL da imagem ativa agora é calculada dinamicamente. Quando o resolvedSku muda pelo clique,
-  // a imagem atualiza no exato milissegundo, evitando renderizações em cascata lentas.
   const activeImageUrl = useMemo(() => {
     if (resolvedSku && resolvedSku.images && resolvedSku.images.length > 0) {
       return resolvedSku.images[0].imageUrl;
     }
-    if (product && product.skus && product.skus.length > 0) {
-      const defaultSku = product.skus[0];
-      if (defaultSku.images && defaultSku.images.length > 0) {
-        return defaultSku.images[0].imageUrl;
+    
+    if (product && product.skus) {
+      const primeiroSkuComImagem = product.skus.find((s) => s.images && s.images.length > 0);
+      if (primeiroSkuComImagem && primeiroSkuComImagem.images.length > 0) {
+        return primeiroSkuComImagem.images[0].imageUrl;
       }
     }
+    
     return '/fallback-image.jpg';
   }, [resolvedSku, product]);
 
   const handleOptionChange = (attributeId: string, value: string) => {
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [attributeId]: value,
-    }));
+    setSelectedOptions((prev) => {
+      if (prev[attributeId] === value) {
+        const copia = { ...prev };
+        delete copia[attributeId];
+        return copia;
+      }
+      return {
+        ...prev,
+        [attributeId]: value,
+      };
+    });
   };
 
   const getOptionGroupValues = (attributeId: string): string[] => {
@@ -76,10 +74,13 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
   const isCombinationAvailable = (attributeId: string, value: string): boolean => {
     if (!product || !product.skus) return false;
 
-    const hypotheticalSelection = { ...selectedOptions, [attributeId]: value };
-    return product.skus.some((sku) =>
-      sku.options.every((opt) => hypotheticalSelection[opt.attributeId] === opt.value)
-    );
+    const selecaoHipotetica = { ...selectedOptions, [attributeId]: value };
+    
+    return product.skus.some((sku) => {
+      return Object.entries(selecaoHipotetica).every(([attrId, val]) =>
+        sku.options.some((opt) => opt.attributeId === attrId && opt.value === val)
+      );
+    });
   };
 
   return {

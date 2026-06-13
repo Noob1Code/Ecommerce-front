@@ -1,8 +1,6 @@
 import { httpClient } from '../../../services/api';
 import { CART_ENDPOINTS } from './cartEndpoints';
 
-const TEMPO_ESPERA_MS = 400;
-
 export interface BackendItemCarrinhoRequestDTO {
   variacaoId: string;
   quantidade: number;

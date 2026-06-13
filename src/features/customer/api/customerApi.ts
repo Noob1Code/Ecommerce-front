@@ -2,8 +2,6 @@ import { httpClient } from '../../../services/api';
 import type { ClienteResponseDTO, FuncionarioResponseDTO } from '../../auth';
 import { CUSTOMER_ENDPOINTS } from './customerEndpoints';
 
-const TEMPO_ESPERA_MS = 500;
-
 export interface PerfilExibicao {
   nome: string;
   email: string;
