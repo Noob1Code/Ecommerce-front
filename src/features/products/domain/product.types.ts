@@ -55,7 +55,7 @@ export interface BackendImagemVariacaoRequestDTO {
 }
 
 export interface BackendVariacaoOpcaoRequestDTO {
-  atributoId: string;
+  attributeId: string;
   valor: string;
 }
 
@@ -100,7 +100,6 @@ export interface ProductSku {
   stock: number;
   options: SkuOption[];
   images: SkuImage[];
-  formattedPrice: string;
 }
 
 export interface Product {

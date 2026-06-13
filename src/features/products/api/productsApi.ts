@@ -65,9 +65,9 @@ export const createProductInApi = async (payload: ProductRequestDTO): Promise<Pr
 };
 
 export const updateProductMetadataInApi = async (
-  id: string, 
-  name: string, 
-  description: string, 
+  id: string,
+  name: string,
+  description: string,
   atributosIds: string[]
 ): Promise<void> => {
   const payload: ProductRequestDTO = {
@@ -78,11 +78,7 @@ export const updateProductMetadataInApi = async (
   await httpClient.put<void>(PRODUCT_ENDPOINTS.detail(id), payload);
 };
 
-export const activateProductInApi = async (id: string): Promise<void> => {
-  await httpClient.patch<void>(PRODUCT_ENDPOINTS.delete(id));
-};
-
-export const deleteProductInApi = async (id: string): Promise<void> => {
+export const alterarStatusProdutoEmApi = async (id: string): Promise<void> => {
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.delete(id));
 };
 
@@ -92,11 +88,11 @@ export const fetchAllSkuVariationsFromApi = async (): Promise<ProductVariationRe
 };
 
 export const createSkuVariationInApi = async (
-  productId: string, 
+  productId: string,
   payload: ProductVariationRequestDTO
 ): Promise<ProductVariationResponseDTO> => {
   const response = await httpClient.post<ProductVariationResponseDTO>(
-    PRODUCT_ENDPOINTS.variation.create(productId), 
+    PRODUCT_ENDPOINTS.variation.create(productId),
     payload
   );
   return response.data;

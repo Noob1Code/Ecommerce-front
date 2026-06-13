@@ -27,13 +27,12 @@ export const cartApi = {
     await httpClient.post<void>(CART_ENDPOINTS.addItems, payload);
   },
 
-  atualizarQuantidadeNoCarrinho: async (variacaoId: string, quantity: number): Promise<void> => {
-    const payload: BackendItemCarrinhoRequestDTO = {
-      variacaoId,
-      quantidade: quantity
-    };
+  incrementarItemNoCarrinho: async (variacaoId: string): Promise<void> => {
+    await httpClient.post<void>(CART_ENDPOINTS.incrementItem(variacaoId));
+  },
 
-    await httpClient.put<void>(CART_ENDPOINTS.addItems, payload);
+  decrementarItemNoCarrinho: async (variacaoId: string): Promise<void> => {
+    await httpClient.post<void>(CART_ENDPOINTS.decrementItem(variacaoId));
   },
 
   obterCarrinhoDoServidor: async (): Promise<BackendCarrinhoResponseDTO> => {

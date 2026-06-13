@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-//  CORREÇÃO CIRÚRGICA: Consumindo o hook pela fachada pública legalizada para o Dependency Cruiser passar direto.
 import { useProducts } from '../../products';
 import type { Product, ProductSku } from '../../products/domain/product.types';
 import { useCartStore } from '../store/useCartStore';
@@ -17,7 +16,14 @@ export interface EnrichedCartItem {
 export const useCartController = () => {
   const navigate = useNavigate();
   const { products, isLoading, error } = useProducts();
-  const { addToCartMutation, updateQuantityMutation, removeFromCartMutation, clearCartMutation } = useCartMutations();
+  const { 
+    addToCartMutation, 
+    incrementItemMutation, 
+    decrementItemMutation, 
+    removeFromCartMutation, 
+    clearCartMutation 
+  } = useCartMutations();
+  
   const rawItems = useCartStore((state) => state.items);
   const addItem = useCartStore((state) => state.addItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
@@ -73,6 +79,14 @@ export const useCartController = () => {
 
   const handleAddToCart = (skuId: string, maxStock: number) => {
     if (maxStock <= 0) return;
+    const itemExistente = enrichedItems.find((item) => item.skuId === skuId);
+    const quantidadeAtual = itemExistente ? itemExistente.quantity : 0;
+
+    if (quantidadeAtual + 1 > maxStock) {
+      alert(`Ação Abortada: Limite máximo de estoque atingido para este SKU. Unidades disponíveis: ${maxStock}`);
+      return;
+    }
+
     addItem(skuId, maxStock);
     addToCartMutation.mutate({ variationId: skuId, quantity: 1 });
   };
@@ -84,7 +98,7 @@ export const useCartController = () => {
     }
     const targetQuantity = currentQuantity + 1;
     updateQuantity(skuId, targetQuantity, maxStock);
-    updateQuantityMutation.mutate({ variationId: skuId, quantity: targetQuantity });
+    incrementItemMutation.mutate(skuId);
   };
 
   const handleDecrement = (skuId: string, currentQuantity: number) => {
@@ -101,7 +115,7 @@ export const useCartController = () => {
 
     const targetQuantity = currentQuantity - 1;
     updateQuantity(skuId, targetQuantity, maxStock);
-    updateQuantityMutation.mutate({ variationId: skuId, quantity: targetQuantity });
+    decrementItemMutation.mutate(skuId);
   };
 
   const handleRemove = (skuId: string) => {
@@ -123,7 +137,12 @@ export const useCartController = () => {
   return {
     items: enrichedItems,
     isEmpty,
-    isLoading: isLoading || addToCartMutation.isPending || updateQuantityMutation.isPending || removeFromCartMutation.isPending || clearCartMutation.isPending,
+    isLoading: isLoading || 
+               addToCartMutation.isPending || 
+               incrementItemMutation.isPending || 
+               decrementItemMutation.isPending || 
+               removeFromCartMutation.isPending || 
+               clearCartMutation.isPending,
     error,
     totalItemsCount,
     cartTotal,
