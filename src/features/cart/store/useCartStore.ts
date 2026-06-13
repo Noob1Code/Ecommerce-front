@@ -26,7 +26,7 @@ export const useCartStore = create<CartState>()(
         if (existingItemIndex > -1) {
           const updatedItems = [...currentItems];
           const targetItem = updatedItems[existingItemIndex];
-          
+
           if (targetItem.quantity >= maxStock) {
             return;
           }
@@ -76,7 +76,7 @@ export const useCartStore = create<CartState>()(
     {
       name: 'ecommerce-cart-storage',
       version: 1, // Definição da versão de schema estável para o vetor de SKUs do carrinho
-      migrate: (persistedState: unknown, version: number): any => {
+      migrate: (persistedState: unknown, version: number): unknown => {
         // Abordagem defensiva: caso os metadados gravados localmente pertençam a um contrato
         // obsoleto ou inválido, limpa o carrinho para proteger as telas de checkout contra propriedades nulas.
         if (version < 1) {

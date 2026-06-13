@@ -1,16 +1,23 @@
-import { useState, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
-import { useProducts } from './useProducts';
 import {
-  updateSkuStockInApi,
-  updateProductMetadataInApi,
+  activateProductInApi,
   deleteProductInApi,
   deleteSkuInApi,
-  activateProductInApi,
-  updateSkuPriceInApi
+  fetchAttributesFromApi,
+  updateProductMetadataInApi,
+  updateSkuPriceInApi,
+  updateSkuStockInApi
 } from '../api/productsApi';
+import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
+import { useProducts } from './useProducts';
+
+interface AtributoMinimo {
+  id: string;
+  attributeId: string;
+  attributeName?: string;
+}
 
 export const useProductBackofficeController = () => {
   const queryClient = useQueryClient();
@@ -20,20 +27,24 @@ export const useProductBackofficeController = () => {
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'ativos' | 'inativos'>('todos');
   const [alteracoesEstoque, setAlteracoesEstoque] = useState<Record<string, number | string>>({});
   const [alteracoesPreco, setAlteracoesPreco] = useState<Record<string, number | string>>({});
-  const [alteracoesMetadados, setAlteracoesMetadados] = useState<Record<string, { name: string; description: string }>>({});
+  const [alteracoesMetadados, setAlteracoesMetadados] = useState<Record<string, { name: string; description: string; atributosIds: string[] }>>({});
   const [estaEnviando, setEstaEnviando] = useState(false);
+  const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
+  const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null);
+  const { data: listaAtributosGlobais = [] } = useQuery({
+    queryKey: ['products', 'global-attributes-list'] as const,
+    queryFn: fetchAttributesFromApi,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const produtosFiltrados = useMemo(() => {
     if (!produtos) return [];
-
     return produtos.filter((produto) => {
       const correspondeBusca = produto.name.toLowerCase().includes(termoPesquisa.toLowerCase());
-
       const correspondeStatus =
         filtroStatus === 'todos' ||
         (filtroStatus === 'ativos' && produto.isActive) ||
         (filtroStatus === 'inativos' && !produto.isActive);
-
       return correspondeBusca && correspondeStatus;
     });
   }, [produtos, termoPesquisa, filtroStatus]);
@@ -46,151 +57,122 @@ export const useProductBackofficeController = () => {
     return alteracoesPreco[skuId] !== undefined ? alteracoesPreco[skuId] : precoAtual;
   };
 
-  const obterMetadadosEfetivosProduto = (produtoId: string, nomeAtual: string, descricaoAtual: string) => {
-    return alteracoesMetadados[produtoId] || { name: nomeAtual, description: descricaoAtual };
+  const obterMetadadosEfetivosProduto = (
+    produtoId: string,
+    nomeOriginal: string,
+    descricaoOriginal: string,
+    atributosOriginais: AtributoMinimo[]
+  ) => {
+    return alteracoesMetadados[produtoId] || {
+      name: nomeOriginal,
+      description: descricaoOriginal,
+      atributosIds: atributosOriginais.map((a) => a.attributeId || a.id)
+    };
   };
 
   const handleMudancaMetadados = (produtoId: string, chave: 'name' | 'description', valor: string) => {
     setAlteracoesMetadados((prev) => {
+      const original = produtos?.find((p) => p.id === produtoId);
       const atual = prev[produtoId] || {
-        name: produtos?.find((p) => p.id === produtoId)?.name || '',
-        description: produtos?.find((p) => p.id === produtoId)?.description || '',
+        name: original?.name || '',
+        description: original?.description || '',
+        atributosIds: original?.attributes.map((a) => a.attributeId) || []
       };
-      return {
-        ...prev,
-        [produtoId]: { ...atual, [chave]: valor },
+      return { ...prev, [produtoId]: { ...atual, [chave]: valor } };
+    });
+  };
+  const handleToggleAtributoProdutoPai = (produtoId: string, atributoId: string) => {
+    setAlteracoesMetadados((prev) => {
+      const original = produtos?.find((p) => p.id === produtoId);
+      const atual = prev[produtoId] || {
+        name: original?.name || '',
+        description: original?.description || '',
+        atributosIds: original?.attributes.map((a) => a.attributeId) || []
       };
+
+      const novosIds = atual.atributosIds.includes(atributoId)
+        ? atual.atributosIds.filter((id) => id !== atributoId)
+        : [...atual.atributosIds, atributoId];
+
+      return { ...prev, [produtoId]: { ...atual, atributosIds: novosIds } };
     });
   };
 
   const handleMudancaPreco = (skuId: string, valor: string) => {
     const valorSaneado = valor.replace(/[^0-9.]/g, '');
-    const partes = valorSaneado.split('.');
-    const valorFinal = partes.length > 2 ? `${partes[0]}.${partes.slice(1).join('')}` : valorSaneado;
-
-    setAlteracoesPreco((prev) => ({ ...prev, [skuId]: valorFinal }));
+    setAlteracoesPreco((prev) => ({ ...prev, [skuId]: valorSaneado }));
   };
 
   const handleAlternarStatusProduto = async (produtoId: string, nomeProduto: string, estaAtivo: boolean) => {
-    const mensagemConfirmacao = estaAtivo
-      ? `Tem certeza que deseja INATIVAR o produto pai: ${nomeProduto}?`
-      : `Tem certeza que deseja REATIVAR o produto pai: ${nomeProduto}?`;
-
-    if (!window.confirm(mensagemConfirmacao)) return;
-
+    const msg = estaAtivo ? `Deseja inativar o produto: ${nomeProduto}?` : `Deseja reativar o produto: ${nomeProduto}?`;
+    if (!window.confirm(msg)) return;
     try {
-      if (estaAtivo) {
-        await deleteProductInApi(produtoId);
-      } else {
-        await activateProductInApi(produtoId);
-      }
+      if (estaAtivo) await deleteProductInApi(produtoId);
+      else await activateProductInApi(produtoId);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert(`Status do produto alterado com sucesso!`);
-    } catch (err) {
-      alert('Falha ao modificar o status operacional do ativo.');
+      alert('Status alterado com sucesso!');
+    } catch {
+      alert('Erro ao modificar o status.');
     }
   };
 
   const handleExclusaoFisicaSku = async (skuId: string, codigoSku: string) => {
-    if (!window.confirm(`CRÍTICO: Tem certeza que deseja EXCLUIR FISICAMENTE a variação [${codigoSku}] do banco de dados?`)) return;
+    if (!window.confirm(`Deseja remover permanentemente o SKU ${codigoSku}?`)) return;
     try {
       await deleteSkuInApi(skuId);
-      setAlteracoesEstoque((prev) => {
-        const copia = { ...prev };
-        delete copia[skuId];
-        return copia;
-      });
-      setAlteracoesPreco((prev) => {
-        const copia = { ...prev };
-        delete copia[skuId];
-        return copia;
-      });
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert('Variação de SKU removida permanentemente dos registros.');
-    } catch (err) {
-      alert('Falha ao deletar fisicamente o SKU.');
+      alert('Variação de SKU removida com sucesso!');
+    } catch {
+      alert('Erro ao excluir SKU do banco.');
     }
   };
 
-  const obterContagemItensModificados = (): number => {
+  const contagemModificados = useMemo(() => {
     let contagem = 0;
     if (!produtos) return 0;
 
     Object.entries(alteracoesEstoque).forEach(([skuId, val]) => {
-      const novoEstoque = val === '' ? 0 : Number(val);
-      let estoqueOriginal = -1;
-      produtos.forEach((p) => {
-        const match = p.skus.find((s) => s.id === skuId);
-        if (match) estoqueOriginal = match.stock;
-      });
-      if (estoqueOriginal !== -1 && estoqueOriginal !== novoEstoque) contagem++;
+      let original = -1;
+      produtos.forEach((p) => { const m = p.skus.find((s) => s.id === skuId); if (m) original = m.stock; });
+      if (original !== -1 && original !== (val === '' ? 0 : Number(val))) contagem++;
     });
 
     Object.entries(alteracoesPreco).forEach(([skuId, val]) => {
-      const novoPreco = val === '' ? 0 : Number(val);
-      let precoOriginal = -1;
-      produtos.forEach((p) => {
-        const match = p.skus.find((s) => s.id === skuId);
-        if (match) precoOriginal = match.price;
-      });
-      if (precoOriginal !== -1 && precoOriginal !== novoPreco) contagem++;
+      let original = -1;
+      produtos.forEach((p) => { const m = p.skus.find((s) => s.id === skuId); if (m) original = m.price; });
+      if (original !== -1 && original !== (val === '' ? 0 : Number(val))) contagem++;
     });
 
     Object.entries(alteracoesMetadados).forEach(([id, meta]) => {
-      const original = produtos.find((p) => p.id === id);
-      if (original && (original.name !== meta.name || original.description !== meta.description)) {
-        contagem++;
+      const orig = produtos.find((p) => p.id === id);
+      if (orig) {
+        const origIds = orig.attributes.map((a) => a.attributeId).sort().join(',');
+        const novosIds = [...meta.atributosIds].sort().join(',');
+        if (orig.name !== meta.name || orig.description !== meta.description || origIds !== novosIds) {
+          contagem++;
+        }
       }
     });
 
     return contagem;
-  };
+  }, [produtos, alteracoesEstoque, alteracoesPreco, alteracoesMetadados]);
 
   const handleEnvioEmLote = async () => {
     setEstaEnviando(true);
     if (!produtos) return;
 
-    const camposInvalidos = Object.values(alteracoesMetadados).some(
-      (meta) => meta.name.trim() === '' || meta.description.trim() === ''
-    );
-
-    if (camposInvalidos) {
-      alert('Erro de Validação: O nome e a descrição do produto não podem ser deixados em branco.');
-      setEstaEnviando(false);
-      return;
-    }
-
     try {
-      const promessasEstoque = Object.entries(alteracoesEstoque)
-        .filter(([skuId, val]) => {
-          const novoEstoque = val === '' ? 0 : Number(val);
-          let original = -1;
-          produtos.forEach((p) => {
-            const match = p.skus.find((s) => s.id === skuId);
-            if (match) original = match.stock;
-          });
-          return original !== -1 && original !== novoEstoque;
-        })
-        .map(([skuId, val]) => updateSkuStockInApi(skuId, val === '' ? 0 : Number(val)));
+      const promessasEstoque = Object.entries(alteracoesEstoque).map(([skuId, val]) =>
+        updateSkuStockInApi(skuId, val === '' ? 0 : Number(val))
+      );
 
-      const promessasPreco = Object.entries(alteracoesPreco)
-        .filter(([skuId, val]) => {
-          const novoPreco = val === '' ? 0 : Number(val);
-          let original = -1;
-          produtos.forEach((p) => {
-            const match = p.skus.find((s) => s.id === skuId);
-            if (match) original = match.price;
-          });
-          return original !== -1 && original !== novoPreco;
-        })
-        .map(([skuId, val]) => updateSkuPriceInApi(skuId, Number(val)));
+      const promessasPreco = Object.entries(alteracoesPreco).map(([skuId, val]) =>
+        updateSkuPriceInApi(skuId, Number(val))
+      );
 
-      const promessasMetadados = Object.entries(alteracoesMetadados)
-        .filter(([id, meta]) => {
-          const original = produtos.find((p) => p.id === id);
-          return original && (original.name !== meta.name || original.description !== meta.description);
-        })
-        .map(([id, meta]) => updateProductMetadataInApi(id, meta.name, meta.description));
+      const promessasMetadados = Object.entries(alteracoesMetadados).map(([id, meta]) =>
+        updateProductMetadataInApi(id, meta.name, meta.description, meta.atributosIds)
+      );
 
       await Promise.all([...promessasEstoque, ...promessasPreco, ...promessasMetadados]);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
@@ -198,54 +180,38 @@ export const useProductBackofficeController = () => {
       setAlteracoesEstoque({});
       setAlteracoesPreco({});
       setAlteracoesMetadados({});
-      alert('Todas as configurações em lote e preços foram salvos com sucesso!');
-    } catch (err) {
-      alert('Ocorreu um erro ao aplicar as updates em lote.');
+      alert('Todas as modificações foram integradas e salvas com sucesso!');
+    } catch {
+      alert('Erro ao tentar salvar alterações em lote.');
     } finally {
       setEstaEnviando(false);
     }
   };
 
-  const contagemModificados = obterContagemItensModificados();
-
-  const handleMudancaPesquisa = (valor: string) => {
-    if (valor.trim()) {
-      setParametrosBusca({ search: valor }, { replace: true });
-    } else {
-      setParametrosBusca({}, { replace: true });
-    }
+  const handleMudancaPesquisa = (v: string) => {
+    if (v.trim()) setParametrosBusca({ search: v }, { replace: true });
+    else setParametrosBusca({}, { replace: true });
   };
 
   const limparPesquisa = () => {
     setParametrosBusca({}, { replace: true });
   };
 
-  const handleIncrementarEstoque = (skuId: string, estoqueAtual: number) => {
-    const efetivo = obterEstoqueEfetivoSku(skuId, estoqueAtual);
-    const numerico = efetivo === '' ? 0 : Number(efetivo);
-    setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: numerico + 1 }));
+  const handleIncrementarEstoque = (id: string, atual: number) => {
+    setAlteracoesEstoque(prev => ({ ...prev, [id]: (prev[id] !== undefined ? Number(prev[id]) : atual) + 1 }));
   };
 
-  const handleDecrementarEstoque = (skuId: string, estoqueAtual: number) => {
-    const efetivo = obterEstoqueEfetivoSku(skuId, estoqueAtual);
-    const numerico = efetivo === '' ? 0 : Number(efetivo);
-    setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: Math.max(0, numerico - 1) }));
+  const handleDecrementarEstoque = (id: string, atual: number) => {
+    setAlteracoesEstoque(prev => ({ ...prev, [id]: Math.max(0, (prev[id] !== undefined ? Number(prev[id]) : atual) - 1) }));
   };
 
-  const handleMudancaEstoqueInput = (skuId: string, valor: string) => {
-    if (valor === '') {
-      setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: '' }));
-    } else {
-      const analisado = parseInt(valor, 10);
-      if (!isNaN(analisado) && analisado >= 0) {
-        setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: analisado }));
-      }
-    }
+  const handleMudancaEstoqueInput = (id: string, v: string) => {
+    setAlteracoesEstoque(prev => ({ ...prev, [id]: v === '' ? '' : Math.max(0, parseInt(v, 10)) }));
   };
 
-  const handleBlurEstoqueInput = (skuId: string) => {
-    if (alteracoesEstoque[skuId] === '') {
-      setAlteracoesEstoque((prev) => ({ ...prev, [skuId]: 0 }));
+  const handleBlurEstoqueInput = (id: string) => {
+    if (alteracoesEstoque[id] === '') {
+      setAlteracoesEstoque(prev => ({ ...prev, [id]: 0 }));
     }
   };
 
@@ -258,13 +224,13 @@ export const useProductBackofficeController = () => {
     filtroStatus,
     estaEnviando,
     contagemModificados,
+    listaAtributosGlobais,
     setFiltroStatus,
-    alteracoesEstoque,
-    alteracoesPreco,
     obterEstoqueEfetivoSku,
     obterPrecoEfetivoSku,
     obterMetadadosEfetivosProduto,
     handleMudancaMetadados,
+    handleToggleAtributoProdutoPai,
     handleMudancaPreco,
     handleAlternarStatusProduto,
     handleExclusaoFisicaSku,
@@ -274,6 +240,11 @@ export const useProductBackofficeController = () => {
     handleIncrementarEstoque,
     handleDecrementarEstoque,
     handleMudancaEstoqueInput,
-    handleBlurEstoqueInput
+    handleBlurEstoqueInput,
+    exibirFormCriacao,
+    setExibirFormCriacao,
+    produtoIdParaNovoSku,
+    setProdutoIdParaNovoSku,
+    podeEditarMetadados: true
   };
 };

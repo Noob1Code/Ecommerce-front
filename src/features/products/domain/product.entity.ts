@@ -1,4 +1,4 @@
-import type { Product, ProductSku, SkuOption, SkuImage, ProductAttribute } from './product.types';
+import type { Product, ProductAttribute, ProductSku, SkuImage, SkuOption } from './product.types';
 
 export const createProductAttributeEntity = (data: Partial<ProductAttribute>): ProductAttribute => {
   return {
@@ -30,8 +30,8 @@ export const createSkuEntity = (data: Partial<ProductSku>): ProductSku => {
   const normalizedPrice = Math.max(0, data.price || 0);
   const normalizedStock = Math.max(0, data.stock || 0);
 
-  const sortedImages = data.images 
-    ? [...data.images].sort((a, b) => a.order - b.order) 
+  const sortedImages = data.images
+    ? [...data.images].sort((a, b) => a.order - b.order)
     : [];
 
   return {

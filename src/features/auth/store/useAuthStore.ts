@@ -69,7 +69,7 @@ export const useAuthStore = create<EstadoAutenticacao>()(
     {
       name: 'ecommerce-auth-storage',
       version: 1, // Definição da versão estável inicial do schema de dados
-      migrate: (persistedState: unknown, version: number): any => {
+      migrate: (persistedState: unknown, version: number): unknown => {
         // Abordagem defensiva: Se a versão em disco for menor que a atual ou indefinida,
         // força o reset preventivo do estado para evitar quebra de tipagem no carregamento.
         if (version < 1) {

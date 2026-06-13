@@ -1,5 +1,5 @@
+import { Button, Card, EmptyState, ErrorMessage, Spinner } from '../../../shared/components/ui';
 import { useCustomerOrdersController } from '../hooks/useCustomerOrdersController';
-import { Card, Button, Spinner, ErrorMessage, EmptyState } from '../../../shared/components/ui';
 
 export const CustomerOrders = () => {
   const {

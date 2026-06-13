@@ -1,5 +1,5 @@
+import { Button, Card, Input } from '../../../shared/components/ui';
 import { useCustomerProfileController } from '../hooks/useCustomerProfileController';
-import { Card, Button, Input } from '../../../shared/components/ui';
 
 export const CustomerProfile = () => {
   const {
@@ -28,8 +28,8 @@ export const CustomerProfile = () => {
       <div className="mb-6 border-b border-gray-200 pb-5">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Meus Dados Cadastrais</h1>
         <p className="mt-2 text-sm text-gray-500">
-          {ehCliente 
-            ? 'Gerencie suas informações pessoais de cliente e contato.' 
+          {ehCliente
+            ? 'Gerencie suas informações pessoais de cliente e contato.'
             : 'Gerencie suas informações e credenciais de acesso corporativo.'}
         </p>
       </div>
@@ -87,13 +87,13 @@ export const CustomerProfile = () => {
             <div className="max-w-md">
               <label htmlFor="senha" className="block text-sm font-semibold text-gray-700 mb-1">Alterar Senha de Acesso</label>
               <p className="text-[11px] text-gray-400 mb-1.5">Deixe em branco caso queira manter a sua senha atual do sistema.</p>
-              <Input 
-                id="senha" 
-                type="password" 
-                value={senha} 
-                onChange={(e) => setSenha(e.target.value)} 
-                placeholder="Nova senha (mínimo 6 caracteres)" 
-                disabled={estaCarregando} 
+              <Input
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder="Nova senha (mínimo 6 caracteres)"
+                disabled={estaCarregando}
               />
             </div>
           </div>

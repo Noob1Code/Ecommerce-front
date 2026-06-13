@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCartStore } from '../store/useCartStore';
+//  CORREÇÃO CIRÚRGICA: Consumindo o hook pela fachada pública legalizada para o Dependency Cruiser passar direto.
 import { useProducts } from '../../products';
-import { useCartMutations } from './useCartMutations';
 import type { Product, ProductSku } from '../../products/domain/product.types';
+import { useCartStore } from '../store/useCartStore';
+import { useCartMutations } from './useCartMutations';
 
 export interface EnrichedCartItem {
   id: string;
@@ -91,29 +92,23 @@ export const useCartController = () => {
       handleRemove(skuId);
       return;
     }
-    
+
     let maxStock = 999999;
     const match = enrichedItems.find((i) => i.skuId === skuId);
     if (match) {
       maxStock = match.selectedSku.stock;
     }
-    
+
     const targetQuantity = currentQuantity - 1;
     updateQuantity(skuId, targetQuantity, maxStock);
     updateQuantityMutation.mutate({ variationId: skuId, quantity: targetQuantity });
   };
 
-  /**
-   * Remove o item por completo.
-   */
   const handleRemove = (skuId: string) => {
     removeItem(skuId);
     removeFromCartMutation.mutate(skuId);
   };
 
-  /**
-   * Limpa todo o carrinho.
-   */
   const handleClear = () => {
     if (window.confirm('Are you sure you want to drop all selected items from your cart?')) {
       clearCart();

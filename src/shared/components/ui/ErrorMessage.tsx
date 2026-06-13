@@ -1,4 +1,3 @@
-// src/shared/components/ui/ErrorMessage.tsx
 import { Button } from './Button';
 
 interface ErrorMessageProps {

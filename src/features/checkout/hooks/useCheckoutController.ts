@@ -1,12 +1,12 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { useCartStore } from '../../cart';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../auth';
+import { useCartStore } from '../../cart';
 import { useProducts } from '../../products';
+import type { Product, ProductSku } from '../../products/domain/product.types';
 import { createOrderApi, type BackendCheckoutResponseDTO } from '../api/checkoutApi';
 import { mapCheckoutToApi } from '../domain/checkout.mapper';
-import type { Product, ProductSku } from '../../products/domain/product.types';
 
 interface EnrichedCheckoutItem {
   skuId: string;
@@ -61,9 +61,9 @@ export const useCheckoutController = () => {
   }, [enrichedItems]);
 
   const formattedTotal = useMemo(() => {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
     }).format(cartTotal);
   }, [cartTotal]);
 
@@ -88,9 +88,9 @@ export const useCheckoutController = () => {
     }
 
     const payloadMapeado = mapCheckoutToApi(
-      user.id, 
-      metodoPagamento, 
-      parcelas, 
+      user.id,
+      metodoPagamento,
+      parcelas,
       enrichedItems.map(i => ({ skuId: i.skuId, quantity: i.quantity, price: i.selectedSku.price }))
     );
 

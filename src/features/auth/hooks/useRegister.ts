@@ -9,10 +9,8 @@ export const useRegister = () => {
 
   const { mutate: registrarCliente, isPending: estaCarregando, error: erro } = useMutation({
     mutationFn: cadastrarClienteApi,
-    onSuccess: (usuarioCard) => {
-      const tokenSimulado = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.simulated_token_string';
-      
-      fazerLogin(tokenSimulado, usuarioCard);
+    onSuccess: (resultado) => {
+      fazerLogin(resultado.token, resultado.usuario);
       navigate('/');
     },
   });

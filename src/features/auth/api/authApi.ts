@@ -1,9 +1,6 @@
 import { httpClient } from '../../../services/api';
-import type { UsuarioAutenticado, PerfilUsuario } from '../store/useAuthStore';
+import type { PerfilUsuario, UsuarioAutenticado } from '../store/useAuthStore';
 import { AUTH_ENDPOINTS } from './authEndpoints';
-
-const USAR_MOCKS = false;
-const TEMPO_ESPERA_MS = 600;
 
 export interface ClienteRequestDTO {
   nome: string;
@@ -46,10 +43,10 @@ export interface LoginRequestDTO {
 }
 
 export interface TokenResponseDTO {
-  token: string;    
-  id: string;       
-  nome: string;     
-  roles: string[];  
+  token: string;
+  id: string;
+  nome: string;
+  roles: string[];
 }
 
 export interface EntradaCadastroCliente {
@@ -78,21 +75,7 @@ export interface ResultadoAutenticacao {
   usuario: UsuarioAutenticado;
 }
 
-export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<UsuarioAutenticado> => {
-  if (USAR_MOCKS) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: 'mock-id-cliente-gerado',
-          nome: entrada.nome,
-          email: entrada.email,
-          perfis: ['ROLE_CLIENTE'],
-          cpf: entrada.cpf,
-          telefone: entrada.telefone
-        });
-      }, TEMPO_ESPERA_MS);
-    });
-  }
+export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<ResultadoAutenticacao> => {
 
   const dto: ClienteRequestDTO = {
     nome: entrada.nome,
@@ -102,33 +85,17 @@ export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Prom
     cpf: entrada.cpf || '',
   };
 
-  const resposta = await httpClient.post<ClienteResponseDTO>(AUTH_ENDPOINTS.registerCliente, dto);
+  await httpClient.post<ClienteResponseDTO>(AUTH_ENDPOINTS.registerCliente, dto);
+  const resultadoLogin = await logarUsuarioApi({
+    email: entrada.email,
+    senha: entrada.senha
+  });
 
-  return {
-    id: resposta.data.id,
-    nome: resposta.data.nome,
-    email: resposta.data.email,
-    perfis: resposta.data.roles as PerfilUsuario[],
-    cpf: resposta.data.cpf,
-    telefone: resposta.data.telefone
-  };
+  return resultadoLogin;
 };
 
 export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionario): Promise<UsuarioAutenticado> => {
-  if (USAR_MOCKS) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: 'mock-id-staff-gerado',
-          nome: entrada.nome,
-          email: entrada.email,
-          perfis: entrada.perfis,
-          matricula: entrada.matricula,
-        });
-      }, TEMPO_ESPERA_MS);
-    });
-  }
-
+  
   const dto: FuncionarioRequestDTO = {
     nome: entrada.nome,
     email: entrada.email,
@@ -149,28 +116,6 @@ export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionari
 };
 
 export const logarUsuarioApi = async (entrada: EntradaLogin): Promise<ResultadoAutenticacao> => {
-  if (USAR_MOCKS) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (entrada.email.includes('admin')) {
-          resolve({
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_admin_token',
-            usuario: { id: 'admin-id', nome: 'Admin Master', email: entrada.email, perfis: ['ROLE_ADMIN'] }
-          });
-        } else if (entrada.email.includes('estoque')) {
-          resolve({
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_estoque_token',
-            usuario: { id: 'estoque-id', nome: 'Operador de Estoque', email: entrada.email, perfis: ['ROLE_ESTOQUE'] }
-          });
-        } else {
-          resolve({
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_cliente_token',
-            usuario: { id: 'cliente-id', nome: 'Kayque Cliente', email: entrada.email, perfis: ['ROLE_CLIENTE'], cpf: '123.456.789-00', telefone: '(11) 99999-9999' }
-          });
-        }
-      }, TEMPO_ESPERA_MS);
-    });
-  }
 
   const dto: LoginRequestDTO = {
     username: entrada.email,

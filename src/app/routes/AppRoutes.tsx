@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { Layout, ErrorBoundary } from '../layout';
-import { Spinner } from '../../shared/components/ui';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { RoleGuard, useAuthStore } from '../../features/auth';
+import { Spinner } from '../../shared/components/ui';
+import { ErrorBoundary, Layout } from '../layout';
 
 const RouteFallback = () => (
   <div className="flex min-h-[60vh] items-center justify-center">
@@ -18,9 +18,9 @@ const GuardaVisitante = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const ProductGrid = lazy(() => import('../../features/products').then(m => ({ default: m.ProductGrid })));
-const ProductDetail = lazy(() => import('../../features/products').then(m => ({ default: m.ProductDetail })));
-const ProductBackoffice = lazy(() => import('../../features/products').then(m => ({ default: m.ProductBackoffice })));
+const ProductGrid = lazy(() => import('../../features/products/components/ProductGrid').then(m => ({ default: m.ProductGrid })));
+const ProductDetail = lazy(() => import('../../features/products/components/ProductDetail').then(m => ({ default: m.ProductDetail })));
+const ProductBackoffice = lazy(() => import('../../features/products/components/ProductBackoffice').then(m => ({ default: m.ProductBackoffice })));
 const Cart = lazy(() => import('../../features/cart').then(m => ({ default: m.Cart })));
 const Checkout = lazy(() => import('../../features/checkout').then(m => ({ default: m.Checkout })));
 const Login = lazy(() => import('../../features/auth').then(m => ({ default: m.Login })));
@@ -114,7 +114,6 @@ const router = createBrowserRouter([
         path: 'backoffice',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            {/* CORREÇÃO: Apenas ADMIN e ESTOQUE entram no Backoffice de Produtos */}
             <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']} fallback={<Navigate to="/" replace />}>
               <ProductBackoffice />
             </RoleGuard>
@@ -125,7 +124,6 @@ const router = createBrowserRouter([
         path: 'backoffice/funcionarios',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            {/* CORREÇÃO DO ERRO DA URL: Se o cacatua tentar forçar a URL, ele é ejetado de volta para o /backoffice de produtos */}
             <RoleGuard allowedRoles={['ROLE_ADMIN']} fallback={<Navigate to="/backoffice" replace />}>
               <EmployeeRegister />
             </RoleGuard>
@@ -136,7 +134,6 @@ const router = createBrowserRouter([
         path: 'backoffice/faturamento',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            {/* CORREÇÃO DAS OUTRAS ROLES: Travado rigidamente apenas para ADMIN e FATURAMENTO */}
             <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_FATURAMENTO']} fallback={<Navigate to="/" replace />}>
               <PainelFaturamentoMock />
             </RoleGuard>

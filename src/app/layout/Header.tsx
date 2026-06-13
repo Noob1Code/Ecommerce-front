@@ -1,21 +1,19 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCartStore } from '../../features/cart/store/useCartStore';
 import { useAuthStore } from '../../features/auth/store/useAuthStore';
+import { useCartStore } from '../../features/cart/store/useCartStore';
 
 export const Header = () => {
   const navigate = useNavigate();
   const [menuAberto, setMenuAberto] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Estados globais
   const usuario = useAuthStore((state) => state.usuario);
   const fazerLogout = useAuthStore((state) => state.fazerLogout);
   const contagemItensCarrinho = useCartStore((state) => 
     state.items.reduce((total, item) => total + item.quantity, 0)
   );
 
-  // Fecha o menu se o usuário clicar fora dele
   useEffect(() => {
     const cliqueFora = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -34,7 +32,6 @@ export const Header = () => {
     }
   };
 
-  // Pega a inicial do nome para o avatar (Desenho/Bolinha)
   const inicialNome = usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'U';
 
   return (

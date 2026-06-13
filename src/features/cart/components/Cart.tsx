@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
+import { Button, Card, ErrorMessage, Spinner } from '../../../shared/components/ui';
 import { useCartController } from '../hooks/useCartController';
-import { Card, Button, Spinner, ErrorMessage } from '../../../shared/components/ui';
 
 export const Cart = () => {
   const {
@@ -32,8 +32,6 @@ export const Cart = () => {
       </div>
     );
   }
-
-  // TRADUÇÃO: Feedback visual de sacola de compras vazia
   if (isEmpty) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
