@@ -21,6 +21,8 @@ export const useCheckoutController = () => {
   const rawItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const user = useAuthStore((state) => state.usuario);
+  
+  // Alinhado para iniciar com o padrão comercial e aceitar os Enums do Spring Boot
   const [metodoPagamento, setMetodoPagamento] = useState<string>('PIX');
   const [parcelas, setParcelas] = useState<number>(1);
   const [sucessoCheckout, setSucessoCheckout] = useState<BackendCheckoutResponseDTO | null>(null);

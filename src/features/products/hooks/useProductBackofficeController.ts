@@ -7,7 +7,8 @@ import {
   fetchAttributesFromApi,
   updateProductMetadataInApi,
   updateSkuPriceInApi,
-  updateSkuStockInApi
+  updateSkuStockInApi,
+  updateSkuDetailsInApi
 } from '../api/productsApi';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
 import { useProducts } from './useProducts';
@@ -30,6 +31,10 @@ export const useProductBackofficeController = () => {
   const [estaEnviando, setEstaEnviando] = useState(false);
   const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
   const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null);
+
+  // Novos estados para o controle e buffer da edição de propriedades dos SKUs
+  const [skuIdEmEdicao, setSkuIdEmEdicao] = useState<string | null>(null);
+  const [dadosEdicaoSku, setDadosEdicaoSku] = useState<{ skuCode: string; options: Record<string, string> } | null>(null);
 
   const { data: listaAtributosGlobais = [] } = useQuery({
     queryKey: ['products', 'global-attributes-list'] as const,
@@ -124,6 +129,58 @@ export const useProductBackofficeController = () => {
       alert('Variação de SKU removida com sucesso!');
     } catch {
       alert('Erro ao excluir SKU do banco.');
+    }
+  };
+
+  const handleIniciarEdicaoSku = (sku: any) => {
+    setSkuIdEmEdicao(sku.id);
+    const opcoesIniciais: Record<string, string> = {};
+    sku.options?.forEach((o: any) => {
+      opcoesIniciais[o.attributeId] = o.value;
+    });
+    setDadosEdicaoSku({
+      skuCode: sku.skuCode,
+      options: opcoesIniciais
+    });
+  };
+
+  const handleCancelarEdicaoSku = () => {
+    setSkuIdEmEdicao(null);
+    setDadosEdicaoSku(null);
+  };
+
+  const handleMudancaCodigoSkuEdicao = (codigo: string) => {
+    if (!dadosEdicaoSku) return;
+    setDadosEdicaoSku({ ...dadosEdicaoSku, skuCode: codigo });
+  };
+
+  const handleMudancaOpcaoSkuEdicao = (atributoId: string, valor: string) => {
+    if (!dadosEdicaoSku) return;
+    setDadosEdicaoSku({
+      ...dadosEdicaoSku,
+      options: { ...dadosEdicaoSku.options, [atributoId]: valor }
+    });
+  };
+
+  const handleSalvarEdicaoSku = async (skuId: string) => {
+    if (!dadosEdicaoSku) return;
+    setEstaEnviando(true);
+    try {
+      const opcoesDto = Object.entries(dadosEdicaoSku.options).map(([atributoId, valor]) => ({
+        atributoId,
+        valor
+      }));
+
+      await updateSkuDetailsInApi(skuId, dadosEdicaoSku.skuCode, opcoesDto);
+      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
+      
+      setSkuIdEmEdicao(null);
+      setDadosEdicaoSku(null);
+      alert('Configuração de atributos do SKU salva com sucesso!');
+    } catch {
+      alert('Erro ao tentar atualizar as características da variação.');
+    } finally {
+      setEstaEnviando(false);
     }
   };
 
@@ -245,6 +302,13 @@ export const useProductBackofficeController = () => {
     setExibirFormCriacao,
     produtoIdParaNovoSku,
     setProdutoIdParaNovoSku,
+    skuIdEmEdicao,
+    dadosEdicaoSku,
+    handleIniciarEdicaoSku,
+    handleCancelarEdicaoSku,
+    handleMudancaCodigoSkuEdicao,
+    handleMudancaOpcaoSkuEdicao,
+    handleSalvarEdicaoSku,
     podeEditarMetadados: true
   };
 };

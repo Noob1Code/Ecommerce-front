@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
 import { RoleGuard } from '../../auth';
@@ -40,6 +40,13 @@ export const ProductBackoffice = () => {
     setExibirFormCriacao,
     produtoIdParaNovoSku,
     setProdutoIdParaNovoSku,
+    skuIdEmEdicao,
+    dadosEdicaoSku,
+    handleIniciarEdicaoSku,
+    handleCancelarEdicaoSku,
+    handleMudancaCodigoSkuEdicao,
+    handleMudancaOpcaoSkuEdicao,
+    handleSalvarEdicaoSku,
     podeEditarMetadados
   } = useProductBackofficeController();
 
@@ -50,6 +57,16 @@ export const ProductBackoffice = () => {
       </div>
     );
   }
+
+  // Escaneia os SKUs existentes para extrair sugestões automáticas de preenchimento para o datalist
+  const obterValoresGrupoOpcao = (product: any, attributeId: string): string[] => {
+    const valoresSet = new Set<string>();
+    product.skus?.forEach((sku: any) => {
+      const match = sku.options?.find((o: any) => o.attributeId === attributeId);
+      if (match) valoresSet.add(match.value);
+    });
+    return Array.from(valoresSet);
+  };
 
   return (
     <RoleGuard
@@ -270,37 +287,118 @@ export const ProductBackoffice = () => {
                           {product.skus?.map((sku) => {
                             const estEfetivo = obterEstoqueEfetivoSku(sku.id, sku.stock);
                             const prcEfetivo = obterPrecoEfetivoSku(sku.id, sku.price);
+                            const emEdicao = skuIdEmEdicao === sku.id;
+                            
                             return (
-                              <tr key={sku.id} className="hover:bg-gray-50/40">
-                                <td className="px-4 py-2.5 font-mono font-bold text-gray-700">{sku.skuCode}</td>
-                                <td className="px-4 py-2.5 text-gray-500 font-medium">{sku.options?.map((o) => `${o.attributeName}: ${o.value}`).join(' | ')}</td>
-                                <td className="px-4 py-2.5 text-gray-400 line-through">{sku.formattedPrice}</td>
-                                <td className="px-4 py-2.5">
-                                  <input
-                                    type="text"
-                                    value={prcEfetivo}
-                                    disabled={estaEnviando || !product.isActive}
-                                    onChange={(e) => handleMudancaPreco(sku.id, e.target.value)}
-                                    className="w-20 p-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white font-semibold"
-                                  />
-                                </td>
-                                <td className="px-4 py-2.5">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <button type="button" onClick={() => handleDecrementarEstoque(sku.id, sku.stock)} className="h-6 w-6 border rounded bg-gray-50 font-bold select-none">-</button>
+                              <Fragment key={sku.id}>
+                                <tr className="hover:bg-gray-50/40">
+                                  <td className="px-4 py-2.5 font-mono font-bold text-gray-700">{sku.skuCode}</td>
+                                  <td className="px-4 py-2.5 text-gray-500 font-medium">{sku.options?.map((o) => `${o.attributeName}: ${o.value}`).join(' | ')}</td>
+                                  <td className="px-4 py-2.5 text-gray-400 line-through">{sku.price}</td>
+                                  <td className="px-4 py-2.5">
                                     <input
-                                      type="number"
-                                      value={estEfetivo}
-                                      onChange={(e) => handleMudancaEstoqueInput(sku.id, e.target.value)}
-                                      onBlur={() => handleBlurEstoqueInput(sku.id)}
-                                      className="w-14 text-center border rounded text-xs font-semibold focus:outline-none"
+                                      type="text"
+                                      value={prcEfetivo}
+                                      disabled={estaEnviando || !product.isActive}
+                                      onChange={(e) => handleMudancaPreco(sku.id, e.target.value)}
+                                      className="w-20 p-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white font-semibold"
                                     />
-                                    <button type="button" onClick={() => handleIncrementarEstoque(sku.id, sku.stock)} className="h-6 w-6 border rounded bg-gray-50 font-bold select-none">+</button>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-2.5 text-right">
-                                  <button type="button" onClick={() => handleExclusaoFisicaSku(sku.id, sku.skuCode)} className="text-xs bg-red-50 text-red-600 border border-red-100 px-2 py-1 rounded hover:bg-red-600 hover:text-white transition-colors font-bold">Excluir</button>
-                                </td>
-                              </tr>
+                                  </td>
+                                  <td className="px-4 py-2.5">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <button type="button" onClick={() => handleDecrementarEstoque(sku.id, sku.stock)} className="h-6 w-6 border rounded bg-gray-50 font-bold select-none">-</button>
+                                      <input
+                                        type="number"
+                                        value={estEfetivo}
+                                        onChange={(e) => handleMudancaEstoqueInput(sku.id, e.target.value)}
+                                        onBlur={() => handleBlurEstoqueInput(sku.id)}
+                                        className="w-14 text-center border rounded text-xs font-semibold focus:outline-none"
+                                      />
+                                      <button type="button" onClick={() => handleIncrementarEstoque(sku.id, sku.stock)} className="h-6 w-6 border rounded bg-gray-50 font-bold select-none">+</button>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-2.5 text-right">
+                                    <div className="flex justify-end gap-2">
+                                      <button 
+                                        type="button" 
+                                        disabled={estaEnviando || !product.isActive}
+                                        onClick={() => emEdicao ? handleCancelarEdicaoSku() : handleIniciarEdicaoSku(sku)} 
+                                        className="text-xs bg-blue-50 text-blue-600 border border-blue-100 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition-colors font-bold"
+                                      >
+                                        {emEdicao ? 'Fechar' : 'Editar'}
+                                      </button>
+                                      <button type="button" onClick={() => handleExclusaoFisicaSku(sku.id, sku.skuCode)} className="text-xs bg-red-50 text-red-600 border border-red-100 px-2 py-1 rounded hover:bg-red-600 hover:text-white transition-colors font-bold">Excluir</button>
+                                    </div>
+                                  </td>
+                                </tr>
+
+                                {/* Painel Expandido Inline para alteração híbrida (Seleção + Escrita Livre) */}
+                                {emEdicao && dadosEdicaoSku && (
+                                  <tr>
+                                    <td colSpan={6} className="bg-blue-50/20 p-4 border-t border-b border-blue-100">
+                                      <div className="space-y-4 max-w-xl animate-in fade-in duration-150">
+                                        <h4 className="text-xs font-bold uppercase text-blue-600 tracking-wide">Editar Características da Variação</h4>
+                                        
+                                        <div>
+                                          <label htmlFor={`edit-code-${sku.id}`} className="block text-xs font-bold text-gray-500 uppercase mb-1">Código Identificador (SKU)</label>
+                                          <Input 
+                                            id={`edit-code-${sku.id}`}
+                                            type="text" 
+                                            value={dadosEdicaoSku.skuCode} 
+                                            onChange={(e) => handleMudancaCodigoSkuEdicao(e.target.value)} 
+                                            className="w-full text-xs" 
+                                          />
+                                        </div>
+
+                                        <div className="space-y-3">
+                                          {product.attributes.map((attr) => {
+                                            const listaSugestoesId = `sugestoes-${sku.id}-${attr.id}`;
+                                            return (
+                                              <div key={attr.id} className="space-y-1">
+                                                <label htmlFor={`edit-input-${sku.id}-${attr.id}`} className="block text-[11px] font-bold text-gray-500 uppercase">
+                                                  {attr.attributeName}
+                                                </label>
+                                                
+                                                {/* Combinação Híbrida: Input de texto associado a um DataList de sugestões existentes */}
+                                                <input 
+                                                  id={`edit-input-${sku.id}-${attr.id}`}
+                                                  type="text"
+                                                  list={listaSugestoesId}
+                                                  value={dadosEdicaoSku.options[attr.attributeId] || ''} 
+                                                  onChange={(e) => handleMudancaOpcaoSkuEdicao(attr.attributeId, e.target.value)}
+                                                  placeholder="Selecione na lista ou digite um novo valor livre..."
+                                                  className="w-full p-2 border rounded-lg text-xs bg-white font-medium text-gray-700 focus:outline-none shadow-2xs border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+
+                                                {/* Alimentação dinâmica das opções que o banco de dados já possui */}
+                                                <datalist id={listaSugestoesId}>
+                                                  {obterValoresGrupoOpcao(product, attr.attributeId).map((val) => (
+                                                    <option key={val} value={val} />
+                                                  ))}
+                                                </datalist>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+
+                                        <div className="flex gap-2 justify-end pt-2">
+                                          <Button type="button" variant="secondary" onClick={handleCancelarEdicaoSku} className="text-xs py-1.5 px-3">
+                                            Cancelar
+                                          </Button>
+                                          <Button 
+                                            type="button" 
+                                            variant="primary" 
+                                            onClick={() => handleSalvarEdicaoSku(sku.id)} 
+                                            className="text-xs py-1.5 px-3 bg-blue-600 text-white hover:bg-blue-700"
+                                          >
+                                            Salvar Alterações
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </Fragment>
                             );
                           })}
                         </tbody>

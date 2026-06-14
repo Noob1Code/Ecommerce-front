@@ -5,6 +5,7 @@ interface CheckoutItemInput {
   quantity: number;
   price: number;
 }
+
 export const mapCheckoutToApi = (
   userId: string,
   metodoPagamento: string,
