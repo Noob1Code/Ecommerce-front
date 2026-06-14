@@ -65,9 +65,9 @@ export const createProductInApi = async (payload: ProductRequestDTO): Promise<Pr
 };
 
 export const updateProductMetadataInApi = async (
-  id: string,
-  name: string,
-  description: string,
+  id: string, 
+  name: string, 
+  description: string, 
   atributosIds: string[]
 ): Promise<void> => {
   const payload: ProductRequestDTO = {
@@ -88,11 +88,11 @@ export const fetchAllSkuVariationsFromApi = async (): Promise<ProductVariationRe
 };
 
 export const createSkuVariationInApi = async (
-  productId: string,
+  productId: string, 
   payload: ProductVariationRequestDTO
 ): Promise<ProductVariationResponseDTO> => {
   const response = await httpClient.post<ProductVariationResponseDTO>(
-    PRODUCT_ENDPOINTS.variation.create(productId),
+    PRODUCT_ENDPOINTS.variation.create(productId), 
     payload
   );
   return response.data;
@@ -105,6 +105,18 @@ export const updateSkuStockInApi = async (skuId: string, newStock: number): Prom
 
 export const updateSkuPriceInApi = async (skuId: string, newPrice: number): Promise<void> => {
   const payload: ProductVariationUpdateDTO = { preco: newPrice };
+  await httpClient.put<void>(PRODUCT_ENDPOINTS.variation.detail(skuId), payload);
+};
+
+export const updateSkuDetailsInApi = async (
+  skuId: string, 
+  skuCode: string, 
+  opcoes: SkuOptionRequestDTO[]
+): Promise<void> => {
+  const payload: ProductVariationUpdateDTO = {
+    sku: skuCode,
+    opcoes: opcoes
+  };
   await httpClient.put<void>(PRODUCT_ENDPOINTS.variation.detail(skuId), payload);
 };
 

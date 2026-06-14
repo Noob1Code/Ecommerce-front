@@ -16,6 +16,7 @@ export const Checkout = () => {
     handleSubmit,
     concluirFluxo
   } = useCheckoutController();
+
   if (sucessoCheckout) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 text-center">
@@ -30,7 +31,6 @@ export const Checkout = () => {
             <div className="mt-6 p-4 bg-white border border-gray-200 rounded-xl text-left space-y-2">
               <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Pagamento via PIX Copia e Cola</p>
               <textarea readOnly value={sucessoCheckout.pixCopiaECola} rows={3} className="w-full font-mono text-xs p-2 bg-gray-50 border rounded-lg focus:outline-none resize-none" />
-              {/* CORREÇÃO: Removido size="small" e controlado o tamanho de forma nativa pelas classes do Tailwind */}
               <Button variant="secondary" onClick={() => { navigator.clipboard.writeText(sucessoCheckout.pixCopiaECola || ''); alert('Código copiado!'); }} className="text-xs py-1 px-3">
                 Copiar Chave Pix
               </Button>
@@ -42,7 +42,6 @@ export const Checkout = () => {
             <div className="mt-6 p-4 bg-white border border-gray-200 rounded-xl text-left space-y-2">
               <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Linha Digitável do Boleto</p>
               <input type="text" readOnly value={sucessoCheckout.linhaDigitavel} className="w-full font-mono text-xs p-2.5 bg-gray-50 border rounded-lg focus:outline-none" />
-              {/* CORREÇÃO: Removido size="small" e controlado o tamanho de forma nativa pelas classes do Tailwind */}
               <Button variant="secondary" onClick={() => { navigator.clipboard.writeText(sucessoCheckout.linhaDigitavel || ''); alert('Linha digitável copiada!'); }} className="text-xs py-1 px-3">
                 Copiar Código de Barras
               </Button>
@@ -63,13 +62,20 @@ export const Checkout = () => {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-3">
         <h2 className="text-xl font-bold text-gray-900">Seu carrinho de compras está vazio</h2>
-        <p className="text-sm text-gray-400">Insira mercadorias na sacola antes de prosseguir para a confirmação.</p>
+        <p className="text-sm text-gray-400">Insira mercadorias na sacola antes de prosseguir para a confirmation.</p>
         <Button variant="primary" onClick={() => window.location.assign('/')} className="mt-2">
           Ver Produtos
         </Button>
       </div>
     );
   }
+
+  // Helper local para traduzir as chaves enum do Java para rótulos amigáveis de tela
+  const obterRotuloMeioPagamento = (tipo: string) => {
+    if (tipo === 'CREDITO_CARD') return 'Cartão de Crédito';
+    if (tipo === 'DEBITO_CARD') return 'Cartão de Débito';
+    return tipo;
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
@@ -87,24 +93,28 @@ export const Checkout = () => {
             </div>
           </Card>
 
-          {/* Seleção do Método de Faturamento */}
+          {/* Seleção do Método de Faturamento Alinhado ao Enum do Java */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-4">
             <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">Forma de Pagamento *</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {['PIX', 'BOLETO', 'CREDITO'].map((tipo) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {['PIX', 'BOLETO', 'CREDITO_CARD', 'DEBITO_CARD'].map((tipo) => (
                 <button
                   key={tipo}
                   type="button"
-                  onClick={() => setMetodoPagamento(tipo)}
+                  onClick={() => {
+                    setMetodoPagamento(tipo);
+                    setParcelas(1); // Reseta para 1 parcela ao alternar de método
+                  }}
                   className={`p-3 rounded-xl border text-center font-bold text-xs transition-all ${metodoPagamento === tipo ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  {tipo === 'CREDITO' ? 'Cartão de Crédito' : tipo}
+                  {obterRotuloMeioPagamento(tipo)}
                 </button>
               ))}
             </div>
 
-            {metodoPagamento === 'CREDITO' && (
+            {/* Renderização condicional de parcelas restrita ao Enum CREDITO_CARD */}
+            {metodoPagamento === 'CREDITO_CARD' && (
               <div className="pt-3 animate-in fade-in duration-200">
                 <label htmlFor="parcelas" className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Opções de Parcelamento</label>
                 <select id="parcelas" value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className="w-full p-2 text-sm border rounded-lg bg-white font-semibold text-gray-700 focus:outline-none">
@@ -152,9 +162,13 @@ export const Checkout = () => {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-6">
-              <Button type="submit" disabled={isPending} className="w-full py-3 text-sm font-bold uppercase tracking-wider shadow-md bg-blue-600 text-white hover:bg-blue-700">
-                {/* CORREÇÃO VISUAL: Spinner acionado em estado de carregamento real */}
+            <div className="mt-6">
+              <Button 
+                type="button" 
+                onClick={handleSubmit}
+                disabled={isPending} 
+                className="w-full py-3 text-sm font-bold uppercase tracking-wider shadow-md bg-blue-600 text-white hover:bg-blue-700"
+              >
                 {isPending ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Spinner className="h-4 w-4 text-white" />
@@ -164,7 +178,7 @@ export const Checkout = () => {
                   'Confirmar e Finalizar Compra'
                 )}
               </Button>
-            </form>
+            </div>
           </Card>
         </div>
       </div>
