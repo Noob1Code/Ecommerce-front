@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../auth/store/useAuthStore';
+import { useAuthStore } from '../../auth';
 import { useProducts } from '../../products';
 import type { Product, ProductSku } from '../../products/domain/product.types';
 import { cartApi } from '../api/cartApi';
@@ -19,6 +19,7 @@ export interface EnrichedCartItem {
 export const useCartController = () => {
   const navigate = useNavigate();
   const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
+  const usuario = useAuthStore((state) => state.usuario);
   const { products, isLoading: isLoadingProducts, error: errorProducts } = useProducts();
 
   const {
@@ -34,11 +35,14 @@ export const useCartController = () => {
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
+  const possuiPermissaoCompra = usuario?.perfis?.some((p) =>
+    ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
+  );
 
   const { isFetching: isFetchingServerCart } = useQuery({
-    queryKey: ['cart', 'server-state'] as const,
+    queryKey: ['cart', 'server-state', usuario?.id] as const,
     queryFn: cartApi.obterCarrinhoDoServidor,
-    enabled: estaAutenticado,
+    enabled: estaAutenticado && !!usuario?.id && !!possuiPermissaoCompra,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -71,6 +75,7 @@ export const useCartController = () => {
       })
       .filter((item): item is EnrichedCartItem => item !== null);
   }, [rawItems, products]);
+
   const isEmpty = enrichedItems.length === 0 && !isFetchingServerCart;
 
   const totalItemsCount = useMemo(() => {
@@ -150,7 +155,7 @@ export const useCartController = () => {
     items: enrichedItems,
     isEmpty,
     isLoading: isLoadingProducts ||
-      isFetchingServerCart ||
+      (isFetchingServerCart && possuiPermissaoCompra) ||
       addToCartMutation.isPending ||
       incrementItemMutation.isPending ||
       decrementItemMutation.isPending ||

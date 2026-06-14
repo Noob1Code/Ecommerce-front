@@ -21,8 +21,7 @@ export const useCheckoutController = () => {
   const rawItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const user = useAuthStore((state) => state.usuario);
-  
-  // Alinhado para iniciar com o padrão comercial e aceitar os Enums do Spring Boot
+
   const [metodoPagamento, setMetodoPagamento] = useState<string>('PIX');
   const [parcelas, setParcelas] = useState<number>(1);
   const [sucessoCheckout, setSucessoCheckout] = useState<BackendCheckoutResponseDTO | null>(null);
@@ -86,6 +85,15 @@ export const useCheckoutController = () => {
     if (!user) {
       alert('Sessão expirada ou inválida. Por favor, efetue o login antes de fechar a compra.');
       navigate('/login');
+      return;
+    }
+
+    const possuiPermissaoCompra = user.perfis?.some((p) =>
+      ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
+    );
+
+    if (!possuiPermissaoCompra) {
+      alert('Operação Negada: Usuários autenticados sob contas funcionais corporativas não possuem autorização para fechar pedidos.');
       return;
     }
 

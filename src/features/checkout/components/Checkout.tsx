@@ -1,5 +1,5 @@
-import { useCheckoutController } from '../hooks/useCheckoutController';
 import { Button, Card, Spinner } from '../../../shared/components/ui';
+import { useCheckoutController } from '../hooks/useCheckoutController';
 
 export const Checkout = () => {
   const {
@@ -16,6 +16,27 @@ export const Checkout = () => {
     handleSubmit,
     concluirFluxo
   } = useCheckoutController();
+
+  const possuiPermissaoCompra = !user || user.perfis?.some((p) =>
+    ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
+  );
+
+  if (user && !possuiPermissaoCompra) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16 text-center">
+        <Card className="bg-red-50 border border-red-200 rounded-xl p-8 shadow-sm animate-in fade-in zoom-in-95 duration-150">
+          <h2 className="text-xl font-bold text-red-700 mb-2">Acesso Restrito a Compras</h2>
+          <p className="text-sm text-red-600 mb-6">
+            Identificamos que você está autenticado sob uma credencial funcional corporativa.
+            Contas de funcionários não possuem permissão para gerenciar sacolas ou fechar pedidos.
+          </p>
+          <Button variant="primary" onClick={() => window.location.assign('/')}>
+            Voltar para a Vitrine
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   if (sucessoCheckout) {
     return (
@@ -70,7 +91,6 @@ export const Checkout = () => {
     );
   }
 
-  // Helper local para traduzir as chaves enum do Java para rótulos amigáveis de tela
   const obterRotuloMeioPagamento = (tipo: string) => {
     if (tipo === 'CREDITO_CARD') return 'Cartão de Crédito';
     if (tipo === 'DEBITO_CARD') return 'Cartão de Débito';
@@ -93,7 +113,7 @@ export const Checkout = () => {
             </div>
           </Card>
 
-          {/* Seleção do Método de Faturamento Alinhado ao Enum do Java */}
+          {/* Seleção do Método de Faturamento */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-4">
             <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">Forma de Pagamento *</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -103,7 +123,7 @@ export const Checkout = () => {
                   type="button"
                   onClick={() => {
                     setMetodoPagamento(tipo);
-                    setParcelas(1); // Reseta para 1 parcela ao alternar de método
+                    setParcelas(1);
                   }}
                   className={`p-3 rounded-xl border text-center font-bold text-xs transition-all ${metodoPagamento === tipo ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                     }`}
@@ -113,7 +133,6 @@ export const Checkout = () => {
               ))}
             </div>
 
-            {/* Renderização condicional de parcelas restrita ao Enum CREDITO_CARD */}
             {metodoPagamento === 'CREDITO_CARD' && (
               <div className="pt-3 animate-in fade-in duration-200">
                 <label htmlFor="parcelas" className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Opções de Parcelamento</label>
@@ -163,10 +182,10 @@ export const Checkout = () => {
             </div>
 
             <div className="mt-6">
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={handleSubmit}
-                disabled={isPending} 
+                disabled={isPending}
                 className="w-full py-3 text-sm font-bold uppercase tracking-wider shadow-md bg-blue-600 text-white hover:bg-blue-700"
               >
                 {isPending ? (

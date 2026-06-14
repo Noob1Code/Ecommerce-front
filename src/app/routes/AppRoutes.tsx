@@ -28,6 +28,7 @@ const Register = lazy(() => import('../../features/auth').then(m => ({ default: 
 const EmployeeRegister = lazy(() => import('../../features/auth').then(m => ({ default: m.EmployeeRegister })));
 const CustomerProfile = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerProfile })));
 const CustomerOrders = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerOrders })));
+const UserManagement = lazy(() => import('../../features/customer/components/UserManagement').then(m => ({ default: m.UserManagement })));
 
 const PainelFaturamentoMock = () => (
   <div className="mx-auto max-w-7xl px-4 py-12"><h1 className="text-2xl font-bold">Módulo Financeiro</h1></div>
@@ -78,7 +79,9 @@ const router = createBrowserRouter([
         path: 'cart',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <Cart />
+            <RoleGuard allowedRoles={['ROLE_CLIENTE', 'ROLE_ADMIN']} fallback={<Navigate to="/" replace />}>
+              <Cart />
+            </RoleGuard>
           </Suspense>
         ),
       },
@@ -86,7 +89,9 @@ const router = createBrowserRouter([
         path: 'checkout',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <Checkout />
+            <RoleGuard allowedRoles={['ROLE_CLIENTE', 'ROLE_ADMIN']} fallback={<Navigate to="/" replace />}>
+              <Checkout />
+            </RoleGuard>
           </Suspense>
         ),
       },
@@ -126,6 +131,16 @@ const router = createBrowserRouter([
           <Suspense fallback={<RouteFallback />}>
             <RoleGuard allowedRoles={['ROLE_ADMIN']} fallback={<Navigate to="/backoffice" replace />}>
               <EmployeeRegister />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice/usuarios',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <RoleGuard allowedRoles={['ROLE_ADMIN']} fallback={<Navigate to="/backoffice" replace />}>
+              <UserManagement />
             </RoleGuard>
           </Suspense>
         ),
