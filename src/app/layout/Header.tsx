@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../features/auth/store/useAuthStore';
+import { useAuthStore } from '../../features/auth';
 import { useSyncCart } from '../../features/cart';
 import { useCartStore } from '../../features/cart/store/useCartStore';
 
@@ -37,6 +37,12 @@ export const Header = () => {
   };
 
   const inicialNome = usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'U';
+  const possuiPermissaoCompra = !usuario || usuario.perfis?.some((p) =>
+    ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
+  );
+  const ehUsuarioCorporativo = usuario?.perfis?.some((p) =>
+    ['ROLE_ADMIN', 'ROLE_ESTOQUE', 'ROLE_FATURAMENTO'].includes(p)
+  );
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm">
@@ -57,21 +63,21 @@ export const Header = () => {
 
         {/* Lado Direito: Carrinho e Usuário */}
         <div className="flex items-center gap-2 sm:gap-4">
-
-          {/* Botão do Carrinho */}
-          <Link
-            to="/cart"
-            className="group relative flex items-center p-2 text-gray-600 hover:text-blue-600 transition-colors"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.121-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z" />
-            </svg>
-            {contagemItensCarrinho > 0 && (
-              <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
-                {contagemItensCarrinho}
-              </span>
-            )}
-          </Link>
+          {possuiPermissaoCompra && (
+            <Link
+              to="/cart"
+              className="group relative flex items-center p-2 text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.121-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z" />
+              </svg>
+              {contagemItensCarrinho > 0 && (
+                <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                  {contagemItensCarrinho}
+                </span>
+              )}
+            </Link>
+          )}
 
           {/* Seção de Autenticação */}
           <div className="relative flex items-center border-l border-gray-200 pl-4 ml-2" ref={menuRef}>
@@ -97,19 +103,21 @@ export const Header = () => {
                 {menuAberto && (
                   <div className="absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white p-2 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in duration-100">
                     <div className="px-3 py-2 border-b border-gray-100 mb-1">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">Ações do Cliente</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">Ações da Conta</p>
                     </div>
 
-                    <Link
-                      to="/meus-pedidos"
-                      onClick={() => setMenuAberto(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 11-8 0v4M5 9h12l1 12H4L5 9z" />
-                      </svg>
-                      Meus Pedidos
-                    </Link>
+                    {usuario.perfis?.some((p) => ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)) && (
+                      <Link
+                        to="/meus-pedidos"
+                        onClick={() => setMenuAberto(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 11-8 0v4M5 9h12l1 12H4L5 9z" />
+                        </svg>
+                        Meus Pedidos
+                      </Link>
+                    )}
 
                     <Link
                       to="/minha-conta"
@@ -122,8 +130,7 @@ export const Header = () => {
                       Editar Cadastro
                     </Link>
 
-                    {/* Exibe painel admin apenas se tiver perfil para isso */}
-                    {(usuario.perfis.includes('ROLE_ADMIN') || usuario.perfis.includes('ROLE_ESTOQUE')) && (
+                    {ehUsuarioCorporativo && (
                       <Link
                         to="/backoffice"
                         onClick={() => setMenuAberto(false)}

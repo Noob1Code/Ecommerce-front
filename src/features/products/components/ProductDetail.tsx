@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, ErrorMessage, Spinner } from '../../../shared/components/ui';
+import { useAuthStore } from '../../auth';
 import { useCartController } from '../../cart';
 import type { Product } from '../domain/product.types';
 import { useProduct } from '../hooks/useProduct';
@@ -13,6 +14,8 @@ interface ProductDetailContentProps {
 const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
   const navigate = useNavigate();
   const { handleAddToCart } = useCartController();
+
+  const usuario = useAuthStore((state) => state.usuario);
 
   const {
     selectedOptions,
@@ -36,6 +39,9 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
     handleAddToCart(resolvedSku.id, resolvedSku.stock);
     navigate('/cart');
   };
+  const possuiPermissaoCompra = !usuario || usuario.perfis?.some((p) =>
+    ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -117,7 +123,13 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
 
           {/* Botão de Compra e Validação Baseado no Estoque Real do SKU do Servidor */}
           <div className="mt-10 border-t border-gray-100 pt-6">
-            {resolvedSku ? (
+            {!possuiPermissaoCompra ? (
+              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 text-center">
+                <p className="text-xs font-bold text-amber-800">
+                  Sua credencial funcional corporativa não possui permissões de compras nesta vitrine.
+                </p>
+              </div>
+            ) : resolvedSku ? (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-gray-400">
                   Disponibilidade:{' '}

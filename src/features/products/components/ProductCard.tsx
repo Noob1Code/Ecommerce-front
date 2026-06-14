@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card } from '../../../shared/components/ui';
-import { RoleGuard } from '../../auth';
+import { RoleGuard, useAuthStore } from '../../auth';
 import { useCartController } from '../../cart';
 import type { Product } from '../domain/product.types';
 
@@ -13,12 +13,20 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
   const { handleAddToCart: addToCart } = useCartController();
   const [isAdded, setIsAdded] = useState(false);
+
+  const usuario = useAuthStore((state) => state.usuario);
+
   const defaultSku = product.skus && product.skus.length > 0 ? product.skus[0] : null;
   const displayImageUrl = defaultSku && defaultSku.images.length > 0
     ? defaultSku.images[0].imageUrl
     : '/fallback-image.jpg';
-  const displayPrice = defaultSku ? defaultSku.formattedPrice : '$0.00';
+  const displayPrice = defaultSku ? defaultSku.price : '$0.00';
   const isOutOfStock = defaultSku ? defaultSku.stock <= 0 : true;
+
+  const possuiPermissaoCompra = !usuario || usuario.perfis?.some((p) =>
+    ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
+  );
+
   const handleAddToCartClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -43,7 +51,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     <Card className="group flex flex-col transition-all hover:shadow-md relative">
       <div className="relative h-64 overflow-hidden bg-gray-100 rounded-t-lg">
 
-        {/* Controle de acesso visual: Apenas gestores administrativos visualizam as ferramentas rápidas de backoffice */}
         <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']}>
           <button
             type="button"
@@ -66,25 +73,27 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           />
         </Link>
 
-        <Button
-          variant="icon"
-          onClick={handleAddToCartClick}
-          disabled={isOutOfStock}
-          className="absolute bottom-3 right-3 z-10"
-          aria-label={isOutOfStock ? "Esgotado" : "Adicionar ao carrinho"}
-        >
-          {isOutOfStock ? (
-            <span className="text-xs font-semibold text-red-500 px-1">Esgotado</span>
-          ) : isAdded ? (
-            <svg className="h-5 w-5 text-green-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 100 4 2 2 0 000-4z" />
-            </svg>
-          )}
-        </Button>
+        {possuiPermissaoCompra && (
+          <Button
+            variant="icon"
+            onClick={handleAddToCartClick}
+            disabled={isOutOfStock}
+            className="absolute bottom-3 right-3 z-10"
+            aria-label={isOutOfStock ? "Esgotado" : "Adicionar ao carrinho"}
+          >
+            {isOutOfStock ? (
+              <span className="text-xs font-semibold text-red-500 px-1">Esgotado</span>
+            ) : isAdded ? (
+              <svg className="h-5 w-5 text-green-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 100 4 2 2 0 000-4z" />
+              </svg>
+            )}
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col space-y-2 p-4">

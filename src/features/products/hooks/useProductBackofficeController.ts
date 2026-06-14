@@ -6,11 +6,12 @@ import {
   deleteSkuInApi,
   fetchAttributesFromApi,
   updateProductMetadataInApi,
+  updateSkuDetailsInApi,
   updateSkuPriceInApi,
-  updateSkuStockInApi,
-  updateSkuDetailsInApi
+  updateSkuStockInApi
 } from '../api/productsApi';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
+import type { ProductSku } from '../domain/product.types'; // Importação do contrato rígido de domínio
 import { useProducts } from './useProducts';
 
 interface AtributoMinimo {
@@ -32,7 +33,6 @@ export const useProductBackofficeController = () => {
   const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
   const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null);
 
-  // Novos estados para o controle e buffer da edição de propriedades dos SKUs
   const [skuIdEmEdicao, setSkuIdEmEdicao] = useState<string | null>(null);
   const [dadosEdicaoSku, setDadosEdicaoSku] = useState<{ skuCode: string; options: Record<string, string> } | null>(null);
 
@@ -132,10 +132,11 @@ export const useProductBackofficeController = () => {
     }
   };
 
-  const handleIniciarEdicaoSku = (sku: any) => {
+  // CORREÇÃO: Uso do ProductSku tipado estritamente em vez de 'any'
+  const handleIniciarEdicaoSku = (sku: ProductSku) => {
     setSkuIdEmEdicao(sku.id);
     const opcoesIniciais: Record<string, string> = {};
-    sku.options?.forEach((o: any) => {
+    sku.options?.forEach((o) => {
       opcoesIniciais[o.attributeId] = o.value;
     });
     setDadosEdicaoSku({
@@ -173,7 +174,7 @@ export const useProductBackofficeController = () => {
 
       await updateSkuDetailsInApi(skuId, dadosEdicaoSku.skuCode, opcoesDto);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      
+
       setSkuIdEmEdicao(null);
       setDadosEdicaoSku(null);
       alert('Configuração de atributos do SKU salva com sucesso!');

@@ -1,7 +1,8 @@
-import { useState, Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
 import { RoleGuard } from '../../auth';
+import type { Product } from '../domain/product.types';
 import { useProductBackofficeController } from '../hooks/useProductBackofficeController';
 import { AttributeManager } from './AttributeManager';
 import { CreateProductForm } from './CreateProductForm';
@@ -9,7 +10,7 @@ import { CreateSkuForm } from './CreateSkuForm';
 
 export const ProductBackoffice = () => {
   const navigate = useNavigate();
-  const [abaAtiva, setAbaAtiva] = useState<'produtos' | 'atributos'>('produtos');
+  const [abaAtiva, setABAAtiva] = useState<'produtos' | 'atributos'>('produtos');
 
   const {
     estaCarregando,
@@ -58,11 +59,10 @@ export const ProductBackoffice = () => {
     );
   }
 
-  // Escaneia os SKUs existentes para extrair sugestões automáticas de preenchimento para o datalist
-  const obterValoresGrupoOpcao = (product: any, attributeId: string): string[] => {
+  const obterValoresGrupoOpcao = (product: Product, attributeId: string): string[] => {
     const valoresSet = new Set<string>();
-    product.skus?.forEach((sku: any) => {
-      const match = sku.options?.find((o: any) => o.attributeId === attributeId);
+    product.skus?.forEach((sku) => {
+      const match = sku.options?.find((o) => o.attributeId === attributeId);
       if (match) valoresSet.add(match.value);
     });
     return Array.from(valoresSet);
@@ -107,17 +107,17 @@ export const ProductBackoffice = () => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate('/backoffice/funcionarios')}
+                onClick={() => navigate('/backoffice/usuarios')}
                 className="px-4 py-3 text-sm font-bold border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-50"
               >
-                Gerenciar Funcionários
+                Gerenciar Usuários
               </Button>
             </RoleGuard>
 
             <Button
               type="button"
               variant={abaAtiva === 'atributos' ? 'primary' : 'secondary'}
-              onClick={() => setAbaAtiva((p) => p === 'produtos' ? 'atributos' : 'produtos')}
+              onClick={() => setABAAtiva((p) => p === 'produtos' ? 'atributos' : 'produtos')}
               className={`px-4 py-3 text-sm font-bold uppercase tracking-wider shadow-md ${abaAtiva === 'atributos' ? 'bg-purple-600 text-white' : 'text-purple-700 bg-purple-50'}`}
             >
               {abaAtiva === 'produtos' ? 'Gerenciar Atributos' : 'Voltar para Produtos'}
@@ -288,7 +288,7 @@ export const ProductBackoffice = () => {
                             const estEfetivo = obterEstoqueEfetivoSku(sku.id, sku.stock);
                             const prcEfetivo = obterPrecoEfetivoSku(sku.id, sku.price);
                             const emEdicao = skuIdEmEdicao === sku.id;
-                            
+
                             return (
                               <Fragment key={sku.id}>
                                 <tr className="hover:bg-gray-50/40">
@@ -319,10 +319,10 @@ export const ProductBackoffice = () => {
                                   </td>
                                   <td className="px-4 py-2.5 text-right">
                                     <div className="flex justify-end gap-2">
-                                      <button 
-                                        type="button" 
+                                      <button
+                                        type="button"
                                         disabled={estaEnviando || !product.isActive}
-                                        onClick={() => emEdicao ? handleCancelarEdicaoSku() : handleIniciarEdicaoSku(sku)} 
+                                        onClick={() => emEdicao ? handleCancelarEdicaoSku() : handleIniciarEdicaoSku(sku)}
                                         className="text-xs bg-blue-50 text-blue-600 border border-blue-100 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition-colors font-bold"
                                       >
                                         {emEdicao ? 'Fechar' : 'Editar'}
@@ -338,15 +338,15 @@ export const ProductBackoffice = () => {
                                     <td colSpan={6} className="bg-blue-50/20 p-4 border-t border-b border-blue-100">
                                       <div className="space-y-4 max-w-xl animate-in fade-in duration-150">
                                         <h4 className="text-xs font-bold uppercase text-blue-600 tracking-wide">Editar Características da Variação</h4>
-                                        
+
                                         <div>
                                           <label htmlFor={`edit-code-${sku.id}`} className="block text-xs font-bold text-gray-500 uppercase mb-1">Código Identificador (SKU)</label>
-                                          <Input 
+                                          <Input
                                             id={`edit-code-${sku.id}`}
-                                            type="text" 
-                                            value={dadosEdicaoSku.skuCode} 
-                                            onChange={(e) => handleMudancaCodigoSkuEdicao(e.target.value)} 
-                                            className="w-full text-xs" 
+                                            type="text"
+                                            value={dadosEdicaoSku.skuCode}
+                                            onChange={(e) => handleMudancaCodigoSkuEdicao(e.target.value)}
+                                            className="w-full text-xs"
                                           />
                                         </div>
 
@@ -358,19 +358,17 @@ export const ProductBackoffice = () => {
                                                 <label htmlFor={`edit-input-${sku.id}-${attr.id}`} className="block text-[11px] font-bold text-gray-500 uppercase">
                                                   {attr.attributeName}
                                                 </label>
-                                                
-                                                {/* Combinação Híbrida: Input de texto associado a um DataList de sugestões existentes */}
-                                                <input 
+
+                                                <input
                                                   id={`edit-input-${sku.id}-${attr.id}`}
                                                   type="text"
                                                   list={listaSugestoesId}
-                                                  value={dadosEdicaoSku.options[attr.attributeId] || ''} 
+                                                  value={dadosEdicaoSku.options[attr.attributeId] || ''}
                                                   onChange={(e) => handleMudancaOpcaoSkuEdicao(attr.attributeId, e.target.value)}
                                                   placeholder="Selecione na lista ou digite um novo valor livre..."
                                                   className="w-full p-2 border rounded-lg text-xs bg-white font-medium text-gray-700 focus:outline-none shadow-2xs border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                                 />
 
-                                                {/* Alimentação dinâmica das opções que o banco de dados já possui */}
                                                 <datalist id={listaSugestoesId}>
                                                   {obterValoresGrupoOpcao(product, attr.attributeId).map((val) => (
                                                     <option key={val} value={val} />
@@ -385,10 +383,10 @@ export const ProductBackoffice = () => {
                                           <Button type="button" variant="secondary" onClick={handleCancelarEdicaoSku} className="text-xs py-1.5 px-3">
                                             Cancelar
                                           </Button>
-                                          <Button 
-                                            type="button" 
-                                            variant="primary" 
-                                            onClick={() => handleSalvarEdicaoSku(sku.id)} 
+                                          <Button
+                                            type="button"
+                                            variant="primary"
+                                            onClick={() => handleSalvarEdicaoSku(sku.id)}
                                             className="text-xs py-1.5 px-3 bg-blue-600 text-white hover:bg-blue-700"
                                           >
                                             Salvar Alterações
