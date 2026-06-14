@@ -121,8 +121,8 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
                   <label
                     key={attr.id}
                     className={`flex items-start p-2.5 rounded-lg border transition-all cursor-pointer select-none ${isChecked
-                        ? 'border-blue-500 bg-blue-50/40 text-blue-900 ring-1 ring-blue-500'
-                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'border-blue-500 bg-blue-50/40 text-blue-900 ring-1 ring-blue-500'
+                      : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                       }`}
                   >
                     <div className="flex h-5 items-center">
@@ -137,7 +137,6 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
                     <div className="ml-3 text-xs">
                       <span className="font-bold block">{attr.nome}</span>
                       <span className="text-[10px] text-gray-400 line-clamp-1 mt-0.5">
-                        Opções: {attr.valores?.join(', ') || 'Nenhum valor cadastrado'}
                       </span>
                     </div>
                   </label>

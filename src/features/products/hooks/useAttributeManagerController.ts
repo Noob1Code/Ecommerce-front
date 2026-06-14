@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { fetchAttributesFromApi, type AttributeRequestDTO, type AttributeResponseDTO } from '../api/productsApi';
 import { useProductMutations } from './useProductMutations';
 
 export const useAttributeManagerController = () => {
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+  const showError = useNotificationModalStore((state) => state.showError);
+  const showConfirm = useNotificationModalStore((state) => state.showConfirm);
   const [nome, setNome] = useState('');
   const [idEmEdicao, setIdEmEdicao] = useState<string | null>(null);
   const [erroValidacao, setErroValidacao] = useState<string | null>(null);
-
   const { createAttributeMutation, updateAttributeMutation, deleteAttributeMutation } = useProductMutations();
 
   const { data: atributos = [], isLoading, error } = useQuery<AttributeResponseDTO[]>({
@@ -45,20 +48,39 @@ export const useAttributeManagerController = () => {
         await createAttributeMutation.mutateAsync(payload);
       }
       handleCancelarEdicao();
-      alert('Atributo processado com sucesso!');
+
+      showSuccess({
+        title: 'Atributo Processado',
+        message: `O atributo global "${payload.nome}" foi salvo e integrado com sucesso ao catálogo.`
+      });
     } catch {
       setErroValidacao('Erro de salvamento no servidor.');
+      showError({
+        title: 'Falha de Salvamento',
+        message: 'Não foi possível registrar o atributo devido a uma inconsistência no servidor.'
+      });
     }
   };
 
-  const handleExcluirAtributo = async (id: string, nomeAtributo: string) => {
-    if (!window.confirm(`Deseja deletar permanentemente o atributo ${nomeAtributo}?`)) return;
-    try {
-      await deleteAttributeMutation.mutateAsync(id);
-      alert('Atributo removido!');
-    } catch {
-      alert('Erro ao excluir.');
-    }
+  const handleExcluirAtributo = (id: string, nomeAtributo: string) => {
+    showConfirm({
+      title: 'Remover Atributo Global',
+      message: `Tem certeza que deseja apagar permanentemente o atributo "${nomeAtributo}"? Esta ação removerá o eixo de amarração de SKUs existentes.`,
+      onConfirm: async () => {
+        try {
+          await deleteAttributeMutation.mutateAsync(id);
+          showSuccess({
+            title: 'Atributo Removido',
+            message: `O atributo "${nomeAtributo}" foi deletado com sucesso do banco de dados.`
+          });
+        } catch {
+          showError({
+            title: 'Erro de Exclusão',
+            message: 'Não foi possível completar a remoção. Verifique se existem produtos utilizando este atributo.'
+          });
+        }
+      }
+    });
   };
 
   return {

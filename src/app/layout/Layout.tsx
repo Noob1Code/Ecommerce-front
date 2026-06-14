@@ -1,15 +1,15 @@
 import { Outlet } from 'react-router-dom';
-import { Footer } from './Footer';
+import { NotificationModal } from '../../shared/components/ui';
 import { Header } from './Header';
 
 export const Layout = () => {
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="min-h-screen bg-gray-50/50 flex flex-col font-sans">
+      <NotificationModal /> 
       <Header />
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1">
         <Outlet />
       </main>
-      <Footer />
     </div>
   );
 };

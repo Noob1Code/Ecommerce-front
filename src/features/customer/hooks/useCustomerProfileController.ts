@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { useAuthStore } from '../../auth';
 import { customerApi } from '../api/customerApi';
 
@@ -7,6 +8,8 @@ export const useCustomerProfileController = () => {
   const fazerLogin = useAuthStore((state) => state.fazerLogin);
   const token = useAuthStore((state) => state.token);
   const ehCliente = usuario?.perfis.includes('ROLE_CLIENTE') ?? false;
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+  const showError = useNotificationModalStore((state) => state.showError);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
@@ -14,8 +17,6 @@ export const useCustomerProfileController = () => {
   const [matricula, setMatricula] = useState('');
   const [senha, setSenha] = useState('');
   const [estaCarregando, setEstaCarregando] = useState(true);
-  const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
-  const [mensagemErro, setMensagemErro] = useState<string | null>(null);
 
   useEffect(() => {
     const carregarDadosCompletosServidor = async () => {
@@ -30,38 +31,39 @@ export const useCustomerProfileController = () => {
         setCpf(dadosPerfil.cpf || '');
         setMatricula(dadosPerfil.matricula || '');
       } catch {
-        setMensagemErro('Não foi possível sincronizar seus dados cadastrais com o servidor.');
+        showError({
+          title: 'Erro de Sincronia',
+          message: 'Não foi possível carregar seus dados cadastrais do servidor.'
+        });
       } finally {
         setEstaCarregando(false);
       }
     };
 
     carregarDadosCompletosServidor();
-  }, [usuario, ehCliente]);
+  }, [usuario, ehCliente, showError]);
 
   const handleSalvarAlteracoes = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMensagemSucesso(null);
-    setMensagemErro(null);
 
     if (!nome.trim() || !email.trim()) {
-      setMensagemErro('O nome e o e-mail são campos de preenchimento obrigatório.');
+      showError({ title: 'Dados Inválidos', message: 'O nome e o e-mail são obrigatórios.' });
       return;
     }
 
     if (ehCliente && (!telefone.trim() || !cpf.trim())) {
-      setMensagemErro('Para clientes, o Telefone e o CPF são obrigatórios.');
+      showError({ title: 'Dados Incompletos', message: 'Para clientes, o Telefone e o CPF são obrigatórios.' });
       return;
     }
 
     if (!ehCliente && !matricula.trim()) {
-      setMensagemErro('Para funcionários, a Matrícula Funcional é obrigatória.');
+      showError({ title: 'Dados Incompletos', message: 'Para funcionários, a Matrícula Funcional é obrigatória.' });
       return;
     }
 
     setEstaCarregando(true);
     try {
-      if (!usuario) throw new Error('Nenhuma sessão de usuário ativa localizada.');
+      if (!usuario) throw new Error('Sessão inválida.');
 
       const dadosAtualizados = ehCliente
         ? { nome, email, telefone, cpf, senha: senha || undefined }
@@ -78,10 +80,13 @@ export const useCustomerProfileController = () => {
         matricula: !ehCliente ? matricula : undefined,
       });
 
-      setMensagemSucesso('Seus dados cadastrais foram atualizados com sucesso!');
+      showSuccess({
+        title: 'Perfil Atualizado',
+        message: 'Seus dados cadastrais foram gravados com sucesso!'
+      });
       setSenha('');
     } catch {
-      setMensagemErro('Ocorreu uma falha ao tentar atualizar suas informações de conta.');
+      showError({ title: 'Erro na Atualização', message: 'Falha ao tentar persistir suas informações no servidor.' });
     } finally {
       setEstaCarregando(false);
     }
@@ -89,9 +94,6 @@ export const useCustomerProfileController = () => {
 
   const handleCancelar = async () => {
     if (!usuario) return;
-    setMensagemSucesso(null);
-    setMensagemErro(null);
-
     try {
       setEstaCarregando(true);
       const dadosPerfil = await customerApi.obterPerfil(usuario.id, ehCliente);
@@ -102,7 +104,7 @@ export const useCustomerProfileController = () => {
       setMatricula(dadosPerfil.matricula || '');
       setSenha('');
     } catch {
-      setMensagemErro('Ocorreu um erro ao tentar restaurar os dados originais.');
+      showError({ title: 'Erro ao Restaurar', message: 'Falha ao recuperar dados originais.' });
     } finally {
       setEstaCarregando(false);
     }
@@ -117,8 +119,6 @@ export const useCustomerProfileController = () => {
     senha,
     ehCliente,
     estaCarregando,
-    mensagemSucesso,
-    mensagemErro,
     setNome,
     setEmail,
     setTelefone,

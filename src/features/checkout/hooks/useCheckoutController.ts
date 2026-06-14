@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { useAuthStore } from '../../auth';
 import { useCartStore } from '../../cart';
 import { useProducts } from '../../products';
@@ -21,7 +22,8 @@ export const useCheckoutController = () => {
   const rawItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const user = useAuthStore((state) => state.usuario);
-
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+  const showError = useNotificationModalStore((state) => state.showError);
   const [metodoPagamento, setMetodoPagamento] = useState<string>('PIX');
   const [parcelas, setParcelas] = useState<number>(1);
   const [sucessoCheckout, setSucessoCheckout] = useState<BackendCheckoutResponseDTO | null>(null);
@@ -73,9 +75,17 @@ export const useCheckoutController = () => {
     onSuccess: (dadosRetorno) => {
       clearCart();
       setSucessoCheckout(dadosRetorno);
+
+      showSuccess({
+        title: 'Pedido Confirmado',
+        message: 'A transação foi recebida e processada com sucesso no Spring Boot.'
+      });
     },
     onError: () => {
-      alert('Ocorreu uma falha ao tentar transmitir a intenção de compra ao servidor.');
+      showError({
+        title: 'Erro na Transação',
+        message: 'Ocorreu uma falha operacional ao tentar transmitir a intenção de compra ao servidor de faturamento.'
+      });
     }
   });
 
@@ -83,7 +93,10 @@ export const useCheckoutController = () => {
     e.preventDefault();
 
     if (!user) {
-      alert('Sessão expirada ou inválida. Por favor, efetue o login antes de fechar a compra.');
+      showError({
+        title: 'Sessão Expirada',
+        message: 'Sua sessão atual está inválida. Por favor, efetue o login na plataforma antes de fechar a compra.'
+      });
       navigate('/login');
       return;
     }
@@ -93,7 +106,10 @@ export const useCheckoutController = () => {
     );
 
     if (!possuiPermissaoCompra) {
-      alert('Operação Negada: Usuários autenticados sob contas funcionais corporativas não possuem autorização para fechar pedidos.');
+      showError({
+        title: 'Operação Negada',
+        message: 'Usuários autenticados sob contas funcionais corporativas (como Operadores de Estoque ou Faturamento) não possuem autorização para fechar pedidos.'
+      });
       return;
     }
 

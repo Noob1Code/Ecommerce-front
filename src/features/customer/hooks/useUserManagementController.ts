@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import type { ClienteResponseDTO, FuncionarioResponseDTO } from '../../auth';
 import {
     customerApi,
@@ -17,6 +18,9 @@ export interface UserFormState {
 }
 
 export const useUserManagementController = () => {
+    const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+    const showError = useNotificationModalStore((state) => state.showError);
+    const showConfirm = useNotificationModalStore((state) => state.showConfirm);
     const queryClient = useQueryClient();
 
     const [abaAtiva, setAbaAtiva] = useState<'clientes' | 'funcionarios'>('clientes');
@@ -53,9 +57,17 @@ export const useUserManagementController = () => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'funcionarios-list'] });
             setExibirFormCriacao(false);
             setFormCriacao({ nome: '', email: '', matricula: '', senha: '', roles: [] });
-            alert('Novo funcionário registrado com sucesso no sistema!');
+            showSuccess({
+                title: 'Funcionário Registrado',
+                message: 'Novo funcionário registrado com sucesso no sistema!'
+            });
         },
-        onError: () => alert('Ocorreu uma falha ao tentar cadastrar o funcionário. Verifique os dados.')
+        onError: () => {
+            showError({
+                title: 'Falha no Cadastro',
+                message: 'Ocorreu uma falha ao tentar cadastrar o funcionário. Verifique os dados.'
+            });
+        }
     });
 
     const mutacaoAtualizarCliente = useMutation({
@@ -64,18 +76,34 @@ export const useUserManagementController = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'clientes-list'] });
             fecharEdicao();
-            alert('Cadastro do cliente updated com sucesso!');
+            showSuccess({
+                title: 'Cadastro Atualizado',
+                message: 'Cadastro do cliente atualizado com sucesso!'
+            });
         },
-        onError: () => alert('Falha ao tentar atualizar dados do cliente.')
+        onError: () => {
+            showError({
+                title: 'Falha na Atualização',
+                message: 'Falha ao tentar atualizar dados do cliente.'
+            });
+        }
     });
 
     const mutacaoStatusCliente = useMutation({
         mutationFn: customerApi.alterarStatusClientePorAdmin,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'clientes-list'] });
-            alert('Status do cliente modificado com sucesso!');
+            showSuccess({
+                title: 'Status Modificado',
+                message: 'Status do cliente modificado com sucesso!'
+            });
         },
-        onError: () => alert('Falha ao alterar o status do cliente.')
+        onError: () => {
+            showError({
+                title: 'Falha na Alteração',
+                message: 'Falha ao alterar o status do cliente.'
+            });
+        }
     });
 
     const mutacaoAtualizarFuncionario = useMutation({
@@ -84,18 +112,34 @@ export const useUserManagementController = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'funcionarios-list'] });
             fecharEdicao();
-            alert('Cadastro do funcionário atualizado com sucesso!');
+            showSuccess({
+                title: 'Cadastro Atualizado',
+                message: 'Cadastro do funcionário atualizado com sucesso!'
+            });
         },
-        onError: () => alert('Falha ao tentar atualizar dados do funcionário.')
+        onError: () => {
+            showError({
+                title: 'Falha na Atualização',
+                message: 'Falha ao tentar atualizar dados do funcionário.'
+            });
+        }
     });
 
     const mutacaoStatusFuncionario = useMutation({
         mutationFn: customerApi.alterarStatusFuncionarioPorAdmin,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'funcionarios-list'] });
-            alert('Status do funcionário modificado com sucesso!');
+            showSuccess({
+                title: 'Status Modificado',
+                message: 'Status do funcionário modificado com sucesso!'
+            });
         },
-        onError: () => alert('Falha ao alterar o status do funcionário.')
+        onError: () => {
+            showError({
+                title: 'Falha na Alteração',
+                message: 'Falha ao alterar o status do funcionário.'
+            });
+        }
     });
 
     const clientesFiltrados = useMemo(() => {
@@ -167,7 +211,10 @@ export const useUserManagementController = () => {
     const submeterCriacaoFuncionario = (e: React.FormEvent) => {
         e.preventDefault();
         if (formCriacao.roles.length === 0) {
-            alert('Ação Abortada: É obrigatório associar pelo menos um perfil de acesso ao novo funcionário.');
+            showError({
+                title: 'Ação Abortada',
+                message: 'É obrigatório associar pelo menos um perfil de acesso ao novo funcionário.'
+            });
             return;
         }
 
@@ -216,13 +263,19 @@ export const useUserManagementController = () => {
 
     const handleAlternarStatus = (id: string, nome: string, ativo: boolean) => {
         const acao = ativo ? 'inativar' : 'reativar';
-        if (!window.confirm(`Deseja realmente ${acao} o acesso de: ${nome}?`)) return;
+        const tituloModal = ativo ? 'Inativar Acesso' : 'Reativar Acesso';
 
-        if (abaAtiva === 'clientes') {
-            mutacaoStatusCliente.mutate(id);
-        } else {
-            mutacaoStatusFuncionario.mutate(id);
-        }
+        showConfirm({
+            title: tituloModal,
+            message: `Deseja realmente ${acao} o acesso de: ${nome}?`,
+            onConfirm: () => {
+                if (abaAtiva === 'clientes') {
+                    mutacaoStatusCliente.mutate(id);
+                } else {
+                    mutacaoStatusFuncionario.mutate(id);
+                }
+            }
+        });
     };
 
     return {

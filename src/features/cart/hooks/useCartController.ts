@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { useAuthStore } from '../../auth';
 import { useProducts } from '../../products';
 import type { Product, ProductSku } from '../../products/domain/product.types';
@@ -21,6 +22,8 @@ export const useCartController = () => {
   const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
   const usuario = useAuthStore((state) => state.usuario);
   const { products, isLoading: isLoadingProducts, error: errorProducts } = useProducts();
+  const showError = useNotificationModalStore((state) => state.showError);
+  const showConfirm = useNotificationModalStore((state) => state.showConfirm);
 
   const {
     addToCartMutation,
@@ -35,6 +38,7 @@ export const useCartController = () => {
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
+
   const possuiPermissaoCompra = usuario?.perfis?.some((p) =>
     ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
   );
@@ -100,7 +104,10 @@ export const useCartController = () => {
     const quantidadeAtual = itemExistente ? itemExistente.quantity : 0;
 
     if (quantidadeAtual + 1 > maxStock) {
-      alert(`Ação Abortada: Limite máximo de estoque atingido para este SKU. Unidades disponíveis: ${maxStock}`);
+      showError({
+        title: 'Limite de Estoque',
+        message: `Não foi possível adicionar mais unidades deste item. O teto físico disponível no estoque é de ${maxStock} unidades.`
+      });
       return;
     }
 
@@ -110,7 +117,10 @@ export const useCartController = () => {
 
   const handleIncrement = (skuId: string, currentQuantity: number, maxStock: number) => {
     if (currentQuantity >= maxStock) {
-      alert(`Ação Abortada: Teto de estoque máximo atingido para esta variação. Unidades disponíveis: ${maxStock}`);
+      showError({
+        title: 'Quantidade Indisponível',
+        message: `Não é possível incrementar o item. O volume em estoque atingiu o teto máximo de ${maxStock} unidades.`
+      });
       return;
     }
     const targetQuantity = currentQuantity + 1;
@@ -141,10 +151,14 @@ export const useCartController = () => {
   };
 
   const handleClear = () => {
-    if (window.confirm('Tem a certeza que deseja remover todos os itens selecionados do seu carrinho?')) {
-      clearCart();
-      clearCartMutation.mutate();
-    }
+    showConfirm({
+      title: 'Esvaziar Carrinho',
+      message: 'Tem certeza de que deseja remover permanentemente todos os produtos selecionados da sua sacola?',
+      onConfirm: () => {
+        clearCart();
+        clearCartMutation.mutate();
+      }
+    });
   };
 
   const handleCheckoutRedirect = () => {
