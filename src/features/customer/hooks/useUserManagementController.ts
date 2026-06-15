@@ -2,20 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import type { ClienteResponseDTO, FuncionarioResponseDTO } from '../../auth';
-import {
-    customerApi,
-    type ClienteAdminRequestDTO,
-    type FuncionarioAdminRequestDTO
-} from '../api/customerApi';
-
-export interface UserFormState {
-    nome: string;
-    email: string;
-    documento: string;
-    telefone: string;
-    senha?: string;
-    roles?: string[];
-}
+import { customerApi } from '../api/customerApi';
+import { CustomerMapper } from '../domain/customer.mapper';
+import type { ClienteAdminRequestDTO, FuncionarioAdminRequestDTO, UserFormState } from '../domain/customer.types';
 
 export const useUserManagementController = () => {
     const showSuccess = useNotificationModalStore((state) => state.showSuccess);
@@ -25,12 +14,10 @@ export const useUserManagementController = () => {
 
     const [abaAtiva, setAbaAtiva] = useState<'clientes' | 'funcionarios'>('clientes');
     const [termoPesquisa, setTermoPesquisa] = useState('');
-
     const [usuarioIdEmEdicao, setUsuarioIdEmEdicao] = useState<string | null>(null);
-
     const [formEdicao, setFormEdicao] = useState<UserFormState | null>(null);
-
     const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
+
     const [formCriacao, setFormCriacao] = useState({
         nome: '',
         email: '',
@@ -73,11 +60,13 @@ export const useUserManagementController = () => {
     const mutacaoAtualizarCliente = useMutation({
         mutationFn: ({ id, payload }: { id: string; payload: ClienteAdminRequestDTO }) =>
             customerApi.atualizarClientePorAdmin(id, payload),
-        onSuccess: () => {
+        onSuccess: (_, variaveis) => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'clientes-list'] });
+            queryClient.invalidateQueries({ queryKey: ['customer', 'perfil-logado', variaveis.id] });
+            queryClient.invalidateQueries({ queryKey: ['cart'] });
             fecharEdicao();
             showSuccess({
-                title: 'Cadastro Atualizado',
+                title: 'Cadastro Updated',
                 message: 'Cadastro do cliente atualizado com sucesso!'
             });
         },
@@ -91,8 +80,10 @@ export const useUserManagementController = () => {
 
     const mutacaoStatusCliente = useMutation({
         mutationFn: customerApi.alterarStatusClientePorAdmin,
-        onSuccess: () => {
+        onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'clientes-list'] });
+            queryClient.invalidateQueries({ queryKey: ['customer', 'perfil-logado', id] });
+            queryClient.invalidateQueries({ queryKey: ['cart'] });
             showSuccess({
                 title: 'Status Modificado',
                 message: 'Status do cliente modificado com sucesso!'
@@ -109,8 +100,10 @@ export const useUserManagementController = () => {
     const mutacaoAtualizarFuncionario = useMutation({
         mutationFn: ({ id, payload }: { id: string; payload: FuncionarioAdminRequestDTO }) =>
             customerApi.atualizarFuncionarioPorAdmin(id, payload),
-        onSuccess: () => {
+        onSuccess: (_, variaveis) => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'funcionarios-list'] });
+            queryClient.invalidateQueries({ queryKey: ['customer', 'perfil-logado', variaveis.id] });
+            queryClient.invalidateQueries({ queryKey: ['cart'] });
             fecharEdicao();
             showSuccess({
                 title: 'Cadastro Atualizado',
@@ -127,8 +120,10 @@ export const useUserManagementController = () => {
 
     const mutacaoStatusFuncionario = useMutation({
         mutationFn: customerApi.alterarStatusFuncionarioPorAdmin,
-        onSuccess: () => {
+        onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['iam', 'funcionarios-list'] });
+            queryClient.invalidateQueries({ queryKey: ['customer', 'perfil-logado', id] });
+            queryClient.invalidateQueries({ queryKey: ['cart'] });
             showSuccess({
                 title: 'Status Modificado',
                 message: 'Status do funcionário modificado com sucesso!'
@@ -221,7 +216,7 @@ export const useUserManagementController = () => {
         const dto: FuncionarioAdminRequestDTO = {
             nome: formCriacao.nome,
             email: formCriacao.email,
-            senha: formCriacao.senha.trim() || 'Mudar@123',
+            senha: formCriacao.senha.trim(),
             matricula: formCriacao.matricula,
             roles: formCriacao.roles
         };
@@ -238,25 +233,11 @@ export const useUserManagementController = () => {
         e.preventDefault();
         if (!usuarioIdEmEdicao || !formEdicao) return;
 
-        const senhaFinal = formEdicao.senha?.trim() || 'Mudar@123';
-
         if (abaAtiva === 'clientes') {
-            const dtoCliente: ClienteAdminRequestDTO = {
-                nome: formEdicao.nome,
-                email: formEdicao.email,
-                telefone: formEdicao.telefone,
-                senha: senhaFinal,
-                cpf: formEdicao.documento
-            };
+            const dtoCliente = CustomerMapper.toClienteAdminRequestDTO(formEdicao);
             mutacaoAtualizarCliente.mutate({ id: usuarioIdEmEdicao, payload: dtoCliente });
         } else {
-            const dtoFuncionario: FuncionarioAdminRequestDTO = {
-                nome: formEdicao.nome,
-                email: formEdicao.email,
-                senha: senhaFinal,
-                matricula: formEdicao.documento,
-                roles: formEdicao.roles || []
-            };
+            const dtoFuncionario = CustomerMapper.toFuncionarioAdminRequestDTO(formEdicao);
             mutacaoAtualizarFuncionario.mutate({ id: usuarioIdEmEdicao, payload: dtoFuncionario });
         }
     };

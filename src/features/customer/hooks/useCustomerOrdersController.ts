@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { customerApi, type BackendPedidoDetalhadoResponseDTO } from '../api/customerApi';
+import { customerApi } from '../api/customerApi';
+import type { BackendPedidoDetalhadoResponseDTO } from '../domain/customer.types';
 
 export const useCustomerOrdersController = (somenteMeus: boolean = true) => {
   const [pedidoExpandidoId, setPedidoExpandidoId] = useState<string | null>(null);
+
   const { data: pedidos = [], isLoading: estaCarregando, error } = useQuery<BackendPedidoDetalhadoResponseDTO[], Error>({
     queryKey: ['customer', 'orders', somenteMeus ? 'meus' : 'todos'] as const,
     queryFn: async () => {

@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
@@ -8,12 +9,12 @@ export const useEmployeeRegister = () => {
   const navigate = useNavigate();
   const showSuccess = useNotificationModalStore((state) => state.showSuccess);
   const showError = useNotificationModalStore((state) => state.showError);
+
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [matricula, setMatricula] = useState('');
   const [perfisSelecionados, setPerfisSelecionados] = useState<PerfilUsuario[]>(['ROLE_ESTOQUE']);
-  const [carregando, setCarregando] = useState(false);
 
   const handleAlternarPerfil = (perfil: PerfilUsuario) => {
     setPerfisSelecionados((prev) => {
@@ -25,7 +26,29 @@ export const useEmployeeRegister = () => {
     });
   };
 
-  const handleCadastrarFuncionario = async (e: React.FormEvent) => {
+  const { mutate: executarCadastro, isPending: carregando } = useMutation({
+    mutationFn: cadastrarFuncionarioApi,
+    onSuccess: () => {
+      showSuccess({
+        title: 'Contratação Concluída',
+        message: `O colaborador "${nome}" foi registrado com sucesso sob a matrícula funcional "${matricula}".`
+      });
+
+      setNome('');
+      setEmail('');
+      setSenha('');
+      setMatricula('');
+      setPerfisSelecionados(['ROLE_ESTOQUE']);
+    },
+    onError: () => {
+      showError({
+        title: 'Falha no Registro',
+        message: 'Ocorreu um erro interno de persistência ao processar a contratação do funcionário no Spring Boot.'
+      });
+    }
+  });
+
+  const handleCadastrarFuncionario = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!nome.trim() || !email.trim() || !senha.trim() || !matricula.trim()) {
@@ -44,34 +67,13 @@ export const useEmployeeRegister = () => {
       return;
     }
 
-    setCarregando(true);
-    try {
-      await cadastrarFuncionarioApi({
-        nome,
-        email,
-        senha,
-        matricula,
-        perfis: perfisSelecionados,
-      });
-
-      showSuccess({
-        title: 'Contratação Concluída',
-        message: `O colaborador "${nome}" foi registrado com sucesso sob a matrícula funcional "${matricula}".`
-      });
-
-      setNome('');
-      setEmail('');
-      setSenha('');
-      setMatricula('');
-      setPerfisSelecionados(['ROLE_ESTOQUE']);
-    } catch {
-      showError({
-        title: 'Falha no Registro',
-        message: 'Ocorreu um erro interno de persistência ao processar a contratação do funcionário no Spring Boot.'
-      });
-    } finally {
-      setCarregando(false);
-    }
+    executarCadastro({
+      nome,
+      email,
+      senha,
+      matricula,
+      perfis: perfisSelecionados,
+    });
   };
 
   const handleVoltar = () => {

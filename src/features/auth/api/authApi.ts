@@ -1,82 +1,20 @@
 import { httpClient } from '../../../services/api';
+import type {
+  ClienteRequestDTO,
+  ClienteResponseDTO,
+  EntradaCadastroCliente,
+  EntradaCadastroFuncionario,
+  EntradaLogin,
+  FuncionarioRequestDTO,
+  FuncionarioResponseDTO,
+  LoginRequestDTO,
+  ResultadoAutenticacao,
+  TokenResponseDTO
+} from '../domain/auth.types';
 import type { PerfilUsuario, UsuarioAutenticado } from '../store/useAuthStore';
 import { AUTH_ENDPOINTS } from './authEndpoints';
 
-export interface ClienteRequestDTO {
-  nome: string;
-  email: string;
-  telefone: string;
-  senha: string;
-  cpf: string;
-}
-
-export interface ClienteResponseDTO {
-  id: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  ativo: boolean;
-  roles: string[];
-  cpf: string;
-}
-
-export interface FuncionarioRequestDTO {
-  nome: string;
-  email: string;
-  senha: string;
-  matricula: string;
-  roles: string[];
-}
-
-export interface FuncionarioResponseDTO {
-  id: string;
-  nome: string;
-  email: string;
-  ativo: boolean;
-  roles: string[];
-  matricula: string;
-}
-
-export interface LoginRequestDTO {
-  username: string;
-  password: string;
-}
-
-export interface TokenResponseDTO {
-  token: string;
-  id: string;
-  nome: string;
-  roles: string[];
-}
-
-export interface EntradaCadastroCliente {
-  nome: string;
-  email: string;
-  senha: string;
-  cpf?: string;
-  telefone?: string;
-}
-
-export interface EntradaCadastroFuncionario {
-  nome: string;
-  email: string;
-  senha: string;
-  matricula: string;
-  perfis: PerfilUsuario[];
-}
-
-export interface EntradaLogin {
-  email: string;
-  senha: string;
-}
-
-export interface ResultadoAutenticacao {
-  token: string;
-  usuario: UsuarioAutenticado;
-}
-
-export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<ResultadoAutenticacao> => {
-
+export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Promise<ClienteResponseDTO> => {
   const dto: ClienteRequestDTO = {
     nome: entrada.nome,
     email: entrada.email,
@@ -85,17 +23,11 @@ export const cadastrarClienteApi = async (entrada: EntradaCadastroCliente): Prom
     cpf: entrada.cpf || '',
   };
 
-  await httpClient.post<ClienteResponseDTO>(AUTH_ENDPOINTS.registerCliente, dto);
-  const resultadoLogin = await logarUsuarioApi({
-    email: entrada.email,
-    senha: entrada.senha
-  });
-
-  return resultadoLogin;
+  const resposta = await httpClient.post<ClienteResponseDTO>(AUTH_ENDPOINTS.registerCliente, dto);
+  return resposta.data;
 };
 
 export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionario): Promise<UsuarioAutenticado> => {
-
   const dto: FuncionarioRequestDTO = {
     nome: entrada.nome,
     email: entrada.email,
@@ -116,7 +48,6 @@ export const cadastrarFuncionarioApi = async (entrada: EntradaCadastroFuncionari
 };
 
 export const logarUsuarioApi = async (entrada: EntradaLogin): Promise<ResultadoAutenticacao> => {
-
   const dto: LoginRequestDTO = {
     username: entrada.email,
     password: entrada.senha,

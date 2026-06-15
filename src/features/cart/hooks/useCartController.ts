@@ -3,25 +3,16 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { useAuthStore } from '../../auth';
-import { useProducts } from '../../products';
-import type { Product, ProductSku } from '../../products/domain/product.types';
 import { cartApi } from '../api/cartApi';
+import { CartMapper } from '../domain/cart.mapper';
+import type { EnrichedCartItem } from '../domain/cart.types';
 import { useCartStore } from '../store/useCartStore';
 import { useCartMutations } from './useCartMutations';
-
-export interface EnrichedCartItem {
-  id: string;
-  skuId: string;
-  quantity: number;
-  product: Product;
-  selectedSku: ProductSku;
-}
 
 export const useCartController = () => {
   const navigate = useNavigate();
   const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
   const usuario = useAuthStore((state) => state.usuario);
-  const { products, isLoading: isLoadingProducts, error: errorProducts } = useProducts();
   const showError = useNotificationModalStore((state) => state.showError);
   const showConfirm = useNotificationModalStore((state) => state.showConfirm);
 
@@ -33,7 +24,6 @@ export const useCartController = () => {
     clearCartMutation
   } = useCartMutations();
 
-  const rawItems = useCartStore((state) => state.items);
   const addItem = useCartStore((state) => state.addItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -43,44 +33,18 @@ export const useCartController = () => {
     ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
   );
 
-  const { isFetching: isFetchingServerCart } = useQuery({
+  const { data: carrinhoServidor, isLoading: carregandoCarrinho, error: erroServidor } = useQuery({
     queryKey: ['cart', 'server-state', usuario?.id] as const,
     queryFn: cartApi.obterCarrinhoDoServidor,
     enabled: estaAutenticado && !!usuario?.id && !!possuiPermissaoCompra,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 
   const enrichedItems = useMemo<EnrichedCartItem[]>(() => {
-    if (!products || products.length === 0) return [];
+    return CartMapper.toEnrichedItemsFromServer(carrinhoServidor);
+  }, [carrinhoServidor]);
 
-    return rawItems
-      .map((rawItem) => {
-        let foundProduct: Product | null = null;
-        let foundSku: ProductSku | null = null;
-
-        for (const p of products) {
-          const matchSku = p.skus.find((s) => s.id === rawItem.skuId);
-          if (matchSku) {
-            foundProduct = p;
-            foundSku = matchSku;
-            break;
-          }
-        }
-
-        if (!foundProduct || !foundSku) return null;
-
-        return {
-          id: rawItem.skuId,
-          skuId: rawItem.skuId,
-          quantity: rawItem.quantity,
-          product: foundProduct,
-          selectedSku: foundSku,
-        };
-      })
-      .filter((item): item is EnrichedCartItem => item !== null);
-  }, [rawItems, products]);
-
-  const isEmpty = enrichedItems.length === 0 && !isFetchingServerCart;
+  const isEmpty = enrichedItems.length === 0 && !carregandoCarrinho;
 
   const totalItemsCount = useMemo(() => {
     return enrichedItems.reduce((total, item) => total + item.quantity, 0);
@@ -91,10 +55,7 @@ export const useCartController = () => {
   }, [enrichedItems]);
 
   const formattedCartTotal = useMemo(() => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(cartTotal);
+    return CartMapper.formatarMoeda(cartTotal);
   }, [cartTotal]);
 
   const handleAddToCart = (skuId: string, maxStock: number) => {
@@ -168,14 +129,13 @@ export const useCartController = () => {
   return {
     items: enrichedItems,
     isEmpty,
-    isLoading: isLoadingProducts ||
-      (isFetchingServerCart && possuiPermissaoCompra) ||
+    isLoading: carregandoCarrinho ||
       addToCartMutation.isPending ||
       incrementItemMutation.isPending ||
       decrementItemMutation.isPending ||
       removeFromCartMutation.isPending ||
       clearCartMutation.isPending,
-    error: errorProducts,
+    error: erroServidor ? 'Não foi possível ler os itens da sua sacola de compras.' : null,
     totalItemsCount,
     cartTotal,
     formattedCartTotal,

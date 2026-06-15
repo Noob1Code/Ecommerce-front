@@ -1,26 +1,19 @@
-import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
 import { useLogin } from '../hooks/useLogin';
 
 export const Login = () => {
-  const { login, estaCarregando, erro } = useLogin();
-
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erroValidacao, setErroValidacao] = useState<string | null>(null);
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setErroValidacao(null);
-
-    if (!email || !senha) {
-      setErroValidacao('Por favor, preencha todos os campos obrigatórios de autenticação.');
-      return;
-    }
-
-    login({ email, senha });
-  };
+  const {
+    email,
+    senha,
+    erroValidacao,
+    estaCarregando,
+    erro,
+    setEmail,
+    setSenha,
+    setErroValidacao,
+    handleSubmit,
+  } = useLogin();
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-12 sm:px-6 lg:px-8">

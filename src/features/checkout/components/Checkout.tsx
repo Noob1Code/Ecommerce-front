@@ -7,6 +7,7 @@ export const Checkout = () => {
     user,
     isEmpty,
     formattedTotal,
+    opcoesParcelamento,
     isPending,
     metodoPagamento,
     parcelas,
@@ -47,7 +48,6 @@ export const Checkout = () => {
           <p className="text-sm text-gray-500 mt-1 font-mono">Código: {sucessoCheckout.pedido.id}</p>
           <p className="text-sm text-gray-600 mt-3">{sucessoCheckout.mensagem}</p>
 
-          {/* Faturamento Dinâmico via PIX */}
           {sucessoCheckout.pixCopiaECola && (
             <div className="mt-6 p-4 bg-white border border-gray-200 rounded-xl text-left space-y-2">
               <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Pagamento via PIX Copia e Cola</p>
@@ -58,7 +58,6 @@ export const Checkout = () => {
             </div>
           )}
 
-          {/* Faturamento Dinâmico via BOLETO */}
           {sucessoCheckout.linhaDigitavel && (
             <div className="mt-6 p-4 bg-white border border-gray-200 rounded-xl text-left space-y-2">
               <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Linha Digitável do Boleto</p>
@@ -103,8 +102,6 @@ export const Checkout = () => {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-7 space-y-6">
-
-          {/* Perfil do Comprador */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs">
             <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Dados do Comprador</h2>
             <div className="text-sm text-gray-900 space-y-1 font-medium">
@@ -113,7 +110,6 @@ export const Checkout = () => {
             </div>
           </Card>
 
-          {/* Seleção do Método de Faturamento */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-4">
             <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">Forma de Pagamento *</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -137,15 +133,16 @@ export const Checkout = () => {
               <div className="pt-3 animate-in fade-in duration-200">
                 <label htmlFor="parcelas" className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Opções de Parcelamento</label>
                 <select id="parcelas" value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className="w-full p-2 text-sm border rounded-lg bg-white font-semibold text-gray-700 focus:outline-none">
-                  {[1, 2, 3, 4, 5, 6, 10, 12].map((n) => (
-                    <option key={n} value={n}>{n}x de R$ {(items.reduce((acc, i) => acc + (i.selectedSku.price * i.quantity), 0) / n).toFixed(2)} sem juros</option>
+                  {opcoesParcelamento.map((opcao) => (
+                    <option key={opcao.parcelas} value={opcao.parcelas}>
+                      {opcao.texto}
+                    </option>
                   ))}
                 </select>
               </div>
             )}
           </Card>
 
-          {/* Resumo de Sacola */}
           <Card className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-3">
             <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">Produtos Escolhidos ({items.length})</h2>
             <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto pr-1">
@@ -155,14 +152,17 @@ export const Checkout = () => {
                     <h4 className="font-bold text-gray-900">{item.product.name}</h4>
                     <p className="text-[11px] text-gray-400 font-mono">SKU: {item.selectedSku.skuCode} | Qtd: {item.quantity}x</p>
                   </div>
-                  <span className="font-bold text-gray-900">R$ {(item.selectedSku.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-bold text-gray-900">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                      item.selectedSku.price * item.quantity
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
           </Card>
         </div>
 
-        {/* Resumo Financeiro Lateral */}
         <div className="lg:col-span-5">
           <Card className="bg-white p-5 border border-gray-200 shadow-sm rounded-xl">
             <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">Resumo Econômico</h2>

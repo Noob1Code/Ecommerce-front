@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { useAuthStore } from '../../auth';
 import { customerApi } from '../api/customerApi';
 
 export const useCustomerProfileController = () => {
+  const queryClient = useQueryClient();
   const usuario = useAuthStore((state) => state.usuario);
   const fazerLogin = useAuthStore((state) => state.fazerLogin);
   const token = useAuthStore((state) => state.token);
@@ -16,34 +18,63 @@ export const useCustomerProfileController = () => {
   const [cpf, setCpf] = useState('');
   const [matricula, setMatricula] = useState('');
   const [senha, setSenha] = useState('');
-  const [estaCarregando, setEstaCarregando] = useState(true);
 
-  useEffect(() => {
-    const carregarDadosCompletosServidor = async () => {
-      if (!usuario) return;
+  const { data: dadosPerfil, isLoading: carregandoDados } = useQuery({
+    queryKey: ['customer', 'perfil-logado', usuario?.id] as const,
+    queryFn: () => customerApi.obterPerfil(usuario!.id, ehCliente),
+    enabled: !!usuario,
+    staleTime: 0,
+  });
 
-      try {
-        setEstaCarregando(true);
-        const dadosPerfil = await customerApi.obterPerfil(usuario.id, ehCliente);
-        setNome(dadosPerfil.nome || '');
-        setEmail(dadosPerfil.email || '');
-        setTelefone(dadosPerfil.telefone || '');
-        setCpf(dadosPerfil.cpf || '');
-        setMatricula(dadosPerfil.matricula || '');
-      } catch {
-        showError({
-          title: 'Erro de Sincronia',
-          message: 'Não foi possível carregar seus dados cadastrais do servidor.'
-        });
-      } finally {
-        setEstaCarregando(false);
-      }
-    };
+  const [dadosCarregadosId, setDadosCarregadosId] = useState<string | null>(null);
 
-    carregarDadosCompletosServidor();
-  }, [usuario, ehCliente, showError]);
+  if (dadosPerfil && usuario?.id !== dadosCarregadosId) {
+    setDadosCarregadosId(usuario?.id || null);
+    setNome(dadosPerfil.nome || '');
+    setEmail(dadosPerfil.email || '');
+    setTelefone(dadosPerfil.telefone || '');
+    setCpf(dadosPerfil.cpf || '');
+    setMatricula(dadosPerfil.matricula || '');
+  }
 
-  const handleSalvarAlteracoes = async (e: React.FormEvent) => {
+  const mutationSalvar = useMutation({
+    mutationFn: async () => {
+      if (!usuario) throw new Error('Sessão inválida.');
+
+      const dadosAtualizados = ehCliente
+        ? { nome, email, telefone, cpf, senha: senha || undefined }
+        : { nome, email, matricula, senha: senha || undefined, perfis: usuario.perfis };
+
+      await customerApi.atualizarPerfil(usuario.id, dadosAtualizados);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer', 'perfil-logado', usuario?.id] });
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+
+      fazerLogin(token || '', {
+        ...usuario!,
+        nome,
+        email,
+        telefone: ehCliente ? telefone : undefined,
+        cpf: ehCliente ? cpf : undefined,
+        matricula: !ehCliente ? matricula : undefined,
+      });
+
+      showSuccess({
+        title: 'Perfil Updated',
+        message: 'Seus dados cadastrais foram gravados com sucesso!'
+      });
+      setSenha('');
+    },
+    onError: () => {
+      showError({
+        title: 'Erro na Atualização',
+        message: 'Falha ao tentar persistir suas informações no servidor.'
+      });
+    }
+  });
+
+  const handleSalvarAlteracoes = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!nome.trim() || !email.trim()) {
@@ -61,52 +92,17 @@ export const useCustomerProfileController = () => {
       return;
     }
 
-    setEstaCarregando(true);
-    try {
-      if (!usuario) throw new Error('Sessão inválida.');
-
-      const dadosAtualizados = ehCliente
-        ? { nome, email, telefone, cpf, senha: senha || undefined }
-        : { nome, email, matricula, senha: senha || undefined, perfis: usuario.perfis };
-
-      await customerApi.atualizarPerfil(usuario.id, dadosAtualizados);
-
-      fazerLogin(token || '', {
-        ...usuario,
-        nome,
-        email,
-        telefone: ehCliente ? telefone : undefined,
-        cpf: ehCliente ? cpf : undefined,
-        matricula: !ehCliente ? matricula : undefined,
-      });
-
-      showSuccess({
-        title: 'Perfil Atualizado',
-        message: 'Seus dados cadastrais foram gravados com sucesso!'
-      });
-      setSenha('');
-    } catch {
-      showError({ title: 'Erro na Atualização', message: 'Falha ao tentar persistir suas informações no servidor.' });
-    } finally {
-      setEstaCarregando(false);
-    }
+    mutationSalvar.mutate();
   };
 
-  const handleCancelar = async () => {
-    if (!usuario) return;
-    try {
-      setEstaCarregando(true);
-      const dadosPerfil = await customerApi.obterPerfil(usuario.id, ehCliente);
+  const handleCancelar = () => {
+    if (dadosPerfil) {
       setNome(dadosPerfil.nome || '');
       setEmail(dadosPerfil.email || '');
       setTelefone(dadosPerfil.telefone || '');
       setCpf(dadosPerfil.cpf || '');
       setMatricula(dadosPerfil.matricula || '');
       setSenha('');
-    } catch {
-      showError({ title: 'Erro ao Restaurar', message: 'Falha ao recuperar dados originais.' });
-    } finally {
-      setEstaCarregando(false);
     }
   };
 
@@ -118,7 +114,7 @@ export const useCustomerProfileController = () => {
     matricula,
     senha,
     ehCliente,
-    estaCarregando,
+    estaCarregando: carregandoDados || mutationSalvar.isPending,
     setNome,
     setEmail,
     setTelefone,
