@@ -1,15 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { fetchAttributesFromApi, type ProductRequestDTO } from '../api/productsApi';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
 import { useProductMutations } from './useProductMutations';
 
 export const useCreateProductController = () => {
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+  const showError = useNotificationModalStore((state) => state.showError);
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedAttributeIds, setSelectedAttributeIds] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
   const { createProductMutation } = useProductMutations();
+
   const { data: attributes = [], isLoading: isLoadingAttributes, error: attributesError } = useQuery({
     queryKey: [...PRODUCTS_QUERY_KEYS.all, 'attributes'] as const,
     queryFn: async () => {
@@ -45,7 +50,12 @@ export const useCreateProductController = () => {
 
   const handleCreateSubmit = async (onSuccessCallback?: () => void) => {
     if (name.trim() === '' || description.trim() === '') {
-      setValidationError('Erro de Validação: Os campos Nome e Descrição são inteiramente obrigatórios.');
+      const errorMsg = 'Erro de Validação: Os campos Nome e Descrição são inteiramente obrigatórios.';
+      setValidationError(errorMsg);
+      showError({
+        title: 'Erro de Validação',
+        message: 'Os campos Nome e Descrição são de preenchimento obrigatório.'
+      });
       return;
     }
 
@@ -61,9 +71,17 @@ export const useCreateProductController = () => {
       if (onSuccessCallback) {
         onSuccessCallback();
       }
-      alert('Produto base criado com sucesso no catálogo!');
+      showSuccess({
+        title: 'Produto Criado',
+        message: 'Produto base criado com sucesso no catálogo!'
+      });
     } catch {
-      setValidationError('Falha Operacional: Não foi possível registar o novo produto no servidor.');
+      const errorMsg = 'Falha Operacional: Não foi possível registar o novo produto no servidor.';
+      setValidationError(errorMsg);
+      showError({
+        title: 'Falha Operacional',
+        message: 'Não foi possível registrar o novo produto no servidor.'
+      });
     }
   };
 

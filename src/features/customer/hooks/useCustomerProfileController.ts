@@ -1,76 +1,58 @@
-import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { useAuthStore } from '../../auth';
 import { customerApi } from '../api/customerApi';
 
 export const useCustomerProfileController = () => {
+  const queryClient = useQueryClient();
   const usuario = useAuthStore((state) => state.usuario);
   const fazerLogin = useAuthStore((state) => state.fazerLogin);
   const token = useAuthStore((state) => state.token);
   const ehCliente = usuario?.perfis.includes('ROLE_CLIENTE') ?? false;
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+  const showError = useNotificationModalStore((state) => state.showError);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
   const [cpf, setCpf] = useState('');
   const [matricula, setMatricula] = useState('');
   const [senha, setSenha] = useState('');
-  const [estaCarregando, setEstaCarregando] = useState(true);
-  const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
-  const [mensagemErro, setMensagemErro] = useState<string | null>(null);
 
-  useEffect(() => {
-    const carregarDadosCompletosServidor = async () => {
-      if (!usuario) return;
+  const { data: dadosPerfil, isLoading: carregandoDados } = useQuery({
+    queryKey: ['customer', 'perfil-logado', usuario?.id] as const,
+    queryFn: () => customerApi.obterPerfil(usuario!.id, ehCliente),
+    enabled: !!usuario,
+    staleTime: 0,
+  });
 
-      try {
-        setEstaCarregando(true);
-        const dadosPerfil = await customerApi.obterPerfil(usuario.id, ehCliente);
-        setNome(dadosPerfil.nome || '');
-        setEmail(dadosPerfil.email || '');
-        setTelefone(dadosPerfil.telefone || '');
-        setCpf(dadosPerfil.cpf || '');
-        setMatricula(dadosPerfil.matricula || '');
-      } catch {
-        setMensagemErro('Não foi possível sincronizar seus dados cadastrais com o servidor.');
-      } finally {
-        setEstaCarregando(false);
-      }
-    };
+  const [dadosCarregadosId, setDadosCarregadosId] = useState<string | null>(null);
 
-    carregarDadosCompletosServidor();
-  }, [usuario, ehCliente]);
+  if (dadosPerfil && usuario?.id !== dadosCarregadosId) {
+    setDadosCarregadosId(usuario?.id || null);
+    setNome(dadosPerfil.nome || '');
+    setEmail(dadosPerfil.email || '');
+    setTelefone(dadosPerfil.telefone || '');
+    setCpf(dadosPerfil.cpf || '');
+    setMatricula(dadosPerfil.matricula || '');
+  }
 
-  const handleSalvarAlteracoes = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMensagemSucesso(null);
-    setMensagemErro(null);
-
-    if (!nome.trim() || !email.trim()) {
-      setMensagemErro('O nome e o e-mail são campos de preenchimento obrigatório.');
-      return;
-    }
-
-    if (ehCliente && (!telefone.trim() || !cpf.trim())) {
-      setMensagemErro('Para clientes, o Telefone e o CPF são obrigatórios.');
-      return;
-    }
-
-    if (!ehCliente && !matricula.trim()) {
-      setMensagemErro('Para funcionários, a Matrícula Funcional é obrigatória.');
-      return;
-    }
-
-    setEstaCarregando(true);
-    try {
-      if (!usuario) throw new Error('Nenhuma sessão de usuário ativa localizada.');
+  const mutationSalvar = useMutation({
+    mutationFn: async () => {
+      if (!usuario) throw new Error('Sessão inválida.');
 
       const dadosAtualizados = ehCliente
         ? { nome, email, telefone, cpf, senha: senha || undefined }
         : { nome, email, matricula, senha: senha || undefined, perfis: usuario.perfis };
 
       await customerApi.atualizarPerfil(usuario.id, dadosAtualizados);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer', 'perfil-logado', usuario?.id] });
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
 
       fazerLogin(token || '', {
-        ...usuario,
+        ...usuario!,
         nome,
         email,
         telefone: ehCliente ? telefone : undefined,
@@ -78,33 +60,49 @@ export const useCustomerProfileController = () => {
         matricula: !ehCliente ? matricula : undefined,
       });
 
-      setMensagemSucesso('Seus dados cadastrais foram atualizados com sucesso!');
+      showSuccess({
+        title: 'Perfil Updated',
+        message: 'Seus dados cadastrais foram gravados com sucesso!'
+      });
       setSenha('');
-    } catch {
-      setMensagemErro('Ocorreu uma falha ao tentar atualizar suas informações de conta.');
-    } finally {
-      setEstaCarregando(false);
+    },
+    onError: () => {
+      showError({
+        title: 'Erro na Atualização',
+        message: 'Falha ao tentar persistir suas informações no servidor.'
+      });
     }
+  });
+
+  const handleSalvarAlteracoes = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!nome.trim() || !email.trim()) {
+      showError({ title: 'Dados Inválidos', message: 'O nome e o e-mail são obrigatórios.' });
+      return;
+    }
+
+    if (ehCliente && (!telefone.trim() || !cpf.trim())) {
+      showError({ title: 'Dados Incompletos', message: 'Para clientes, o Telefone e o CPF são obrigatórios.' });
+      return;
+    }
+
+    if (!ehCliente && !matricula.trim()) {
+      showError({ title: 'Dados Incompletos', message: 'Para funcionários, a Matrícula Funcional é obrigatória.' });
+      return;
+    }
+
+    mutationSalvar.mutate();
   };
 
-  const handleCancelar = async () => {
-    if (!usuario) return;
-    setMensagemSucesso(null);
-    setMensagemErro(null);
-
-    try {
-      setEstaCarregando(true);
-      const dadosPerfil = await customerApi.obterPerfil(usuario.id, ehCliente);
+  const handleCancelar = () => {
+    if (dadosPerfil) {
       setNome(dadosPerfil.nome || '');
       setEmail(dadosPerfil.email || '');
       setTelefone(dadosPerfil.telefone || '');
       setCpf(dadosPerfil.cpf || '');
       setMatricula(dadosPerfil.matricula || '');
       setSenha('');
-    } catch {
-      setMensagemErro('Ocorreu um erro ao tentar restaurar os dados originais.');
-    } finally {
-      setEstaCarregando(false);
     }
   };
 
@@ -116,9 +114,7 @@ export const useCustomerProfileController = () => {
     matricula,
     senha,
     ehCliente,
-    estaCarregando,
-    mensagemSucesso,
-    mensagemErro,
+    estaCarregando: carregandoDados || mutationSalvar.isPending,
     setNome,
     setEmail,
     setTelefone,

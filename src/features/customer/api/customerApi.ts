@@ -1,70 +1,14 @@
 import { httpClient } from '../../../services/api';
 import type { ClienteResponseDTO, FuncionarioResponseDTO } from '../../auth';
+import { CustomerMapper } from '../domain/customer.mapper';
+import type {
+  BackendPedidoDetalhadoResponseDTO,
+  ClienteAdminRequestDTO,
+  DadosAtualizacaoPerfil,
+  FuncionarioAdminRequestDTO,
+  PerfilExibicao
+} from '../domain/customer.types';
 import { CUSTOMER_ENDPOINTS } from './customerEndpoints';
-
-export interface PerfilExibicao {
-  nome: string;
-  email: string;
-  telefone?: string;
-  cpf?: string;
-  matricula?: string;
-}
-
-export interface DadosAtualizacaoPerfil {
-  nome: string;
-  email: string;
-  senha?: string;
-  matricula?: string;
-  perfis?: string[];
-  telefone?: string;
-  cpf?: string;
-}
-
-export interface BackendPedidoClienteExibicaoDTO {
-  id: string;
-  nome: string;
-  cpf: string;
-}
-
-export interface BackendPedidoVariacaoExibicaoDTO {
-  id: string;
-  nomeProduto: string;
-  sku: string;
-  detalhes: string;
-}
-
-export interface BackendItemPedidoDetalhadoResponseDTO {
-  id: string;
-  variacao: BackendPedidoVariacaoExibicaoDTO;
-  quantidade: number;
-  precoUnitario: number;
-  subtotal: number;
-}
-
-export interface BackendPedidoDetalhadoResponseDTO {
-  id: string;
-  cliente: BackendPedidoClienteExibicaoDTO;
-  status: string;
-  valorTotal: number;
-  criadoEm: string;
-  itens: BackendItemPedidoDetalhadoResponseDTO[];
-}
-
-export interface ClienteAdminRequestDTO {
-  nome: string;
-  email: string;
-  telefone: string;
-  senha?: string;
-  cpf: string;
-}
-
-export interface FuncionarioAdminRequestDTO {
-  nome: string;
-  email: string;
-  senha?: string;
-  matricula: string;
-  roles: string[];
-}
 
 export const customerApi = {
   obterPerfil: async (usuarioId: string, ehCliente: boolean): Promise<PerfilExibicao> => {
@@ -78,13 +22,11 @@ export const customerApi = {
   },
 
   atualizarPerfil: async (usuarioId: string, dados: DadosAtualizacaoPerfil): Promise<void> => {
-    const senhaSubmissao = dados.senha || 'Mudar@123';
-
     if ('matricula' in dados && dados.matricula) {
-      const payload = { nome: dados.nome, email: dados.email, senha: senhaSubmissao, matricula: dados.matricula, roles: dados.perfis };
+      const payload = CustomerMapper.toFuncionarioUpdatePayload(dados);
       await httpClient.put(`${CUSTOMER_ENDPOINTS.funcionario}/${usuarioId}`, payload);
     } else {
-      const payload = { nome: dados.nome, email: dados.email, telefone: dados.telefone || '', senha: senhaSubmissao, cpf: dados.cpf || '' };
+      const payload = CustomerMapper.toClienteUpdatePayload(dados);
       await httpClient.put(`${CUSTOMER_ENDPOINTS.cliente}/${usuarioId}`, payload);
     }
   },
@@ -132,3 +74,5 @@ export const customerApi = {
     await httpClient.patch<void>(`${CUSTOMER_ENDPOINTS.funcionario}/${id}/delete`);
   }
 };
+
+export type { BackendPedidoDetalhadoResponseDTO, ClienteAdminRequestDTO, FuncionarioAdminRequestDTO };

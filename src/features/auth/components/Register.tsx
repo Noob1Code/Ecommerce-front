@@ -1,57 +1,17 @@
-import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, ErrorMessage, Input, Spinner } from '../../../shared/components/ui';
 import { useRegister } from '../hooks/useRegister';
 
 export const Register = () => {
-  const { registrarCliente, estaCarregando, erro } = useRegister();
-
-  const [formulario, setFormulario] = useState({
-    nome: '',
-    email: '',
-    senha: '',
-    confirmarSenha: '',
-    cpf: '',
-    telefone: '',
-  });
-
-  const [erroValidacao, setErroValidacao] = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormulario((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setErroValidacao(null);
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!formulario.nome || !formulario.email || !formulario.senha) {
-      setErroValidacao('Por favor, preencha todos os campos obrigatórios.');
-      return;
-    }
-
-    if (formulario.senha !== formulario.confirmarSenha) {
-      setErroValidacao('As senhas informadas não coincidem.');
-      return;
-    }
-
-    if (formulario.senha.length < 6) {
-      setErroValidacao('A senha provisória deve conter no mínimo 6 caracteres.');
-      return;
-    }
-
-    registrarCliente({
-      nome: formulario.nome,
-      email: formulario.email,
-      senha: formulario.senha,
-      cpf: formulario.cpf || undefined,
-      telefone: formulario.telefone || undefined,
-    });
-  };
+  const {
+    formulario,
+    erroValidacao,
+    estaCarregando,
+    erro,
+    handleChange,
+    handleSubmit,
+    setErroValidacao,
+  } = useRegister();
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
@@ -64,7 +24,10 @@ export const Register = () => {
         </div>
 
         {erroValidacao && (
-          <div className="p-3 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
+          <div
+            className="p-3 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl cursor-pointer"
+            onClick={() => setErroValidacao(null)}
+          >
             {erroValidacao}
           </div>
         )}
@@ -190,7 +153,7 @@ export const Register = () => {
 
         <div className="text-center pt-4 border-t border-gray-100">
           <p className="text-sm text-gray-600">
-            Já possui uma conta ativa?{' '}
+            Já possui uma conta activa?{' '}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
               Fazer login
             </Link>

@@ -1,31 +1,6 @@
 import { httpClient } from '../../../services/api';
+import type { BackendCarrinhoResponseDTO, BackendItemCarrinhoRequestDTO } from '../domain/cart.types';
 import { CART_ENDPOINTS } from './cartEndpoints';
-
-export interface BackendItemCarrinhoRequestDTO {
-  variacaoId: string;
-  quantidade: number;
-}
-
-export interface BackendItemCatalogoCompletoDTO {
-  variacaoId: string;
-  nomeProduto: string;
-  preco: number;
-  estoque: number;
-  sku: string;
-  detalhes: string;
-}
-
-export interface BackendItemCarrinhoResponseDTO {
-  id: string;
-  quantidade: number;
-  produto: BackendItemCatalogoCompletoDTO | null; // Objeto de domínio enriquecido pelo servidor
-}
-
-export interface BackendCarrinhoResponseDTO {
-  id: string;
-  atualizadoEm: string;
-  itens: BackendItemCarrinhoResponseDTO[];
-}
 
 export const cartApi = {
   adicionarItemAoCarrinho: async (variacaoId: string, quantity: number): Promise<void> => {

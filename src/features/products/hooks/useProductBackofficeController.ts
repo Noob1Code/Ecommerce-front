@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import {
   alterarStatusProdutoEmApi,
   deleteSkuInApi,
@@ -11,7 +12,7 @@ import {
   updateSkuStockInApi
 } from '../api/productsApi';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
-import type { ProductSku } from '../domain/product.types'; // Importação do contrato rígido de domínio
+import type { ProductSku } from '../domain/product.types';
 import { useProducts } from './useProducts';
 
 interface AtributoMinimo {
@@ -21,6 +22,9 @@ interface AtributoMinimo {
 }
 
 export const useProductBackofficeController = () => {
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+  const showError = useNotificationModalStore((state) => state.showError);
+  const showConfirm = useNotificationModalStore((state) => state.showConfirm);
   const queryClient = useQueryClient();
   const { products: produtos, isLoading: estaCarregando, error: erro } = useProducts();
   const [parametrosBusca, setParametrosBusca] = useSearchParams();
@@ -32,7 +36,6 @@ export const useProductBackofficeController = () => {
   const [estaEnviando, setEstaEnviando] = useState(false);
   const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
   const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null);
-
   const [skuIdEmEdicao, setSkuIdEmEdicao] = useState<string | null>(null);
   const [dadosEdicaoSku, setDadosEdicaoSku] = useState<{ skuCode: string; options: Record<string, string> } | null>(null);
 
@@ -109,30 +112,52 @@ export const useProductBackofficeController = () => {
     setAlteracoesPreco((prev) => ({ ...prev, [skuId]: valorSaneado }));
   };
 
-  const handleAlternarStatusProduto = async (produtoId: string, nomeProduto: string, estaAtivo: boolean) => {
-    const msg = estaAtivo ? `Deseja inativar o produto: ${nomeProduto}?` : `Deseja reativar o produto: ${nomeProduto}?`;
-    if (!window.confirm(msg)) return;
-    try {
-      await alterarStatusProdutoEmApi(produtoId);
-      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert('Status alterado com sucesso!');
-    } catch {
-      alert('Erro ao modificar o status.');
-    }
+  const handleAlternarStatusProduto = (produtoId: string, nomeProduto: string, estaAtivo: boolean) => {
+    const acaoLabel = estaAtivo ? 'inativar' : 'reativar';
+
+    showConfirm({
+      title: `${estaAtivo ? 'Inativar' : 'Reativar'} Produto`,
+      message: `Deseja realmente ${acaoLabel} o produto container "${nomeProduto}" do catálogo comercial?`,
+      onConfirm: async () => {
+        try {
+          await alterarStatusProdutoEmApi(produtoId);
+          await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
+          showSuccess({
+            title: 'Status Modificado',
+            message: `O produto "${nomeProduto}" foi ${estaAtivo ? 'inativado' : 'reativado'} com sucesso.`
+          });
+        } catch {
+          showError({
+            title: 'Falha de Sincronia',
+            message: 'Ocorreu um erro no barramento ao tentar alterar o status do produto pai.'
+          });
+        }
+      }
+    });
   };
 
-  const handleExclusaoFisicaSku = async (skuId: string, codigoSku: string) => {
-    if (!window.confirm(`Deseja remover permanentemente o SKU ${codigoSku}?`)) return;
-    try {
-      await deleteSkuInApi(skuId);
-      await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
-      alert('Variação de SKU removida com sucesso!');
-    } catch {
-      alert('Erro ao excluir SKU do banco.');
-    }
+  const handleExclusaoFisicaSku = (skuId: string, codigoSku: string) => {
+    showConfirm({
+      title: 'Remover Variação SKU',
+      message: `Tem certeza que deseja apagar permanentemente o SKU "${codigoSku}" do banco de dados? Esta ação não pode ser desfeita.`,
+      onConfirm: async () => {
+        try {
+          await deleteSkuInApi(skuId);
+          await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
+          showSuccess({
+            title: 'Exclusão Concluída',
+            message: `A variação identificada por "${codigoSku}" foi removida física e permanentemente do banco.`
+          });
+        } catch {
+          showError({
+            title: 'Erro na Exclusão',
+            message: 'Não foi possível completar a remoção do SKU. Verifique as amarrações de pedidos.'
+          });
+        }
+      }
+    });
   };
 
-  // CORREÇÃO: Uso do ProductSku tipado estritamente em vez de 'any'
   const handleIniciarEdicaoSku = (sku: ProductSku) => {
     setSkuIdEmEdicao(sku.id);
     const opcoesIniciais: Record<string, string> = {};
@@ -177,9 +202,16 @@ export const useProductBackofficeController = () => {
 
       setSkuIdEmEdicao(null);
       setDadosEdicaoSku(null);
-      alert('Configuração de atributos do SKU salva com sucesso!');
+
+      showSuccess({
+        title: 'Variação Atualizada',
+        message: 'As características e propriedades do SKU foram gravadas com sucesso.'
+      });
     } catch {
-      alert('Erro ao tentar atualizar as características da variação.');
+      showError({
+        title: 'Falha na Gravação',
+        message: 'Erro ao tentar atualizar as características e eixos da variação.'
+      });
     } finally {
       setEstaEnviando(false);
     }
@@ -238,9 +270,16 @@ export const useProductBackofficeController = () => {
       setAlteracoesEstoque({});
       setAlteracoesPreco({});
       setAlteracoesMetadados({});
-      alert('Todas as modificações foram integradas e salvas com sucesso!');
+
+      showSuccess({
+        title: 'Processamento em Lote',
+        message: 'Todas as modificações de preços, estoques e metadados foram salvas com sucesso.'
+      });
     } catch {
-      alert('Erro ao tentar salvar alterações em lote.');
+      showError({
+        title: 'Erro de Persistência',
+        message: 'Ocorreu um erro ao tentar salvar as alterações em lote. Alguns campos podem ter falhado.'
+      });
     } finally {
       setEstaEnviando(false);
     }

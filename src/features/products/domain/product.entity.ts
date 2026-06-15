@@ -1,62 +1,49 @@
-import type { Product, ProductAttribute, ProductSku, SkuImage, SkuOption } from './product.types';
+import type { Product, ProductSku } from './product.types';
 
-export const createProductAttributeEntity = (data: Partial<ProductAttribute>): ProductAttribute => {
+export interface DisplayableSku extends ProductSku {
+  formattedPrice: string;
+}
+
+export const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+};
+
+export const createDisplayableSku = (sku: ProductSku): DisplayableSku => {
   return {
-    id: data.id || 'unknown',
-    attributeId: data.attributeId || 'unknown',
-    attributeName: data.attributeName || 'Unnamed Attribute',
+    id: sku.id,
+    skuCode: sku.skuCode,
+    price: sku.price,
+    stock: sku.stock,
+    options: sku.options,
+    images: sku.images,
+    formattedPrice: formatCurrency(sku.price)
   };
 };
 
-export const createSkuOptionEntity = (data: Partial<SkuOption>): SkuOption => {
+export const isSkuInStock = (sku: ProductSku): boolean => {
+  return sku.stock > 0;
+};
+
+export const getProductPriceRange = (product: Product): { minPrice: number; maxPrice: number; formattedMin: string; formattedMax: string } | null => {
+  if (!product.skus || product.skus.length === 0) {
+    return null;
+  }
+
+  const prices = product.skus.map((sku) => sku.price);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+
   return {
-    id: data.id || 'unknown',
-    attributeId: data.attributeId || 'unknown',
-    attributeName: data.attributeName || 'Unnamed Option Type',
-    value: data.value || '',
+    minPrice,
+    maxPrice,
+    formattedMin: formatCurrency(minPrice),
+    formattedMax: formatCurrency(maxPrice)
   };
 };
 
-export const createSkuImageEntity = (data: Partial<SkuImage>): SkuImage => {
-  return {
-    id: data.id || 'unknown',
-    imageUrl: data.imageUrl || '/fallback-image.jpg',
-    order: data.order ?? 0,
-    createdAt: data.createdAt || new Date().toISOString(),
-  };
-};
-
-export const createSkuEntity = (data: Partial<ProductSku>): ProductSku => {
-  const normalizedPrice = Math.max(0, data.price || 0);
-  const normalizedStock = Math.max(0, data.stock || 0);
-
-  const sortedImages = data.images
-    ? [...data.images].sort((a, b) => a.order - b.order)
-    : [];
-
-  return {
-    id: data.id || 'unknown',
-    skuCode: data.skuCode || 'unknown-sku',
-    price: normalizedPrice,
-    stock: normalizedStock,
-    options: data.options || [],
-    images: sortedImages,
-    formattedPrice: new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(normalizedPrice),
-  };
-};
-
-export const createProductEntity = (data: Partial<Product>): Product => {
-  return {
-    id: data.id || 'unknown',
-    name: data.name || 'Unnamed Product',
-    description: data.description || '',
-    isActive: data.isActive ?? true,
-    createdAt: data.createdAt || new Date().toISOString(),
-    variationIds: data.variationIds || [],
-    attributes: data.attributes || [],
-    skus: data.skus || [],
-  };
+export const validateSkuInventory = (sku: ProductSku, requestedQuantity: number): boolean => {
+  return sku.stock >= requestedQuantity;
 };

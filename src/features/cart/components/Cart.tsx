@@ -32,7 +32,7 @@ export const Cart = () => {
       </div>
     );
   }
-  
+
   if (isEmpty) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
@@ -40,8 +40,8 @@ export const Cart = () => {
         <p className="text-sm text-gray-500 max-w-md text-center">
           Adicione produtos ao seu carrinho de compras antes de prosseguir para o fluxo de finalização e pagamento seguro.
         </p>
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="mt-4 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-md"
         >
           Navegar pelo Catálogo de Produtos
@@ -70,24 +70,24 @@ export const Cart = () => {
         {/* Listagem de Itens no Carrinho */}
         <div className="lg:col-span-8 space-y-4">
           {items.map((item) => (
-            <Card 
-              key={item.skuId} 
+            <Card
+              key={item.skuId}
               className="p-5 bg-white border border-gray-200 rounded-xl shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-sm transition-shadow"
             >
               <div className="flex items-start gap-4">
                 {/* Container da Imagem */}
                 <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center text-[10px] text-gray-400 font-mono">
                   {item.selectedSku.images?.[0]?.imageUrl ? (
-                    <img 
-                      src={item.selectedSku.images[0].imageUrl} 
-                      alt={item.product.name} 
+                    <img
+                      src={item.selectedSku.images[0].imageUrl}
+                      alt={item.product.name}
                       className="h-full w-full object-cover object-center"
                     />
                   ) : (
                     'Sem Imagem'
                   )}
                 </div>
-                
+
                 {/* Metadados do Produto */}
                 <div>
                   <h3 className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors">
@@ -97,12 +97,10 @@ export const Cart = () => {
                   <p className="mt-0.5 text-xs text-gray-500 font-medium">
                     {item.selectedSku.options.map((o) => `${o.attributeName}: ${o.value}`).join(' | ')}
                   </p>
-                  
-                  {/* Responsabilidade de Formatação Unificada na Camada Visuall */}
+
+                  {/* Consumindo a propriedade de preço formatada no Controlador */}
                   <span className="mt-2 inline-block text-sm font-bold text-gray-900">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                      item.selectedSku.price
-                    )}
+                    {item.precoFormatado}
                   </span>
                 </div>
               </div>
@@ -127,12 +125,10 @@ export const Cart = () => {
                   </button>
                 </div>
 
-                {/* Subtotal por Linha Calculado Baseado no Preço Puro de Domínio */}
+                {/* Subtotal por Linha vindo pronto do Domínio */}
                 <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 sm:gap-1 min-w-[110px]">
                   <span className="text-base font-black text-gray-900 hidden sm:block">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                      item.selectedSku.price * item.quantity
-                    )}
+                    {item.subtotalFormatado}
                   </span>
                   <button
                     type="button"
@@ -151,7 +147,7 @@ export const Cart = () => {
         <div className="lg:col-span-4">
           <Card className="bg-white p-6 border border-gray-200 shadow-sm rounded-xl">
             <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Resumo do Pedido</h2>
-            
+
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between text-sm font-medium text-gray-500">
                 <span>Subtotal Itens</span>

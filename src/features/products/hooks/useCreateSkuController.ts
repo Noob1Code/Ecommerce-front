@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import type { ProductVariationRequestDTO } from '../api/productsApi';
 import { useProductMutations } from './useProductMutations';
 
@@ -9,6 +10,7 @@ interface AtributoDoProduto {
 }
 
 export const useCreateSkuController = (productId: string) => {
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
@@ -68,7 +70,7 @@ export const useCreateSkuController = (productId: string) => {
     }
 
     if (isNaN(numericStock) || numericStock < 0) {
-      setValidationError('Erro de Validação: O Volume de Estoque físico não pode assumir valores numéricos negativos.');
+      setValidationError('Erro de Validação: O Volume de Estoque físico não pode assume valores numéricos negativos.');
       return;
     }
     const requiredAttributeIds = atributosDoProduto?.map((attr) => attr.attributeId) || [];
@@ -99,8 +101,12 @@ export const useCreateSkuController = (productId: string) => {
       if (onSuccessCallback) {
         onSuccessCallback();
       }
-      alert('Nova variação de SKU associada e gravada com sucesso!');
-    } catch  {
+
+      showSuccess({
+        title: 'Variação Cadastrada',
+        message: `A nova variação SKU "${payload.sku}" foi associada e gravada com sucesso ao produto pai no banco de dados!`
+      });
+    } catch {
       setValidationError('Falha Operacional: Ocorreu um erro de comunicação ao tentar registrar o SKU no servidor.');
     }
   };
