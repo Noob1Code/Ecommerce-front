@@ -18,6 +18,7 @@ const GuardaVisitante = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Carregamento assíncrono das Views (Code Splitting)
 const ProductGrid = lazy(() => import('../../features/products/components/ProductGrid').then(m => ({ default: m.ProductGrid })));
 const ProductDetail = lazy(() => import('../../features/products/components/ProductDetail').then(m => ({ default: m.ProductDetail })));
 const ProductBackoffice = lazy(() => import('../../features/products/components/ProductBackoffice').then(m => ({ default: m.ProductBackoffice })));
@@ -30,9 +31,8 @@ const CustomerProfile = lazy(() => import('../../features/customer').then(m => (
 const CustomerOrders = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerOrders })));
 const UserManagement = lazy(() => import('../../features/customer/components/UserManagement').then(m => ({ default: m.UserManagement })));
 
-const PainelFaturamentoMock = () => (
-  <div className="mx-auto max-w-7xl px-4 py-12"><h1 className="text-2xl font-bold">Módulo Financeiro</h1></div>
-);
+// CORREÇÃO: Importando a view real da feature invoicing a partir do arquivo barrel (Lei 3)
+const InvoicingPanel = lazy(() => import('../../features/invoicing').then(m => ({ default: m.InvoicingPanel })));
 
 const router = createBrowserRouter([
   {
@@ -149,8 +149,9 @@ const router = createBrowserRouter([
         path: 'backoffice/faturamento',
         element: (
           <Suspense fallback={<RouteFallback />}>
+            {/* Mantida a barreira preventiva baseada em privilégios anexados ao perfil logado */}
             <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_FATURAMENTO']} fallback={<Navigate to="/" replace />}>
-              <PainelFaturamentoMock />
+              <InvoicingPanel />
             </RoleGuard>
           </Suspense>
         ),
