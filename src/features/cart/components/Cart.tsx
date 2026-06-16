@@ -1,152 +1,177 @@
 import { Link } from 'react-router-dom';
-import { useCartStore } from '../../../app/store/useCartStore';
+import { Button, Card, ErrorMessage, Spinner } from '../../../shared/components/ui';
+import { useCartController } from '../hooks/useCartController';
 
 export const Cart = () => {
-  // Extracting clearCart from the Zustand store
-  const { items, removeItem, updateQuantity, getCartTotal, clearCart } = useCartStore();
-  const cartTotal = getCartTotal();
+  const {
+    items,
+    isEmpty,
+    isLoading,
+    error,
+    totalItemsCount,
+    formattedCartTotal,
+    handleIncrement,
+    handleDecrement,
+    handleRemove,
+    handleClear,
+    handleCheckoutRedirect,
+  } = useCartController();
 
-  if (items.length === 0) {
+  if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900">Your bag is empty</h2>
-        <p className="text-gray-500">Looks like you haven't added any items yet.</p>
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <Spinner className="h-12 w-12 text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <ErrorMessage message={error} />
+      </div>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4 px-4 py-12">
+        <h2 className="text-2xl font-black text-gray-900 text-center">Seu carrinho está vazio</h2>
+        <p className="text-sm text-gray-500 max-w-md text-center">
+          Adicione produtos ao seu carrinho de compras antes de prosseguir para o fluxo de finalização e pagamento seguro.
+        </p>
         <Link
           to="/"
-          className="mt-4 rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          className="mt-4 w-full sm:w-auto text-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-md"
         >
-          Start Shopping
+          Navegar pelo Catálogo de Produtos
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-      
-      {/* Header section with the Clear Cart button */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Shopping Cart</h1>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-5 mb-6 sm:mb-8">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
+            Carrinho de Compras
+          </h1>
+          <p className="text-xs sm:text-sm font-medium text-gray-400 mt-0.5">
+            Você selecionou {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'itens'} para compra
+          </p>
+        </div>
         <button
           type="button"
-          onClick={clearCart}
-          className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+          onClick={handleClear}
+          className="text-center w-full sm:w-auto text-xs font-bold uppercase tracking-wider text-red-600 hover:text-white hover:bg-red-600 border border-red-200 bg-red-50/50 px-4 py-2.5 rounded-lg transition-all shadow-2xs"
         >
-          Clear Cart
+          Esvaziar Carrinho
         </button>
       </div>
-      
-      <div className="bg-white shadow-sm sm:rounded-lg border border-gray-200">
-        <ul role="list" className="divide-y divide-gray-200">
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-8 space-y-4">
           {items.map((item) => (
-            <li key={item.id} className="flex py-6 px-4 sm:px-6">
-              <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  className="h-full w-full object-cover object-center"
-                />
-              </div>
-
-              <div className="ml-4 flex flex-1 flex-col">
-                <div>
-                  <div className="flex justify-between text-base font-medium text-gray-900">
-                    <h3>
-                      <Link to={`/product/${item.id}`}>{item.name}</Link>
-                    </h3>
-                    <p className="ml-4">${(item.price * item.quantity).toFixed(2)}</p>
-                  </div>
+            <Card
+              key={item.skuId}
+              className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-sm transition-shadow"
+            >
+              <div className="flex items-start gap-4 w-full sm:w-auto">
+                <div className="h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center text-[10px] text-gray-400 font-mono">
+                  {item.selectedSku.images?.[0]?.imageUrl ? (
+                    <img
+                      src={item.selectedSku.images[0].imageUrl}
+                      alt={item.product.name}
+                      className="h-full w-full object-cover object-center"
+                    />
+                  ) : (
+                    'Sem Imagem'
+                  )}
                 </div>
-                <div className="flex flex-1 items-end justify-between text-sm mt-4">
-                  <div className="flex items-center">
-                    <label htmlFor={`quantity-${item.id}`} className="sr-only">
-                      Quantity
-                    </label>
-                    
-                    {/* Advanced Quantity Selector */}
-                    <div className="flex items-center rounded-md border border-gray-300 bg-white">
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-md transition-colors"
-                        aria-label="Decrease quantity"
-                      >
-                        -
-                      </button>
-                      
-                      <input
-                        id={`quantity-${item.id}`}
-                        type="number"
-                        min="1"
-                        max={item.stock}
-                        value={item.quantity}
-                        onChange={(e) => {
-                          const inputValue = parseInt(e.target.value, 10);
-                          if (!isNaN(inputValue)) {
-                            const clampedValue = Math.max(1, Math.min(inputValue, item.stock));
-                            updateQuantity(item.id, clampedValue);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          if (e.target.value === '' || isNaN(parseInt(e.target.value, 10))) {
-                            updateQuantity(item.id, 1);
-                          }
-                        }}
-                        className="w-16 border-y-0 border-x border-gray-300 py-1 text-center text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        disabled={item.quantity >= item.stock}
-                        className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-md transition-colors"
-                        aria-label="Increase quantity"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
 
-                  <div className="flex">
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.id)}
-                      className="font-medium text-red-600 hover:text-red-500 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                <div className="flex-1 sm:flex-none">
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2 sm:line-clamp-none">
+                    <Link to={`/product/${item.product.id}`}>{item.product.name}</Link>
+                  </h3>
+                  <p className="mt-0.5 text-[11px] text-gray-400 font-mono tracking-tight">SKU: {item.selectedSku.skuCode}</p>
+                  <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+                    {item.selectedSku.options.map((o) => `${o.attributeName}: ${o.value}`).join(' | ')}
+                  </p>
+                  <span className="mt-1 inline-block text-xs sm:text-sm font-bold text-gray-700 bg-gray-100 sm:bg-transparent px-2 py-0.5 sm:px-0 sm:py-0 rounded">
+                    {item.precoFormatado}
+                  </span>
                 </div>
               </div>
-            </li>
+
+              <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 sm:gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
+                <div className="flex items-center gap-1.5 bg-gray-50/80 p-1 border border-gray-200 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => handleDecrement(item.skuId, item.quantity)}
+                    className="h-7 w-7 bg-white border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold select-none transition-colors shadow-2xs active:scale-95"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center text-xs sm:text-sm font-bold text-gray-900">{item.quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleIncrement(item.skuId, item.quantity, item.selectedSku.stock)}
+                    className="h-7 w-7 bg-white border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold select-none transition-colors shadow-2xs active:scale-95"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div className="text-right flex flex-col items-end justify-center min-w-[90px] sm:min-w-[110px] gap-0.5">
+                  <span className="text-sm sm:text-base font-black text-gray-900">
+                    {item.subtotalFormatado}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(item.skuId)}
+                    className="text-[11px] font-bold text-gray-400 hover:text-red-600 transition-colors uppercase tracking-wider mt-0.5 active:scale-95"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            </Card>
           ))}
-        </ul>
-      </div>
+        </div>
 
-      <div className="mt-8 bg-gray-50 px-4 py-6 sm:rounded-lg sm:px-6 border border-gray-200">
-        <div className="flex justify-between text-base font-medium text-gray-900 mb-4">
-          <p>Subtotal</p>
-          <p>${cartTotal.toFixed(2)}</p>
-        </div>
-        <p className="mt-0.5 text-sm text-gray-500 mb-6">
-          Shipping and taxes calculated at checkout.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/checkout"
-            className="flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
-          >
-            Proceed to Checkout
-          </Link>
-        </div>
-        <div className="mt-6 flex justify-center text-center text-sm text-gray-500">
-          <p>
-            or{' '}
-            <Link to="/" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-              Continue Shopping<span aria-hidden="true"> &rarr;</span>
-            </Link>
-          </p>
+        <div className="lg:col-span-4 w-full">
+          <Card className="bg-white p-5 sm:p-6 border border-gray-200 shadow-sm rounded-xl">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Resumo do Pedido</h2>
+
+            <div className="mt-4 space-y-3.5">
+              <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-gray-500">
+                <span>Subtotal Itens</span>
+                <span className="font-bold text-gray-900">{formattedCartTotal}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs sm:text-sm font-medium border-b border-gray-100 pb-4">
+                <span className="text-gray-500">Logística de Entrega</span>
+                <span className="text-[10px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-100 uppercase tracking-wide">
+                  Frete Grátis
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-sm sm:text-base font-bold text-gray-900">Total Geral</span>
+                <span className="text-xl sm:text-2xl font-black text-blue-600">{formattedCartTotal}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 sm:mt-8">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleCheckoutRedirect}
+                className="w-full py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md flex justify-center items-center bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
+              >
+                Prosseguir para o Checkout
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

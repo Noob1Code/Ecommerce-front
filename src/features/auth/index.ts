@@ -1,1 +1,10 @@
-export * from './components/Login';
+export { EmployeeRegister } from './components/EmployeeRegister';
+export { Login } from './components/Login';
+export { Register } from './components/Register';
+export { RoleGuard } from './components/RoleGuard';
+export { useEmployeeRegister } from './hooks/useEmployeeRegister';
+export { useLogin } from './hooks/useLogin';
+export { useRegister } from './hooks/useRegister';
+export { useAuthStore } from './store/useAuthStore';
+export { cadastrarFuncionarioApi } from './api/authApi';
+export type { ClienteResponseDTO, FuncionarioResponseDTO } from './domain/auth.types';

@@ -1,24 +1,68 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Layout } from '../../shared/components/layout';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { RoleGuard, useAuthStore } from '../../features/auth';
 import { Spinner } from '../../shared/components/ui';
+import { ErrorBoundary, Layout } from '../layout';
 
-// Lazy loading features for performance optimization
-const ProductGrid = lazy(() => import('../../features/products').then(module => ({ default: module.ProductGrid })));
-const ProductDetail = lazy(() => import('../../features/products').then(module => ({ default: module.ProductDetail })));
-const Cart = lazy(() => import('../../features/cart').then(module => ({ default: module.Cart })));
-const Checkout = lazy(() => import('../../features/checkout').then(module => ({ default: module.Checkout })));
-const Login = lazy(() => import('../../features/auth').then(module => ({ default: module.Login })));
+const RouteFallback = () => (
+  <div className="flex min-h-[60vh] items-center justify-center">
+    <Spinner className="h-10 w-10 text-blue-600" />
+  </div>
+);
+
+const GuardaVisitante = ({ children }: { children: React.ReactNode }) => {
+  const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
+  if (estaAutenticado) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
+// Carregamento assíncrono das Views (Code Splitting)
+const ProductGrid = lazy(() => import('../../features/products/components/ProductGrid').then(m => ({ default: m.ProductGrid })));
+const ProductDetail = lazy(() => import('../../features/products/components/ProductDetail').then(m => ({ default: m.ProductDetail })));
+const ProductBackoffice = lazy(() => import('../../features/products/components/ProductBackoffice').then(m => ({ default: m.ProductBackoffice })));
+const Cart = lazy(() => import('../../features/cart').then(m => ({ default: m.Cart })));
+const Checkout = lazy(() => import('../../features/checkout').then(m => ({ default: m.Checkout })));
+const Login = lazy(() => import('../../features/auth').then(m => ({ default: m.Login })));
+const Register = lazy(() => import('../../features/auth').then(m => ({ default: m.Register })));
+const EmployeeRegister = lazy(() => import('../../features/auth').then(m => ({ default: m.EmployeeRegister })));
+const CustomerProfile = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerProfile })));
+const CustomerOrders = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerOrders })));
+const UserManagement = lazy(() => import('../../features/customer/components/UserManagement').then(m => ({ default: m.UserManagement })));
+
+// CORREÇÃO: Importando a view real da feature invoicing a partir do arquivo barrel (Lei 3)
+const InvoicingPanel = lazy(() => import('../../features/invoicing').then(m => ({ default: m.InvoicingPanel })));
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: (
+      <ErrorBoundary>
+        <Layout />
+      </ErrorBoundary>
+    ),
     children: [
+      {
+        path: 'minha-conta',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <CustomerProfile />
+          </Suspense>
+        )
+      },
+      {
+        path: 'meus-pedidos',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <CustomerOrders />
+          </Suspense>
+        )
+      },
       {
         index: true,
         element: (
-          <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<RouteFallback />}>
             <ProductGrid />
           </Suspense>
         ),
@@ -26,7 +70,7 @@ const router = createBrowserRouter([
       {
         path: 'product/:id',
         element: (
-          <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<RouteFallback />}>
             <ProductDetail />
           </Suspense>
         ),
@@ -34,24 +78,81 @@ const router = createBrowserRouter([
       {
         path: 'cart',
         element: (
-          <Suspense fallback={<Spinner />}>
-            <Cart />
+          <Suspense fallback={<RouteFallback />}>
+            <RoleGuard allowedRoles={['ROLE_CLIENTE', 'ROLE_ADMIN']} fallback={<Navigate to="/" replace />}>
+              <Cart />
+            </RoleGuard>
           </Suspense>
         ),
       },
       {
         path: 'checkout',
         element: (
-          <Suspense fallback={<Spinner />}>
-            <Checkout />
+          <Suspense fallback={<RouteFallback />}>
+            <RoleGuard allowedRoles={['ROLE_CLIENTE', 'ROLE_ADMIN']} fallback={<Navigate to="/" replace />}>
+              <Checkout />
+            </RoleGuard>
           </Suspense>
         ),
       },
       {
         path: 'login',
         element: (
-          <Suspense fallback={<Spinner />}>
-            <Login />
+          <Suspense fallback={<RouteFallback />}>
+            <GuardaVisitante>
+              <Login />
+            </GuardaVisitante>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'register',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <GuardaVisitante>
+              <Register />
+            </GuardaVisitante>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_ESTOQUE']} fallback={<Navigate to="/" replace />}>
+              <ProductBackoffice />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice/funcionarios',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <RoleGuard allowedRoles={['ROLE_ADMIN']} fallback={<Navigate to="/backoffice" replace />}>
+              <EmployeeRegister />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice/usuarios',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <RoleGuard allowedRoles={['ROLE_ADMIN']} fallback={<Navigate to="/backoffice" replace />}>
+              <UserManagement />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'backoffice/faturamento',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            {/* Mantida a barreira preventiva baseada em privilégios anexados ao perfil logado */}
+            <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_FATURAMENTO']} fallback={<Navigate to="/" replace />}>
+              <InvoicingPanel />
+            </RoleGuard>
           </Suspense>
         ),
       },
