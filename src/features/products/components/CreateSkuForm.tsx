@@ -32,6 +32,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
     handleAddImageUrl,
     handleRemoveImageUrl,
     handleSaveSku,
+    handleFileUpload,
   } = useCreateSkuController(product.id);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,7 +65,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4sm:space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
 
         {validationError && (
           <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center space-x-2 animate-in fade-in duration-150">
@@ -154,7 +155,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
             Galeria de Imagens da Variação
           </span>
 
-          <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="flex flex-col sm:flex-row gap-2.5 items-end sm:items-center">
             <div className="flex-1 w-full">
               <Input
                 type="text"
@@ -166,15 +167,31 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
                 className="rounded-xl"
               />
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={isPending || !currentImageUrl.trim()}
-              onClick={handleAddImageUrl}
-              className="w-full sm:w-auto px-4 py-3 sm:py-2.5 text-xs font-bold rounded-xl shrink-0 active:scale-95 transition-transform"
-            >
-              Vincular Link
-            </Button>
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isPending || !currentImageUrl.trim()}
+                onClick={handleAddImageUrl}
+                className="flex-1 sm:flex-initial px-4 py-3 sm:py-2.5 text-xs font-bold rounded-xl active:scale-95 transition-all"
+              >
+                Vincular Link
+              </Button>
+              <label className={`flex-1 sm:flex-initial px-4 py-3 sm:py-2.5 text-xs font-bold text-center rounded-xl border bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100 transition-all cursor-pointer flex items-center justify-center active:scale-95 select-none ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <span>Fazer Upload</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isPending}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleFileUpload(e.target.files[0]);
+                    }
+                  }}
+                />
+              </label>
+            </div>
           </div>
 
           {images.length > 0 && (

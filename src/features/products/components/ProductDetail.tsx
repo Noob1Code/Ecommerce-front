@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button, ErrorMessage, Spinner } from '../../../shared/components/ui';
 import { useAuthStore } from '../../auth';
 import { useCartController } from '../../cart';
+import { formatCurrency } from '../domain/product.entity';
 import type { Product } from '../domain/product.types';
 import { useProduct } from '../hooks/useProduct';
 import { useVariantSelector } from '../hooks/useVariantSelector';
@@ -24,14 +25,12 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
     handleOptionChange,
     getOptionGroupValues,
     isCombinationAvailable,
+    handleImageChange,
   } = useVariantSelector(product);
 
   const precoFormatado = useMemo(() => {
     if (!resolvedSku) return '';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(resolvedSku.price);
+    return formatCurrency(resolvedSku.price);
   }, [resolvedSku]);
 
   const handleAddToCartClick = () => {
@@ -59,7 +58,11 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
           {resolvedSku && resolvedSku.images && resolvedSku.images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">
               {resolvedSku.images.map((img) => (
-                <div key={img.id} className="aspect-square rounded-xl overflow-hidden border border-gray-200 bg-white p-1 hover:border-blue-500 transition-colors shadow-3xs cursor-pointer active:scale-95">
+                <div
+                  key={img.id}
+                  onClick={() => handleImageChange(img.imageUrl)}
+                  className="aspect-square rounded-xl overflow-hidden border border-gray-200 bg-white p-1 hover:border-blue-500 transition-colors shadow-3xs cursor-pointer active:scale-95"
+                >
                   <img src={img.imageUrl} alt="Visualização" className="h-full w-full object-cover rounded-lg" />
                 </div>
               ))}
@@ -101,10 +104,10 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
                           disabled={!disponivel}
                           onClick={() => handleOptionChange(attr.attributeId, valor)}
                           className={`px-4 py-2.5 sm:py-2 text-xs font-bold rounded-xl border transition-all active:scale-95 ${ativo
-                              ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
-                              : disponivel
-                                ? 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-2xs'
-                                : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through opacity-40'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
+                            : disponivel
+                              ? 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-2xs'
+                              : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through opacity-40'
                             }`}
                         >
                           {valor}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card } from '../../../shared/components/ui';
 import { RoleGuard, useAuthStore } from '../../auth';
 import { useCartController } from '../../cart';
+import { formatCurrency } from '../domain/product.entity';
 import type { Product } from '../domain/product.types';
 
 interface ProductCardProps {
@@ -20,7 +21,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const displayImageUrl = defaultSku && defaultSku.images.length > 0
     ? defaultSku.images[0].imageUrl
     : '/fallback-image.jpg';
-  const displayPrice = defaultSku ? defaultSku.price : '$0.00';
+  const displayPrice = defaultSku ? formatCurrency(defaultSku.price) : 'R$ 0,00';
   const isOutOfStock = defaultSku ? defaultSku.stock <= 0 : true;
 
   const possuiPermissaoCompra = !usuario || usuario.perfis?.some((p) =>

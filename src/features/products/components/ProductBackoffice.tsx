@@ -47,6 +47,8 @@ export const ProductBackoffice = () => {
     handleCancelarEdicaoSku,
     handleMudancaCodigoSkuEdicao,
     handleMudancaOpcaoSkuEdicao,
+    handleUploadImagemEdicaoSku,
+    handleRemoverImagemEdicaoSku,
     handleSalvarEdicaoSku,
     podeEditarMetadados
   } = useProductBackofficeController();
@@ -238,7 +240,7 @@ export const ProductBackoffice = () => {
                     </div>
 
                     {product.isActive && (
-                      <div className="mb-4 p-3 bg-gray-50 border border-gray-150 rounded-xl space-y-2 shadow-3xs">
+                      <div className="mb-4 p-3 bg-gray-50 border border-gray-155 rounded-xl space-y-2 shadow-3xs">
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">
                           Eixos de Atributos Vinculados a este Produto Container
                         </span>
@@ -373,6 +375,48 @@ export const ProductBackoffice = () => {
                                               </div>
                                             );
                                           })}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Gerenciar Galeria da Variação</label>
+
+                                          <div className="flex items-center justify-center w-full">
+                                            <label className="flex flex-col items-center justify-center w-full h-20 border border-dashed border-blue-300 rounded-xl cursor-pointer bg-white hover:bg-blue-50/40 transition-colors">
+                                              <div className="flex flex-col items-center justify-center pt-1.5 pb-1.5">
+                                                <p className="text-xs text-blue-600 font-bold">Anexar Nova Foto a esta variação</p>
+                                                <p className="text-[10px] text-gray-400 mt-0.5">Selecione arquivos locais</p>
+                                              </div>
+                                              <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                  if (e.target.files && e.target.files[0]) {
+                                                    handleUploadImagemEdicaoSku(e.target.files[0]);
+                                                  }
+                                                }}
+                                              />
+                                            </label>
+                                          </div>
+
+                                          {dadosEdicaoSku.images && dadosEdicaoSku.images.length > 0 && (
+                                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 pt-1">
+                                              {dadosEdicaoSku.images.map((url, idx) => (
+                                                <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-square bg-white">
+                                                  <img src={url} alt="Preview SKU" className="w-full h-full object-cover" />
+                                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleRemoverImagemEdicaoSku(idx)}
+                                                      className="bg-red-600 text-white rounded px-1.5 py-0.5 text-[9px] font-bold hover:bg-red-700"
+                                                    >
+                                                      Excluir
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
 
                                         <div className="flex gap-2.5 justify-end pt-2">

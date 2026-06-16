@@ -9,7 +9,8 @@ import {
   updateProductMetadataInApi,
   updateSkuDetailsInApi,
   updateSkuPriceInApi,
-  updateSkuStockInApi
+  updateSkuStockInApi,
+  uploadSkuImageInApi
 } from '../api/productsApi';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
 import type { ProductSku } from '../domain/product.types';
@@ -37,7 +38,7 @@ export const useProductBackofficeController = () => {
   const [exibirFormCriacao, setExibirFormCriacao] = useState(false);
   const [produtoIdParaNovoSku, setProdutoIdParaNovoSku] = useState<string | null>(null);
   const [skuIdEmEdicao, setSkuIdEmEdicao] = useState<string | null>(null);
-  const [dadosEdicaoSku, setDadosEdicaoSku] = useState<{ skuCode: string; options: Record<string, string> } | null>(null);
+  const [dadosEdicaoSku, setDadosEdicaoSku] = useState<{ skuCode: string; options: Record<string, string>; images: string[] } | null>(null);
 
   const { data: listaAtributosGlobais = [] } = useQuery({
     queryKey: ['products', 'global-attributes-list'] as const,
@@ -164,9 +165,11 @@ export const useProductBackofficeController = () => {
     sku.options?.forEach((o) => {
       opcoesIniciais[o.attributeId] = o.value;
     });
+
     setDadosEdicaoSku({
       skuCode: sku.skuCode,
-      options: opcoesIniciais
+      options: opcoesIniciais,
+      images: sku.images?.map((img) => img.imageUrl) || []
     });
   };
 
@@ -188,6 +191,48 @@ export const useProductBackofficeController = () => {
     });
   };
 
+  const handleUploadImagemEdicaoSku = async (file: File) => {
+    if (!dadosEdicaoSku || !file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showError({
+        title: 'Formato Inválido',
+        message: 'Erro de IHC: O arquivo selecionado deve ser uma imagem válida (PNG, JPG, WEBP).'
+      });
+      return;
+    }
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      showError({
+        title: 'Arquivo muito grande',
+        message: 'Erro de IHC: A imagem selecionada excede o limite máximo de 10MB permitido pelo servidor.'
+      });
+      return;
+    }
+
+    try {
+      const response = await uploadSkuImageInApi(file);
+      setDadosEdicaoSku({
+        ...dadosEdicaoSku,
+        images: [...dadosEdicaoSku.images, response.url]
+      });
+    } catch {
+      showError({
+        title: 'Falha no Upload',
+        message: 'Não foi possível anexar a nova imagem a esta variação específica.'
+      });
+    }
+  };
+
+  const handleRemoverImagemEdicaoSku = (index: number) => {
+    if (!dadosEdicaoSku) return;
+    setDadosEdicaoSku({
+      ...dadosEdicaoSku,
+      images: dadosEdicaoSku.images.filter((_, idx) => idx !== index)
+    });
+  };
+
   const handleSalvarEdicaoSku = async (skuId: string) => {
     if (!dadosEdicaoSku) return;
     setEstaEnviando(true);
@@ -197,7 +242,12 @@ export const useProductBackofficeController = () => {
         valor
       }));
 
-      await updateSkuDetailsInApi(skuId, dadosEdicaoSku.skuCode, opcoesDto);
+      const imagensDto = dadosEdicaoSku.images.map((url, index) => ({
+        urlImagem: url,
+        ordem: index + 1
+      }));
+
+      await updateSkuDetailsInApi(skuId, dadosEdicaoSku.skuCode, opcoesDto, imagensDto);
       await queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
 
       setSkuIdEmEdicao(null);
@@ -205,7 +255,7 @@ export const useProductBackofficeController = () => {
 
       showSuccess({
         title: 'Variação Atualizada',
-        message: 'As características e propriedades do SKU foram gravadas com sucesso.'
+        message: 'As características e a galeria de imagens do SKU foram salvas com sucesso.'
       });
     } catch {
       showError({
@@ -348,6 +398,8 @@ export const useProductBackofficeController = () => {
     handleCancelarEdicaoSku,
     handleMudancaCodigoSkuEdicao,
     handleMudancaOpcaoSkuEdicao,
+    handleUploadImagemEdicaoSku,
+    handleRemoverImagemEdicaoSku,
     handleSalvarEdicaoSku,
     podeEditarMetadados: true
   };

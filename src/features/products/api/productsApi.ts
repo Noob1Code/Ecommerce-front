@@ -1,17 +1,10 @@
 import { httpClient } from '../../../services/api';
+import type { BackendProdutoResponseDTO } from '../domain/product.types';
 import { PRODUCT_ENDPOINTS } from './productsEndpoints';
 
 export interface ProductRequestDTO {
   nome: string;
   descricao: string;
-  atributosIds: string[];
-}
-
-export interface ProductResponseDTO {
-  id: string;
-  nome: string;
-  descricao: string;
-  ativo: boolean;
   atributosIds: string[];
 }
 
@@ -59,15 +52,15 @@ export interface AttributeResponseDTO {
   nome: string;
 }
 
-export const createProductInApi = async (payload: ProductRequestDTO): Promise<ProductResponseDTO> => {
-  const response = await httpClient.post<ProductResponseDTO>(PRODUCT_ENDPOINTS.base, payload);
+export const createProductInApi = async (payload: ProductRequestDTO): Promise<BackendProdutoResponseDTO> => {
+  const response = await httpClient.post<BackendProdutoResponseDTO>(PRODUCT_ENDPOINTS.base, payload);
   return response.data;
 };
 
 export const updateProductMetadataInApi = async (
-  id: string, 
-  name: string, 
-  description: string, 
+  id: string,
+  name: string,
+  description: string,
   atributosIds: string[]
 ): Promise<void> => {
   const payload: ProductRequestDTO = {
@@ -88,11 +81,11 @@ export const fetchAllSkuVariationsFromApi = async (): Promise<ProductVariationRe
 };
 
 export const createSkuVariationInApi = async (
-  productId: string, 
+  productId: string,
   payload: ProductVariationRequestDTO
 ): Promise<ProductVariationResponseDTO> => {
   const response = await httpClient.post<ProductVariationResponseDTO>(
-    PRODUCT_ENDPOINTS.variation.create(productId), 
+    PRODUCT_ENDPOINTS.variation.create(productId),
     payload
   );
   return response.data;
@@ -109,13 +102,15 @@ export const updateSkuPriceInApi = async (skuId: string, newPrice: number): Prom
 };
 
 export const updateSkuDetailsInApi = async (
-  skuId: string, 
-  skuCode: string, 
-  opcoes: SkuOptionRequestDTO[]
+  skuId: string,
+  skuCode: string,
+  opcoes: SkuOptionRequestDTO[],
+  imagens: SkuImageRequestDTO[]
 ): Promise<void> => {
   const payload: ProductVariationUpdateDTO = {
     sku: skuCode,
-    opcoes: opcoes
+    opcoes: opcoes,
+    imagens: imagens
   };
   await httpClient.put<void>(PRODUCT_ENDPOINTS.variation.detail(skuId), payload);
 };
@@ -143,12 +138,23 @@ export const deleteAttributeInApi = async (id: string): Promise<void> => {
   await httpClient.patch<void>(PRODUCT_ENDPOINTS.attribute.delete(id));
 };
 
-export const fetchProductsFromApi = async (): Promise<ProductResponseDTO[]> => {
-  const response = await httpClient.get<ProductResponseDTO[]>(PRODUCT_ENDPOINTS.base);
+export const uploadSkuImageInApi = async (file: File): Promise<{ url: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await httpClient.post<{ url: string }>('/produto/storage/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
   return response.data;
 };
 
-export const fetchProductByIdFromApi = async (id: string): Promise<ProductResponseDTO> => {
-  const response = await httpClient.get<ProductResponseDTO>(PRODUCT_ENDPOINTS.detail(id));
+export const fetchProductsFromApi = async (): Promise<BackendProdutoResponseDTO[]> => {
+  const response = await httpClient.get<BackendProdutoResponseDTO[]>(PRODUCT_ENDPOINTS.base);
+  return response.data;
+};
+
+export const fetchProductByIdFromApi = async (id: string): Promise<BackendProdutoResponseDTO> => {
+  const response = await httpClient.get<BackendProdutoResponseDTO>(PRODUCT_ENDPOINTS.detail(id));
   return response.data;
 };

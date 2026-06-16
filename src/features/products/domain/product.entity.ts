@@ -27,8 +27,10 @@ export const isSkuInStock = (sku: ProductSku): boolean => {
   return sku.stock > 0;
 };
 
-export const getProductPriceRange = (product: Product): { minPrice: number; maxPrice: number; formattedMin: string; formattedMax: string } | null => {
-  if (!product.skus || product.skus.length === 0) {
+export const getProductPriceRange = (
+  product: Product
+): { minPrice: number; maxPrice: number; formattedMin: string; formattedMax: string } | null => {
+  if (!product || !product.skus || product.skus.length === 0) {
     return null;
   }
 
@@ -45,5 +47,6 @@ export const getProductPriceRange = (product: Product): { minPrice: number; maxP
 };
 
 export const validateSkuInventory = (sku: ProductSku, requestedQuantity: number): boolean => {
+  if (!sku) return false;
   return sku.stock >= requestedQuantity;
 };
