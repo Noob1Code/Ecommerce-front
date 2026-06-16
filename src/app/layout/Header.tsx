@@ -83,7 +83,6 @@ export const Header = () => {
           <div className="relative flex items-center border-l border-gray-200 pl-4 ml-2" ref={menuRef}>
             {usuario ? (
               <>
-                {/* BOLINHA/AVATAR DO USUÁRIO */}
                 <button
                   onClick={() => setMenuAberto(!menuAberto)}
                   className="flex items-center gap-2 focus:outline-none group"
@@ -93,7 +92,6 @@ export const Header = () => {
                     <span className="text-[10px] text-gray-400 uppercase tracking-tighter">Minha Conta ▼</span>
                   </div>
 
-                  {/* Círculo do Avatar */}
                   <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition-transform border-2 border-white ring-1 ring-gray-100">
                     {inicialNome}
                   </div>
@@ -101,7 +99,7 @@ export const Header = () => {
 
                 {/* DROPDOWN MENU */}
                 {menuAberto && (
-                  <div className="absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white p-2 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in duration-100">
+                  <div className="absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white p-2 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in duration-100 z-50">
                     <div className="px-3 py-2 border-b border-gray-100 mb-1">
                       <p className="text-[10px] font-bold text-gray-400 uppercase">Ações da Conta</p>
                     </div>
@@ -130,6 +128,19 @@ export const Header = () => {
                       Editar Cadastro
                     </Link>
 
+                    {usuario.perfis?.some((p) => ['ROLE_ADMIN', 'ROLE_FATURAMENTO'].includes(p)) && (
+                      <Link
+                        to="/backoffice/faturamento"
+                        onClick={() => setMenuAberto(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-emerald-700 font-bold bg-emerald-50/50 hover:bg-emerald-50 transition-colors"
+                      >
+                        <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Faturamento Global
+                      </Link>
+                    )}
+
                     {ehUsuarioCorporativo && (
                       <Link
                         to="/backoffice"
@@ -150,7 +161,7 @@ export const Header = () => {
                       onClick={handleLogout}
                       className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                       Encerrar Sessão
