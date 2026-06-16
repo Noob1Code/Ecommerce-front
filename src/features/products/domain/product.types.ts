@@ -55,7 +55,7 @@ export interface BackendImagemVariacaoRequestDTO {
 }
 
 export interface BackendVariacaoOpcaoRequestDTO {
-  attributeId: string;
+  atributoId: string;
   valor: string;
 }
 
@@ -71,6 +71,14 @@ export interface BackendProdutoVariacaoRequestDTO {
   estoque: number;
   opcoes: BackendVariacaoOpcaoRequestDTO[];
   imagens: BackendImagemVariacaoRequestDTO[];
+}
+
+export interface BackendProdutoVariacaoUpdateDTO {
+  sku?: string;
+  preco?: number;
+  estoque?: number;
+  opcoes?: BackendVariacaoOpcaoRequestDTO[];
+  imagens?: BackendImagemVariacaoRequestDTO[];
 }
 
 export interface ProductAttribute {

@@ -5,14 +5,19 @@ import {
   createSkuVariationInApi,
   deleteAttributeInApi,
   updateAttributeInApi,
+  updateSkuDetailsInApi,
+  uploadSkuImageInApi,
   type AttributeRequestDTO,
   type ProductRequestDTO,
-  type ProductVariationRequestDTO
+  type ProductVariationRequestDTO,
+  type SkuImageRequestDTO,
+  type SkuOptionRequestDTO
 } from '../api/productsApi';
 import { PRODUCTS_QUERY_KEYS } from '../api/productsQueryKeys';
 
 export const useProductMutations = () => {
   const queryClient = useQueryClient();
+
   const createProductMutation = useMutation({
     mutationFn: async (payload: ProductRequestDTO) => {
       return createProductInApi(payload);
@@ -58,11 +63,38 @@ export const useProductMutations = () => {
     },
   });
 
+  const updateSkuDetailsMutation = useMutation({
+    mutationFn: async ({
+      skuId,
+      skuCode,
+      opcoes,
+      imagens
+    }: {
+      skuId: string;
+      skuCode: string;
+      opcoes: SkuOptionRequestDTO[];
+      imagens: SkuImageRequestDTO[]
+    }) => {
+      return updateSkuDetailsInApi(skuId, skuCode, opcoes, imagens);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEYS.all });
+    },
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      return uploadSkuImageInApi(file);
+    },
+  });
+
   return {
     createProductMutation,
     createSkuMutation,
     createAttributeMutation,
     updateAttributeMutation,
     deleteAttributeMutation,
+    updateSkuDetailsMutation,
+    uploadImageMutation,
   };
 };

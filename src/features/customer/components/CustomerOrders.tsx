@@ -13,7 +13,7 @@ export const CustomerOrders = () => {
 
   if (estaCarregando) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center px-4">
         <Spinner className="h-10 w-10 text-blue-600" />
       </div>
     );
@@ -24,14 +24,21 @@ export const CustomerOrders = () => {
   }
 
   if (pedidos.length === 0) {
-    return <EmptyState title="Nenhum pedido localizado" description="Sua conta de cliente ainda não registrou transações comerciais." />;
+    return (
+      <div className="px-4 py-12">
+        <EmptyState
+          title="Nenhum pedido localizado"
+          description="Sua conta de cliente ainda não registrou transações comerciais."
+        />
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       <div className="mb-6 border-b border-gray-200 pb-5">
-        <h1 className="text-3xl font-black tracking-tight text-gray-900">Meus Pedidos</h1>
-        <p className="mt-2 text-sm text-gray-500">Monitore o status, histórico e faturamento das suas compras de hardware.</p>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">Meus Pedidos</h1>
+        <p className="mt-1 text-xs sm:text-sm text-gray-500 font-medium">Monitore o status, histórico e faturamento das suas compras de hardware.</p>
       </div>
 
       <div className="space-y-4">
@@ -39,58 +46,84 @@ export const CustomerOrders = () => {
           const ehExpandido = pedidoExpandidoId === pedido.id;
 
           return (
-            <Card key={pedido.id} className="p-5 border border-gray-200 bg-white shadow-xs rounded-xl">
+            <Card key={pedido.id} className="p-4 sm:p-5 border border-gray-200 bg-white shadow-xs rounded-xl">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3.5 sm:grid-cols-4 flex-1">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Código Localizador</p>
-                    <p className="text-xs font-mono font-bold text-gray-900 mt-0.5 truncate max-w-[160px]" title={pedido.id}>{pedido.id}</p>
+                    <p className="text-xs font-mono font-bold text-gray-900 mt-0.5 truncate max-w-[120px] sm:max-w-[160px]" typeof="string" title={pedido.id}>
+                      {pedido.id}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data de Emissão</p>
-                    <p className="text-sm font-semibold text-gray-700 mt-0.5">{new Date(pedido.criadoEm).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-700 mt-0.5">
+                      {new Date(pedido.criadoEm).toLocaleDateString('pt-BR')}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Liquidado</p>
-                    <p className="text-sm font-black text-blue-600 mt-0.5">R$ {pedido.valorTotal.toFixed(2)}</p>
+                    <p className="text-xs sm:text-sm font-black text-blue-600 mt-0.5">
+                      R$ {pedido.valorTotal.toFixed(2)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Status Operacional</p>
-                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold border mt-1 uppercase tracking-wide ${obterClasseStatus(pedido.status)}`}>
-                      {pedido.status}
-                    </span>
+                    <div>
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] sm:text-xs font-bold border mt-0.5 uppercase tracking-wide ${obterClasseStatus(pedido.status)}`}>
+                        {pedido.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-end items-center sm:pl-4">
-                  <Button variant="secondary" onClick={() => handleAlternarDetalhes(pedido.id)} className="text-xs py-1.5 px-3 font-bold">
+
+                <div className="w-full sm:w-auto flex justify-end items-center sm:pl-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleAlternarDetalhes(pedido.id)}
+                    className="w-full sm:w-auto text-xs py-2 px-4 font-bold rounded-xl active:scale-95 transition-transform"
+                  >
                     {ehExpandido ? 'Ocultar Sub-itens' : 'Ver Detalhes'}
                   </Button>
                 </div>
               </div>
 
-              {/* Accordion Enriquecido: Lê diretamente o PedidoVariacaoExibicaoDTO do Java */}
               {ehExpandido && (
-                <div className="mt-5 border-t border-gray-100 pt-4 bg-gray-50/50 rounded-xl p-4 space-y-3 animate-in fade-in duration-200">
+                <div className="mt-4 border-t border-gray-100 pt-4 bg-gray-50/50 rounded-xl p-3 sm:p-4 space-y-3 animate-in fade-in duration-200">
                   <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Discriminação das Variações Adquiridas</h4>
+
                   {pedido.itens.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-4 text-sm bg-white p-3 rounded-xl border border-gray-100 shadow-2xs">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center border text-gray-400 font-mono text-[9px]">BOX</div>
-                        <div>
-                          {/* CORREÇÃO CRÍTICA: Lendo propriedades de dentro do objeto enriquecido item.variacao */}
-                          <p className="font-bold text-gray-900">{item.variacao.nomeProduto}</p>
-                          <p className="text-xs text-gray-500 font-medium">{item.variacao.detalhes}</p>
-                          <p className="text-[10px] text-gray-400 font-mono mt-0.5">SKU: {item.variacao.sku} | Qtd: {item.quantidade}x</p>
+                    <div
+                      key={item.id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-2xs"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="h-10 w-10 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center border text-gray-400 font-mono text-[9px]">
+                          BOX
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{item.variacao.nomeProduto}</p>
+                          <p className="text-xs text-gray-500 font-medium mt-0.5">{item.variacao.detalhes}</p>
+                          <p className="text-[10px] text-gray-400 font-mono mt-0.5 tracking-tight">
+                            SKU: {item.variacao.sku} | Qtd: {item.quantidade}x
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="font-bold text-gray-900 block">R$ {item.subtotal.toFixed(2)}</span>
-                        <span className="text-[10px] text-gray-400 font-medium">Un: R$ {item.precoUnitario.toFixed(2)}</span>
+
+                      <div className="text-left sm:text-right flex sm:flex-col justify-between sm:justify-center items-center sm:items-end border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100/70">
+                        <span className="text-sm font-black text-gray-900 sm:block">
+                          R$ {item.subtotal.toFixed(2)}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          Un: R$ {item.precoUnitario.toFixed(2)}
+                        </span>
                       </div>
+
                     </div>
                   ))}
                 </div>
               )}
+
             </Card>
           );
         })}

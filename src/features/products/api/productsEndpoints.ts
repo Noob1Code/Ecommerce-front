@@ -14,5 +14,9 @@ export const PRODUCT_ENDPOINTS = {
     base: '/produto/atributo',
     detail: (id: string) => `/produto/atributo/${id}` as const,
     delete: (id: string) => `/produto/atributo/${id}/delete` as const,
-  }
+  },
+
+  storage: {
+    upload: '/produto/storage/upload' as const,
+  },
 } as const;

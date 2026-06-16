@@ -6,19 +6,21 @@ interface UseVariantSelectorResult {
   resolvedSku: ProductSku | null;
   activeImageUrl: string;
   handleOptionChange: (attributeId: string, value: string) => void;
+  handleImageChange: (imageUrl: string) => void;
   getOptionGroupValues: (attributeId: string) => string[];
   isCombinationAvailable: (attributeId: string, value: string) => boolean;
 }
 
 export const useVariantSelector = (product: Product | null | undefined): UseVariantSelectorResult => {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [selectedImageOverride, setSelectedImageOverride] = useState<string | null>(null);
 
   const resolvedSku = useMemo(() => {
     if (!product || !product.skus) return null;
 
     return product.skus.find((sku) => {
       const numOpcoesSelecionadas = Object.keys(selectedOptions).length;
-      
+
       if (sku.options.length !== numOpcoesSelecionadas) return false;
 
       return sku.options.every((opt) => selectedOptions[opt.attributeId] === opt.value);
@@ -26,21 +28,27 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
   }, [selectedOptions, product]);
 
   const activeImageUrl = useMemo(() => {
+    if (selectedImageOverride) {
+      return selectedImageOverride;
+    }
+
     if (resolvedSku && resolvedSku.images && resolvedSku.images.length > 0) {
       return resolvedSku.images[0].imageUrl;
     }
-    
+
     if (product && product.skus) {
       const primeiroSkuComImagem = product.skus.find((s) => s.images && s.images.length > 0);
       if (primeiroSkuComImagem && primeiroSkuComImagem.images.length > 0) {
         return primeiroSkuComImagem.images[0].imageUrl;
       }
     }
-    
+
     return '/fallback-image.jpg';
-  }, [resolvedSku, product]);
+  }, [resolvedSku, product, selectedImageOverride]);
 
   const handleOptionChange = (attributeId: string, value: string) => {
+    setSelectedImageOverride(null);
+
     setSelectedOptions((prev) => {
       if (prev[attributeId] === value) {
         const copia = { ...prev };
@@ -52,6 +60,10 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
         [attributeId]: value,
       };
     });
+  };
+
+  const handleImageChange = (imageUrl: string) => {
+    setSelectedImageOverride(imageUrl);
   };
 
   const getOptionGroupValues = (attributeId: string): string[] => {
@@ -69,7 +81,7 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
     if (!product || !product.skus) return false;
 
     const selecaoHipotetica = { ...selectedOptions, [attributeId]: value };
-    
+
     return product.skus.some((sku) => {
       return Object.entries(selecaoHipotetica).every(([attrId, val]) =>
         sku.options.some((opt) => opt.attributeId === attrId && opt.value === val)
@@ -82,6 +94,7 @@ export const useVariantSelector = (product: Product | null | undefined): UseVari
     resolvedSku,
     activeImageUrl,
     handleOptionChange,
+    handleImageChange,
     getOptionGroupValues,
     isCombinationAvailable,
   };

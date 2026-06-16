@@ -19,11 +19,10 @@ export const NotificationModal = () => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/60 backdrop-blur-xs animate-in fade-in duration-200">
             <div
-                className="w-full max-w-md overflow-hidden bg-white border border-gray-100 p-6 rounded-2xl shadow-xl animate-in zoom-in-95 duration-200 flex flex-col items-center text-center"
+                className="w-full max-w-md overflow-hidden bg-white border border-gray-100 p-5 sm:p-6 rounded-2xl shadow-xl animate-in zoom-in-95 duration-200 flex flex-col items-center text-center"
                 role="dialog"
                 aria-modal="true"
             >
-                {/* Dynamic Status Icon Configuration */}
                 {type === 'success' && (
                     <div className="h-14 w-14 rounded-full bg-green-50 border border-green-200 text-green-600 flex items-center justify-center text-2xl font-bold mb-4 shadow-2xs">
                         <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -48,28 +47,27 @@ export const NotificationModal = () => {
                     </div>
                 )}
 
-                <h2 className="text-xl font-black text-gray-900 tracking-tight mb-2">{title}</h2>
-                <p className="text-sm font-medium text-gray-500 leading-relaxed mb-6">{message}</p>
+                <h2 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight mb-2">{title}</h2>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 leading-relaxed mb-6 px-1">{message}</p>
 
-                {/* Operational Control Triggers */}
-                <div className="flex w-full gap-2 justify-center">
+                <div className="flex flex-col-reverse sm:flex-row w-full gap-2.5 justify-center">
                     {type === 'confirm' ? (
                         <>
                             <Button
                                 type="button"
                                 variant="secondary"
                                 onClick={handleCancel}
-                                className="w-full py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl"
+                                className="w-full py-3 font-bold text-xs uppercase tracking-wider rounded-xl border-none"
                             >
-                                Cancel
+                                Cancelar
                             </Button>
                             <Button
                                 type="button"
                                 variant="primary"
                                 onClick={handleConfirm}
-                                className="w-full py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-xs"
+                                className="w-full py-3 font-bold text-xs uppercase tracking-wider rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-md border-none"
                             >
-                                Confirm
+                                Confirmar
                             </Button>
                         </>
                     ) : (
@@ -77,9 +75,10 @@ export const NotificationModal = () => {
                             type="button"
                             variant="primary"
                             onClick={handleConfirm}
-                            className={`w-full max-w-[160px] py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl text-white shadow-xs ${type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                            className={`w-full sm:max-w-[160px] py-3 font-bold text-xs uppercase tracking-wider rounded-xl text-white shadow-md border-none ${type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                                }`}
                         >
-                            Okay
+                            Entendido
                         </Button>
                     )}
                 </div>

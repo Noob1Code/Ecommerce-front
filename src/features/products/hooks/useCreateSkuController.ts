@@ -11,6 +11,8 @@ interface AtributoDoProduto {
 
 export const useCreateSkuController = (productId: string) => {
   const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+  const showError = useNotificationModalStore((state) => state.showError);
+
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
@@ -18,7 +20,8 @@ export const useCreateSkuController = (productId: string) => {
   const [images, setImages] = useState<string[]>([]);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const { createSkuMutation } = useProductMutations();
+
+  const { createSkuMutation, uploadImageMutation } = useProductMutations();
 
   const handleOptionChange = (attributeId: string, value: string) => {
     setSelectedOptions((prev) => ({
@@ -26,6 +29,32 @@ export const useCreateSkuController = (productId: string) => {
       [attributeId]: value,
     }));
     if (validationError) setValidationError(null);
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setValidationError('Erro de IHC: O arquivo selecionado deve ser uma imagem válida (PNG, JPG, WEBP).');
+      return;
+    }
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      setValidationError('Erro de IHC: A imagem selecionada é muito grande. O limite máximo permitido é de 10MB.');
+      return;
+    }
+
+    try {
+      const response = await uploadImageMutation.mutateAsync(file);
+      setImages((prev) => [...prev, response.url]);
+      setValidationError(null);
+    } catch {
+      showError({
+        title: 'Falha no Upload',
+        message: 'Não foi possível processar o upload do arquivo de imagem para o servidor de arquivos.'
+      });
+    }
   };
 
   const handleAddImageUrl = () => {
@@ -119,7 +148,7 @@ export const useCreateSkuController = (productId: string) => {
     images,
     currentImageUrl,
     validationError,
-    isPending: createSkuMutation.isPending,
+    isPending: createSkuMutation.isPending || uploadImageMutation.isPending,
     setSku,
     setPrice,
     setStock,
@@ -128,6 +157,7 @@ export const useCreateSkuController = (productId: string) => {
     handleAddImageUrl,
     handleRemoveImageUrl,
     handleSaveSku,
+    handleFileUpload,
     resetForm,
   };
 };

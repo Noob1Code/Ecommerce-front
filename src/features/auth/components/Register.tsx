@@ -14,18 +14,21 @@ export const Register = () => {
   } = useRegister();
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-      <Card className="w-full max-w-md p-8 space-y-6 shadow-xl bg-white border border-gray-100 rounded-xl">
+    <div className="flex min-h-[80vh] items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+      <Card className="w-full max-w-md p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-xl bg-white border border-gray-100 rounded-xl">
+
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Criar Nova Conta</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
+            Criar Nova Conta
+          </h2>
+          <p className="mt-1.5 text-xs sm:text-sm text-gray-500 font-medium max-w-xs mx-auto">
             Cadastre-se para realizar pedidos e acompanhar suas compras
           </p>
         </div>
 
         {erroValidacao && (
           <div
-            className="p-3 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl cursor-pointer"
+            className="p-3 text-xs sm:text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl cursor-pointer active:scale-98 transition-transform"
             onClick={() => setErroValidacao(null)}
           >
             {erroValidacao}
@@ -36,9 +39,9 @@ export const Register = () => {
           <ErrorMessage message={erro} />
         )}
 
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-6 sm:mt-8 space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="nome" className="block text-xs font-bold text-gray-500 uppercase mb-1">
               Nome Completo *
             </label>
             <Input
@@ -50,11 +53,12 @@ export const Register = () => {
               onChange={handleChange}
               disabled={estaCarregando}
               placeholder="Ex: João Silva da Costa"
+              className="rounded-xl"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-xs font-bold text-gray-500 uppercase mb-1">
               Endereço de E-mail *
             </label>
             <Input
@@ -66,12 +70,13 @@ export const Register = () => {
               onChange={handleChange}
               disabled={estaCarregando}
               placeholder="exemplo@provedor.com"
+              className="rounded-xl"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="cpf" className="block text-xs font-bold text-gray-500 uppercase mb-1">
                 CPF (Opcional)
               </label>
               <Input
@@ -82,10 +87,11 @@ export const Register = () => {
                 onChange={handleChange}
                 disabled={estaCarregando}
                 placeholder="000.000.000-00"
+                className="rounded-xl"
               />
             </div>
             <div>
-              <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="telefone" className="block text-xs font-bold text-gray-500 uppercase mb-1">
                 Telefone (Opcional)
               </label>
               <Input
@@ -96,12 +102,13 @@ export const Register = () => {
                 onChange={handleChange}
                 disabled={estaCarregando}
                 placeholder="(00) 99999-9999"
+                className="rounded-xl"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="senha" className="block text-xs font-bold text-gray-500 uppercase mb-1">
               Senha *
             </label>
             <Input
@@ -113,11 +120,12 @@ export const Register = () => {
               onChange={handleChange}
               disabled={estaCarregando}
               placeholder="No mínimo 6 caracteres"
+              className="rounded-xl"
             />
           </div>
 
           <div>
-            <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="confirmarSenha" className="block text-xs font-bold text-gray-500 uppercase mb-1">
               Confirmar Senha *
             </label>
             <Input
@@ -129,6 +137,7 @@ export const Register = () => {
               onChange={handleChange}
               disabled={estaCarregando}
               placeholder="Repita a sua senha"
+              className="rounded-xl"
             />
           </div>
 
@@ -136,7 +145,7 @@ export const Register = () => {
             <Button
               type="submit"
               disabled={estaCarregando}
-              className="w-full flex justify-center py-3 text-sm font-semibold uppercase tracking-wider"
+              className="w-full flex justify-center py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl shadow-md active:scale-95 transition-transform bg-blue-600 text-white hover:bg-blue-700"
               variant="primary"
             >
               {estaCarregando ? (
@@ -152,9 +161,9 @@ export const Register = () => {
         </form>
 
         <div className="text-center pt-4 border-t border-gray-100">
-          <p className="text-sm text-gray-600">
-            Já possui uma conta activa?{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+          <p className="text-xs sm:text-sm text-gray-500 font-medium">
+            Já possui uma conta ativa?{' '}
+            <Link to="/login" className="font-bold text-blue-600 hover:text-blue-500 transition-colors">
               Fazer login
             </Link>
           </p>
