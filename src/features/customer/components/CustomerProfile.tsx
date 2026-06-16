@@ -18,12 +18,20 @@ export const CustomerProfile = () => {
     setMatricula,
     setSenha,
     handleSalvarAlteracoes,
-    handleCancelar
+    handleCancelar,
+    handleBackToCatalog
   } = useCustomerProfileController();
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       <div className="mb-6 border-b border-gray-200 pb-5">
+        <button
+          type="button"
+          onClick={handleBackToCatalog}
+          className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider flex items-center space-x-1 active:scale-95 transition-transform mb-2"
+        >
+          &larr; Voltar para o Catálogo
+        </button>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
           Meus Dados Cadastrais
         </h1>
@@ -57,13 +65,13 @@ export const CustomerProfile = () => {
                 <label htmlFor="cpf" className="block text-xs font-bold text-gray-500 uppercase mb-1">
                   CPF do Titular *
                 </label>
-                <Input id="cpf" type="text" value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="000.000.000-00" required disabled={estaCarregando} className="rounded-xl" />
+                <Input id="cpf" type="text" value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="000.000.000-00" required disabled={estaCarregando} className="rounded-xl" maxLength={14} />
               </div>
               <div>
                 <label htmlFor="telefone" className="block text-xs font-bold text-gray-500 uppercase mb-1">
                   Telefone de Contato *
                 </label>
-                <Input id="telefone" type="text" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(00) 99999-9999" required disabled={estaCarregando} className="rounded-xl" />
+                <Input id="telefone" type="text" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(00) 99999-9999" required disabled={estaCarregando} className="rounded-xl" maxLength={15} />
               </div>
             </div>
           ) : (

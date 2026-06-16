@@ -77,32 +77,36 @@ export const Register = () => {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="cpf" className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                CPF (Opcional)
+                CPF *
               </label>
               <Input
                 id="cpf"
                 name="cpf"
                 type="text"
+                required
                 value={formulario.cpf}
                 onChange={handleChange}
                 disabled={estaCarregando}
                 placeholder="000.000.000-00"
                 className="rounded-xl"
+                maxLength={14}
               />
             </div>
             <div>
               <label htmlFor="telefone" className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                Telefone (Opcional)
+                Telefone *
               </label>
               <Input
                 id="telefone"
                 name="telefone"
                 type="text"
+                required
                 value={formulario.telefone}
                 onChange={handleChange}
                 disabled={estaCarregando}
                 placeholder="(00) 99999-9999"
                 className="rounded-xl"
+                maxLength={15}
               />
             </div>
           </div>
