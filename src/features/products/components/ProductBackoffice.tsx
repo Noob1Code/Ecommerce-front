@@ -83,22 +83,24 @@ export const ProductBackoffice = () => {
         </div>
       }
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-12">
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-5 mb-6">
+        {/* Topbar do Painel Administrativo */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-gray-200 pb-5 mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">Painel do Catálogo</h1>
             <p className="mt-1 text-xs sm:text-sm text-gray-500 font-medium">Controle de produtos pai, amarrações de eixos e SKUs físicos.</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          {/* SOLUÇÃO TOPBAR MOBILE: Substituído o flex-wrap desalinhado por um grid em coluna única que vira flex no desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-2.5 w-full lg:w-auto">
             {abaAtiva === 'produtos' && (
               <Button
                 type="button"
                 variant={exibirFormCriacao ? 'secondary' : 'primary'}
                 onClick={() => setExibirFormCriacao((prev) => !prev)}
                 disabled={estaEnviando}
-                className={`w-full sm:w-auto px-4 py-2.5 text-xs font-bold uppercase rounded-xl shadow-xs border-none ${!exibirFormCriacao ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}
+                className={`w-full lg:w-auto px-4 py-2.5 text-xs font-bold uppercase rounded-xl shadow-xs border-none ${!exibirFormCriacao ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}
               >
                 {exibirFormCriacao ? 'Fechar Cadastro' : 'Cadastrar Produto'}
               </Button>
@@ -109,7 +111,7 @@ export const ProductBackoffice = () => {
                 type="button"
                 variant="secondary"
                 onClick={() => navigate('/backoffice/usuarios')}
-                className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-50 rounded-xl"
+                className="w-full lg:w-auto px-4 py-2.5 text-xs font-bold border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-50 rounded-xl"
               >
                 Gerenciar Usuários
               </Button>
@@ -119,7 +121,7 @@ export const ProductBackoffice = () => {
               type="button"
               variant={abaAtiva === 'atributos' ? 'primary' : 'secondary'}
               onClick={() => setABAAtiva((p) => p === 'produtos' ? 'atributos' : 'produtos')}
-              className={`w-full sm:w-auto px-4 py-2.5 text-xs font-bold uppercase rounded-xl shadow-xs border-none ${abaAtiva === 'atributos' ? 'bg-purple-600 text-white' : 'text-purple-700 bg-purple-50 hover:bg-purple-100/50'}`}
+              className={`w-full lg:w-auto px-4 py-2.5 text-xs font-bold uppercase rounded-xl shadow-xs border-none ${abaAtiva === 'atributos' ? 'bg-purple-600 text-white' : 'text-purple-700 bg-purple-50 hover:bg-purple-100/50'}`}
             >
               {abaAtiva === 'produtos' ? 'Gerenciar Atributos' : 'Voltar para Produtos'}
             </Button>
@@ -131,7 +133,7 @@ export const ProductBackoffice = () => {
                 disabled={contagemModificados === 0 || estaEnviando}
                 isLoading={estaEnviando}
                 onClick={handleEnvioEmLote}
-                className={`w-full sm:w-auto px-5 py-2.5 text-xs font-bold uppercase rounded-xl shadow-md border-none ${contagemModificados > 0 ? 'bg-green-600 text-white hover:bg-green-700' : ''}`}
+                className={`w-full lg:w-auto px-5 py-2.5 text-xs font-bold uppercase rounded-xl shadow-md border-none ${contagemModificados > 0 ? 'bg-green-600 text-white hover:bg-green-700' : ''}`}
               >
                 Salvar em Lote ({contagemModificados})
               </Button>
@@ -147,6 +149,7 @@ export const ProductBackoffice = () => {
               <div className="mb-8"><CreateProductForm onClose={() => setExibirFormCriacao(false)} /></div>
             )}
 
+            {/* Barra de Pesquisa e Combobox de Status */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center max-w-3xl w-full">
               <div className="w-full sm:w-1/2">
                 <label htmlFor="search-input" className="block text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wider">Filtrar Container</label>
@@ -184,6 +187,7 @@ export const ProductBackoffice = () => {
 
             {erro && <ErrorMessage message={erro} />}
 
+            {/* Listagem de Produtos Pai */}
             <div className="space-y-6">
               {produtosFiltrados.map((product) => {
                 const { name: nomeAtual, description: descricaoAtual, atributosIds: idsAtributosVinculados } =
@@ -192,8 +196,9 @@ export const ProductBackoffice = () => {
                 return (
                   <Card key={product.id} className={`p-4 sm:p-5 border rounded-xl bg-white shadow-xs transition-colors ${!product.isActive ? 'border-red-200 bg-red-50/10' : 'border-gray-200'}`}>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 border-b border-gray-100 pb-5 mb-4 items-end">
-                      <div className="md:col-span-1 space-y-1.5">
+                    {/* SOLUÇÃO GRID CARD: Força empilhamento em bloco flexível vertical no celular, abrindo grid a partir de md: */}
+                    <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 mb-4 md:grid md:grid-cols-3 md:items-end">
+                      <div className="w-full space-y-1.5">
                         <div>
                           <label htmlFor={`name-${product.id}`} className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">Nome do Produto</label>
                           <Input
@@ -208,7 +213,7 @@ export const ProductBackoffice = () => {
                         <p className="text-[10px] text-gray-400 font-mono break-all">UUID: {product.id}</p>
                       </div>
 
-                      <div className="md:col-span-1">
+                      <div className="w-full">
                         <label htmlFor={`desc-${product.id}`} className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">Descrição Comercial</label>
                         <textarea
                           id={`desc-${product.id}`}
@@ -220,27 +225,29 @@ export const ProductBackoffice = () => {
                         />
                       </div>
 
-                      <div className="md:col-span-1 flex flex-row sm:justify-end items-center gap-2.5 w-full">
+                      {/* SOLUÇÃO BOTÕES CARD: Modificado de flex-row para flex-col no celular. Agora os botões ocupam largura cheia e não quebram o layout */}
+                      <div className="flex flex-col sm:flex-row gap-2 w-full md:justify-end">
                         <button
                           type="button"
                           disabled={estaEnviando || !product.isActive}
                           onClick={() => setProdutoIdParaNovoSku(produtoIdParaNovoSku === product.id ? null : product.id)}
-                          className="flex-1 sm:flex-none text-center text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100 rounded-xl px-3.5 py-2.5 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-3xs"
+                          className="w-full sm:w-auto text-center text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100 rounded-xl px-4 py-3 sm:py-2.5 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-3xs"
                         >
                           {produtoIdParaNovoSku === product.id ? 'Fechar SKU' : 'Adicionar SKU'}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAlternarStatusProduto(product.id, product.name, product.isActive)}
-                          className={`flex-1 sm:flex-none text-center text-xs font-bold rounded-xl px-3.5 py-2.5 border transition-all active:scale-95 shadow-3xs ${product.isActive ? 'text-red-600 bg-red-50 border-red-100 hover:bg-red-600 hover:text-white' : 'text-green-600 bg-green-50 border-green-100 hover:bg-green-600 hover:text-white'}`}
+                          className={`w-full sm:w-auto text-center text-xs font-bold rounded-xl px-4 py-3 sm:py-2.5 border transition-all active:scale-95 shadow-3xs ${product.isActive ? 'text-red-600 bg-red-50 border-red-100 hover:bg-red-600 hover:text-white' : 'text-green-600 bg-green-50 border-green-100 hover:bg-green-600 hover:text-white'}`}
                         >
                           {product.isActive ? 'Inativar' : 'Reativar'}
                         </button>
                       </div>
                     </div>
 
+                    {/* Eixos de Atributos Vinculados */}
                     {product.isActive && (
-                      <div className="mb-4 p-3 bg-gray-50 border border-gray-155 rounded-xl space-y-2 shadow-3xs">
+                      <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-2 shadow-3xs">
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">
                           Eixos de Atributos Vinculados a este Produto Container
                         </span>
@@ -270,6 +277,7 @@ export const ProductBackoffice = () => {
                       </div>
                     )}
 
+                    {/* Sub-tabela de Variações Físicas de SKU */}
                     <div className="w-full overflow-x-auto rounded-xl border border-gray-100">
                       <table className="min-w-[650px] w-full divide-y divide-gray-100 text-xs text-left">
                         <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
@@ -331,6 +339,7 @@ export const ProductBackoffice = () => {
                                   </td>
                                 </tr>
 
+                                {/* Painel Expandido Inline para Edição de Opções */}
                                 {emEdicao && dadosEdicaoSku && (
                                   <tr className="bg-blue-50/5">
                                     <td colSpan={6} className="px-4 py-4 border-t border-b border-blue-100">
@@ -381,7 +390,7 @@ export const ProductBackoffice = () => {
                                           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Gerenciar Galeria da Variação</label>
 
                                           <div className="flex items-center justify-center w-full">
-                                            <label className="flex flex-col items-center justify-center w-full h-20 border border-dashed border-blue-300 rounded-xl cursor-pointer bg-white hover:bg-blue-50/40 transition-colors">
+                                            <label className={`flex flex-col items-center justify-center w-full h-20 border border-dashed border-blue-300 rounded-xl cursor-pointer bg-white hover:bg-blue-50/40 transition-colors ${estaEnviando ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
                                               <div className="flex flex-col items-center justify-center pt-1.5 pb-1.5">
                                                 <p className="text-xs text-blue-600 font-bold">Anexar Nova Foto a esta variação</p>
                                                 <p className="text-[10px] text-gray-400 mt-0.5">Selecione arquivos locais</p>
@@ -390,6 +399,7 @@ export const ProductBackoffice = () => {
                                                 type="file"
                                                 accept="image/*"
                                                 className="hidden"
+                                                disabled={estaEnviando}
                                                 onChange={(e) => {
                                                   if (e.target.files && e.target.files[0]) {
                                                     handleUploadImagemEdicaoSku(e.target.files[0]);
@@ -407,8 +417,9 @@ export const ProductBackoffice = () => {
                                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                                     <button
                                                       type="button"
+                                                      disabled={estaEnviando}
                                                       onClick={() => handleRemoverImagemEdicaoSku(idx)}
-                                                      className="bg-red-600 text-white rounded px-1.5 py-0.5 text-[9px] font-bold hover:bg-red-700"
+                                                      className="bg-red-600 text-white rounded px-1.5 py-0.5 text-[9px] font-bold hover:bg-red-700 disabled:opacity-50"
                                                     >
                                                       Excluir
                                                     </button>

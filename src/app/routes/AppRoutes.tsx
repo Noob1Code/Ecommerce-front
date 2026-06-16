@@ -5,7 +5,7 @@ import { Spinner } from '../../shared/components/ui';
 import { ErrorBoundary, Layout } from '../layout';
 
 const RouteFallback = () => (
-  <div className="flex min-h-[60vh] items-center justify-center">
+  <div className="flex min-h-[60vh] items-center justify-center px-4">
     <Spinner className="h-10 w-10 text-blue-600" />
   </div>
 );
@@ -18,7 +18,6 @@ const GuardaVisitante = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Carregamento assíncrono das Views (Code Splitting)
 const ProductGrid = lazy(() => import('../../features/products/components/ProductGrid').then(m => ({ default: m.ProductGrid })));
 const ProductDetail = lazy(() => import('../../features/products/components/ProductDetail').then(m => ({ default: m.ProductDetail })));
 const ProductBackoffice = lazy(() => import('../../features/products/components/ProductBackoffice').then(m => ({ default: m.ProductBackoffice })));
@@ -30,8 +29,6 @@ const EmployeeRegister = lazy(() => import('../../features/auth').then(m => ({ d
 const CustomerProfile = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerProfile })));
 const CustomerOrders = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerOrders })));
 const UserManagement = lazy(() => import('../../features/customer/components/UserManagement').then(m => ({ default: m.UserManagement })));
-
-// CORREÇÃO: Importando a view real da feature invoicing a partir do arquivo barrel (Lei 3)
 const InvoicingPanel = lazy(() => import('../../features/invoicing').then(m => ({ default: m.InvoicingPanel })));
 
 const router = createBrowserRouter([
@@ -43,22 +40,6 @@ const router = createBrowserRouter([
       </ErrorBoundary>
     ),
     children: [
-      {
-        path: 'minha-conta',
-        element: (
-          <Suspense fallback={<RouteFallback />}>
-            <CustomerProfile />
-          </Suspense>
-        )
-      },
-      {
-        path: 'meus-pedidos',
-        element: (
-          <Suspense fallback={<RouteFallback />}>
-            <CustomerOrders />
-          </Suspense>
-        )
-      },
       {
         index: true,
         element: (
@@ -74,6 +55,22 @@ const router = createBrowserRouter([
             <ProductDetail />
           </Suspense>
         ),
+      },
+      {
+        path: 'minha-conta',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <CustomerProfile />
+          </Suspense>
+        )
+      },
+      {
+        path: 'meus-pedidos',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <CustomerOrders />
+          </Suspense>
+        )
       },
       {
         path: 'cart',
@@ -149,7 +146,6 @@ const router = createBrowserRouter([
         path: 'backoffice/faturamento',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            {/* Mantida a barreira preventiva baseada em privilégios anexados ao perfil logado */}
             <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_FATURAMENTO']} fallback={<Navigate to="/" replace />}>
               <InvoicingPanel />
             </RoleGuard>
