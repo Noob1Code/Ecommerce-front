@@ -39,17 +39,16 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
     handleAddToCart(resolvedSku.id, resolvedSku.stock);
     navigate('/cart');
   };
+
   const possuiPermissaoCompra = !usuario || usuario.perfis?.some((p) =>
     ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">
-
-        {/* Bloco Esquerdo: Galeria de Imagens baseada na Variação Ativa */}
-        <div className="flex flex-col space-y-4">
-          <div className="aspect-square w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center shadow-xs">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-12 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-2">
+        <div className="flex flex-col space-y-4 w-full">
+          <div className="aspect-square w-full max-h-[360px] sm:max-h-none overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center shadow-xs">
             <img
               src={activeImageUrl}
               alt={product.name}
@@ -57,35 +56,32 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
             />
           </div>
 
-          {/* Miniaturas de Preview da Variação Selecionada */}
           {resolvedSku && resolvedSku.images && resolvedSku.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-3">
               {resolvedSku.images.map((img) => (
-                <div key={img.id} className="aspect-square rounded-lg overflow-hidden border bg-gray-50 p-1">
-                  <img src={img.imageUrl} alt="Visualização" className="h-full w-full object-cover rounded-md" />
+                <div key={img.id} className="aspect-square rounded-xl overflow-hidden border border-gray-200 bg-white p-1 hover:border-blue-500 transition-colors shadow-3xs cursor-pointer active:scale-95">
+                  <img src={img.imageUrl} alt="Visualização" className="h-full w-full object-cover rounded-lg" />
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Bloco Direito: Detalhes, Preços e Seletores Dinâmicos de Atributos */}
-        <div className="flex flex-col justify-between">
+        <div className="flex flex-col justify-between space-y-6 sm:space-y-0">
           <div className="space-y-4">
-            <h1 className="text-3xl font-black tracking-tight text-gray-900">{product.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">{product.name}</h1>
 
-            <p className="text-3xl font-black text-blue-600">
+            <p className="text-2xl sm:text-3xl font-black text-blue-600">
               {resolvedSku ? precoFormatado : 'Selecione as opções'}
             </p>
 
             <div className="border-t border-gray-100 pt-4">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide">Descrição</h3>
-              <p className="mt-2 text-base text-gray-600 leading-relaxed">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Descrição</h3>
+              <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed font-medium">
                 {product.description || 'Este item não possui uma descrição detalhada cadastrada.'}
               </p>
             </div>
 
-            {/* Seleção Dinâmica baseada nos atributos injetados via DTO do Backend */}
             <div className="mt-6 space-y-4 border-t border-gray-100 pt-4">
               {product.attributes.map((attr) => (
                 <div key={attr.id} className="space-y-2">
@@ -93,7 +89,7 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
                     {attr.attributeName}
                   </span>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {getOptionGroupValues(attr.attributeId).map((valor) => {
                       const ativo = selectedOptions[attr.attributeId] === valor;
                       const disponivel = isCombinationAvailable(attr.attributeId, valor);
@@ -104,11 +100,11 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
                           type="button"
                           disabled={!disponivel}
                           onClick={() => handleOptionChange(attr.attributeId, valor)}
-                          className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${ativo
-                            ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
-                            : disponivel
-                              ? 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-2xs'
-                              : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through'
+                          className={`px-4 py-2.5 sm:py-2 text-xs font-bold rounded-xl border transition-all active:scale-95 ${ativo
+                              ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
+                              : disponivel
+                                ? 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-2xs'
+                                : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through opacity-40'
                             }`}
                         >
                           {valor}
@@ -121,22 +117,25 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
             </div>
           </div>
 
-          {/* Botão de Compra e Validação Baseado no Estoque Real do SKU do Servidor */}
-          <div className="mt-10 border-t border-gray-100 pt-6">
+          <div className="mt-8 sm:mt-10 border-t border-gray-100 pt-5 sm:pt-6">
             {!possuiPermissaoCompra ? (
-              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 text-center">
+              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-center shadow-3xs">
                 <p className="text-xs font-bold text-amber-800">
                   Sua credencial funcional corporativa não possui permissões de compras nesta vitrine.
                 </p>
               </div>
             ) : resolvedSku ? (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-gray-400">
+              <div className="space-y-3.5">
+                <p className="text-xs font-bold text-gray-400 tracking-wide uppercase">
                   Disponibilidade:{' '}
                   {resolvedSku.stock > 0 ? (
-                    <span className="text-green-600 font-bold">{resolvedSku.stock} unidades em estoque</span>
+                    <span className="text-green-600 font-extrabold normal-case bg-green-50 px-2 py-0.5 rounded border border-green-100 ml-1">
+                      {resolvedSku.stock} unidades em estoque
+                    </span>
                   ) : (
-                    <span className="text-red-500 font-bold">Produto Esgotado</span>
+                    <span className="text-red-500 font-extrabold normal-case bg-red-50 px-2 py-0.5 rounded border border-red-100 ml-1">
+                      Produto Esgotado
+                    </span>
                   )}
                 </p>
                 <Button
@@ -144,13 +143,18 @@ const ProductDetailContent = ({ product }: ProductDetailContentProps) => {
                   variant="primary"
                   disabled={resolvedSku.stock === 0}
                   onClick={handleAddToCartClick}
-                  className="w-full py-4 text-sm font-bold uppercase tracking-wider shadow-md bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-200 disabled:text-gray-400"
+                  className="w-full py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md bg-blue-600 text-white hover:bg-blue-700 rounded-xl border-none disabled:bg-gray-200 disabled:text-gray-400"
                 >
                   {resolvedSku.stock > 0 ? 'Adicionar ao Carrinho' : 'Indisponível'}
                 </Button>
               </div>
             ) : (
-              <Button type="button" variant="primary" disabled className="w-full py-4 text-sm font-bold uppercase bg-gray-100 text-gray-400 cursor-not-allowed">
+              <Button
+                type="button"
+                variant="primary"
+                disabled
+                className="w-full py-3.5 text-xs sm:text-sm font-bold uppercase bg-gray-100 text-gray-400 cursor-not-allowed rounded-xl border-none"
+              >
                 Selecione as Variações
               </Button>
             )}
@@ -168,7 +172,7 @@ export const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center px-4">
         <Spinner className="h-12 w-12 text-blue-600" />
       </div>
     );
