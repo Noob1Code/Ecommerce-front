@@ -20,7 +20,7 @@ export const ProductGrid = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center px-4">
+      <div className="flex min-h-[50vh] items-center justify-center px-4 w-full">
         <Spinner className="h-12 w-12 text-blue-600" />
       </div>
     );
@@ -28,7 +28,7 @@ export const ProductGrid = () => {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 w-full">
         <ErrorMessage message={error} />
       </div>
     );
@@ -41,11 +41,11 @@ export const ProductGrid = () => {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-8 w-full">
       <div className="mb-6 sm:mb-8 max-w-2xl mx-auto w-full">
-        <div className="relative rounded-xl shadow-xs">
+        <div className="relative rounded-xl shadow-xs w-full">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
-            <svg className="h-5 w-5 text-gray-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="h-5 w-5 text-gray-400/80 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -59,34 +59,34 @@ export const ProductGrid = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:grid lg:grid-cols-4 gap-6 lg:gap-x-8 lg:gap-y-10 lg:items-start">
+      <div className="flex flex-col lg:grid lg:grid-cols-4 gap-6 lg:gap-x-8 lg:gap-y-10 lg:items-start w-full">
         <div className="w-full lg:col-span-1">
-          <Card className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+          <Card className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs w-full text-left">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4 w-full">
               <h2 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight">Filtros</h2>
               {(searchQuery || minPrice || maxPrice) && (
                 <button
                   type="button"
                   onClick={handleClearFilters}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider active:scale-95"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider active:scale-95 border-none bg-transparent outline-none cursor-pointer"
                 >
                   Limpar todos
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5 w-full">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2.5">Preço</h3>
-                <ul className="space-y-2 text-xs sm:text-sm font-medium">
+                <ul className="space-y-2 text-xs sm:text-sm font-medium w-full">
                   {quickPriceRanges.map((range) => {
                     const isSelected = activePriceRange === range.id;
                     return (
-                      <li key={range.id}>
+                      <li key={range.id} className="w-full">
                         <button
                           type="button"
                           onClick={() => handleSelectPriceRange(range.id, range.min, range.max)}
-                          className={`text-left w-full transition-colors py-0.5 rounded active:scale-99 ${isSelected
+                          className={`text-left w-full transition-colors py-0.5 rounded active:scale-99 border-none bg-transparent outline-none cursor-pointer ${isSelected
                               ? 'text-blue-600 font-extrabold'
                               : 'text-gray-600 hover:text-blue-600'
                             }`}
@@ -99,11 +99,11 @@ export const ProductGrid = () => {
                 </ul>
               </div>
 
-              <div className="flex flex-col justify-center lg:justify-start">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2.5">
+              <div className="flex flex-col justify-center lg:justify-start w-full">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2.5 text-left">
                   Intervalo personalizado
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full">
                   <Input
                     type="text"
                     inputMode="numeric"
@@ -114,7 +114,7 @@ export const ProductGrid = () => {
                     onChange={(e) => handleMinPriceChange(e.target.value)}
                     className="w-full text-center py-2 text-xs rounded-xl bg-gray-50/50"
                   />
-                  <span className="text-gray-400 text-xs font-bold shrink-0">—</span>
+                  <span className="text-gray-400 text-xs font-bold shrink-0 select-none">—</span>
                   <Input
                     type="text"
                     inputMode="numeric"
@@ -139,7 +139,7 @@ export const ProductGrid = () => {
               description="Tente ajustar os termos da busca ou redefinir os limites de preço aplicados."
             />
           ) : (
-            <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 w-full">
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

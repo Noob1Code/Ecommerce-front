@@ -28,8 +28,8 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
   };
 
   return (
-    <Card className="p-4 sm:p-6 border border-gray-200 bg-white shadow-xl rounded-xl max-w-2xl mx-auto animate-in fade-in duration-200">
-      <div className="flex items-start justify-between border-b border-gray-100 pb-4 mb-5 sm:mb-6 gap-4">
+    <Card className="p-4 sm:p-6 border border-gray-200 bg-white shadow-xl rounded-xl max-w-2xl mx-auto animate-in fade-in duration-200 w-full">
+      <div className="flex items-start justify-between border-b border-gray-100 pb-4 mb-5 sm:mb-6 gap-4 w-full">
         <div>
           <h2 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">Cadastrar Novo Produto Base</h2>
           <p className="text-xs text-gray-500 mt-0.5 font-medium">
@@ -49,7 +49,7 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 w-full">
 
         {(validationError || error) && (
           <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center space-x-2 animate-in fade-in duration-150">
@@ -90,7 +90,7 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
           />
         </div>
 
-        <div className="space-y-2.5 border-t border-gray-100 pt-4">
+        <div className="space-y-2.5 border-t border-gray-100 pt-4 w-full">
           <div>
             <label className="block text-xs font-bold uppercase text-gray-500 tracking-wide">
               Atributos de Customização Disponíveis
@@ -101,7 +101,7 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
           </div>
 
           {isLoading && attributes.length === 0 ? (
-            <div className="py-4 flex items-center justify-center space-x-2 text-xs text-gray-400 font-medium bg-gray-50/30 rounded-xl border border-dashed">
+            <div className="py-4 flex items-center justify-center space-x-2 text-xs text-gray-400 font-medium bg-gray-50/30 rounded-xl border border-dashed w-full">
               <Spinner className="h-4 w-4 text-gray-400" />
               <span>Sincronizando tabela de atributos...</span>
             </div>
@@ -110,7 +110,7 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
               Aviso: Nenhum atributo (Cor, Tamanho, etc.) foi localizado no banco de dados.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-gray-50/50 p-3 rounded-xl border border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-gray-50/50 p-3 rounded-xl border border-gray-200 w-full">
               {attributes.map((attr) => {
                 const isChecked = selectedAttributeIds.includes(attr.id);
                 return (
@@ -141,7 +141,7 @@ export const CreateProductForm = ({ onClose }: CreateProductFormProps) => {
           )}
         </div>
 
-        <div className="pt-4 flex flex-col-reverse sm:flex-row items-center sm:justify-end gap-3 border-t border-gray-100">
+        <div className="pt-4 flex flex-col-reverse sm:flex-row items-center sm:justify-end gap-3 border-t border-gray-100 w-full">
           <Button
             type="button"
             variant="secondary"

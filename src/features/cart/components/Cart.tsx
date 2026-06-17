@@ -35,14 +35,14 @@ export const Cart = () => {
 
   if (isEmpty) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4 px-4 py-12">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4 px-4 py-12 w-full max-w-xl mx-auto">
         <h2 className="text-2xl font-black text-gray-900 text-center">Seu carrinho está vazio</h2>
-        <p className="text-sm text-gray-500 max-w-md text-center">
+        <p className="text-sm text-gray-500 text-center px-4">
           Adicione produtos ao seu carrinho de compras antes de prosseguir para o fluxo de finalização e pagamento seguro.
         </p>
         <Link
           to="/"
-          className="mt-4 w-full sm:w-auto text-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-md"
+          className="mt-4 w-full sm:w-auto text-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-md active:scale-95 transform"
         >
           Navegar pelo Catálogo de Produtos
         </Link>
@@ -51,9 +51,9 @@ export const Cart = () => {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-5 mb-6 sm:mb-8">
-        <div>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:py-12 sm:px-6 lg:px-8 w-full">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-5 mb-6 sm:mb-8">
+        <div className="text-center sm:text-left">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
             Carrinho de Compras
           </h1>
@@ -64,18 +64,18 @@ export const Cart = () => {
         <button
           type="button"
           onClick={handleClear}
-          className="text-center w-full sm:w-auto text-xs font-bold uppercase tracking-wider text-red-600 hover:text-white hover:bg-red-600 border border-red-200 bg-red-50/50 px-4 py-2.5 rounded-lg transition-all shadow-2xs"
+          className="text-center w-full sm:w-auto text-xs font-bold uppercase tracking-wider text-red-600 hover:text-white hover:bg-red-600 border border-red-200 bg-red-50/50 px-4 py-2.5 rounded-lg transition-all shadow-2xs active:scale-98"
         >
           Esvaziar Carrinho
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-        <div className="lg:col-span-8 space-y-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start w-full">
+        <div className="lg:col-span-8 space-y-4 w-full">
           {items.map((item) => (
             <Card
               key={item.skuId}
-              className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-sm transition-shadow"
+              className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 hover:shadow-sm transition-shadow"
             >
               <div className="flex items-start gap-4 w-full sm:w-auto">
                 <div className="h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center text-[10px] text-gray-400 font-mono">
@@ -90,22 +90,24 @@ export const Cart = () => {
                   )}
                 </div>
 
-                <div className="flex-1 sm:flex-none">
-                  <h3 className="text-sm sm:text-base font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2 sm:line-clamp-none">
+                <div className="flex-1">
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2">
                     <Link to={`/product/${item.product.id}`}>{item.product.name}</Link>
                   </h3>
-                  <p className="mt-0.5 text-[11px] text-gray-400 font-mono tracking-tight">SKU: {item.selectedSku.skuCode}</p>
-                  <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+                  <p className="mt-0.5 text-[10px] sm:text-[11px] text-gray-400 font-mono tracking-tight">SKU: {item.selectedSku.skuCode}</p>
+                  <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium mt-0.5 leading-normal">
                     {item.selectedSku.options.map((o) => `${o.attributeName}: ${o.value}`).join(' | ')}
                   </p>
-                  <span className="mt-1 inline-block text-xs sm:text-sm font-bold text-gray-700 bg-gray-100 sm:bg-transparent px-2 py-0.5 sm:px-0 sm:py-0 rounded">
-                    {item.precoFormatado}
-                  </span>
+                  <div className="mt-1.5 sm:mt-1">
+                    <span className="inline-block text-xs font-bold text-gray-700 bg-gray-100 sm:bg-transparent px-2 py-0.5 sm:px-0 sm:py-0 rounded">
+                      {item.precoFormatado}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 sm:gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
-                <div className="flex items-center gap-1.5 bg-gray-50/80 p-1 border border-gray-200 rounded-lg">
+                <div className="flex items-center gap-1.5 bg-gray-50/80 p-1 border border-gray-200 rounded-lg shrink-0">
                   <button
                     type="button"
                     onClick={() => handleDecrement(item.skuId, item.quantity)}
@@ -130,7 +132,7 @@ export const Cart = () => {
                   <button
                     type="button"
                     onClick={() => handleRemove(item.skuId)}
-                    className="text-[11px] font-bold text-gray-400 hover:text-red-600 transition-colors uppercase tracking-wider mt-0.5 active:scale-95"
+                    className="text-[11px] font-bold text-gray-400 hover:text-red-600 transition-colors uppercase tracking-wider mt-0.5 active:scale-95 block"
                   >
                     Remover
                   </button>
@@ -145,12 +147,12 @@ export const Cart = () => {
             <h2 className="text-base sm:text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Resumo do Pedido</h2>
 
             <div className="mt-4 space-y-3.5">
-              <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-gray-500">
+              <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-gray-400">
                 <span>Subtotal Itens</span>
                 <span className="font-bold text-gray-900">{formattedCartTotal}</span>
               </div>
               <div className="flex items-center justify-between text-xs sm:text-sm font-medium border-b border-gray-100 pb-4">
-                <span className="text-gray-500">Logística de Entrega</span>
+                <span className="text-gray-400">Logística de Entrega</span>
                 <span className="text-[10px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-100 uppercase tracking-wide">
                   Frete Grátis
                 </span>
@@ -166,7 +168,7 @@ export const Cart = () => {
                 type="button"
                 variant="primary"
                 onClick={handleCheckoutRedirect}
-                className="w-full py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md flex justify-center items-center bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
+                className="w-full py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md flex justify-center items-center bg-blue-600 text-white hover:bg-blue-700 rounded-xl transition-all active:scale-[0.99]"
               >
                 Prosseguir para o Checkout
               </Button>

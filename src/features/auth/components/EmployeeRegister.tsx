@@ -26,31 +26,31 @@ export const EmployeeRegister = () => {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-5">
-        <div>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-12 w-full">
+      <div className="mb-6 flex flex-col items-center text-center sm:text-left sm:items-start sm:flex-row sm:justify-between border-b border-gray-200 pb-5 gap-4">
+        <div className="w-full">
           <button
             type="button"
             onClick={handleVoltar}
-            className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider flex items-center space-x-1 active:scale-95 transition-transform"
+            className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider flex items-center justify-center sm:justify-start space-x-1 active:scale-95 transition-transform mx-auto sm:mx-0"
           >
-            &larr; Voltar para o Painel de Estoque
+            <span>&larr; Voltar para o Painel de Estoque</span>
           </button>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 mt-2">
+          <h1 className="text-xl sm:text-3xl font-black tracking-tight text-gray-900 mt-2">
             Controle de Credenciais
           </h1>
         </div>
       </div>
 
       <Card className="w-full max-w-xl mx-auto p-4 sm:p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Cadastrar Novo Funcionário</h2>
-        <p className="text-xs text-gray-500 mb-6 font-mono break-all">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Cadastrar Novo Funcionário</h2>
+        <p className="text-[11px] sm:text-xs text-gray-500 mb-6 font-mono break-all bg-gray-50 p-2 rounded-lg border border-gray-100">
           POST mapping vinculado à estrutura Set&lt;String&gt; roles do Java
         </p>
 
         <form onSubmit={handleCadastrarFuncionario} className="space-y-4">
           <div>
-            <label htmlFor="nomeFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            <label htmlFor="nomeFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1 px-0.5">
               Nome Completo *
             </label>
             <Input
@@ -66,7 +66,7 @@ export const EmployeeRegister = () => {
           </div>
 
           <div>
-            <label htmlFor="emailFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            <label htmlFor="emailFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1 px-0.5">
               E-mail Corporativo *
             </label>
             <Input
@@ -82,7 +82,7 @@ export const EmployeeRegister = () => {
           </div>
 
           <div>
-            <label htmlFor="matriculaFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            <label htmlFor="matriculaFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1 px-0.5">
               Matrícula Funcional *
             </label>
             <Input
@@ -98,7 +98,7 @@ export const EmployeeRegister = () => {
           </div>
 
           <div>
-            <label htmlFor="senhaFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            <label htmlFor="senhaFunc" className="block text-xs font-bold text-gray-500 uppercase mb-1 px-0.5">
               Senha Provisória de Acesso *
             </label>
             <Input
@@ -114,7 +114,7 @@ export const EmployeeRegister = () => {
           </div>
 
           <div className="border-t border-gray-100 pt-4">
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2 px-0.5">
               Perfis de Acesso Autorizados <span className="text-xs font-normal text-gray-400 normal-case">(Selecione 1 ou mais)</span>
             </label>
 
@@ -128,17 +128,17 @@ export const EmployeeRegister = () => {
                     type="button"
                     disabled={carregando}
                     onClick={() => handleAlternarPerfil(perfil.id)}
-                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all active:scale-99 ${marcado
+                    className={`flex items-start justify-between p-3 rounded-xl border text-left transition-all active:scale-99 ${marcado
                       ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500'
                       : 'border-gray-200 bg-white hover:bg-gray-50'
                       }`}
                   >
-                    <div>
+                    <div className="pr-2 w-full">
                       <p className="text-sm font-bold text-gray-900">{perfil.rotulo}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{perfil.descricao}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-normal">{perfil.descricao}</p>
                     </div>
 
-                    <div className={`h-5 w-5 rounded-md border flex items-center justify-center transition-all flex-shrink-0 ml-4 ${marcado
+                    <div className={`h-5 w-5 rounded-md border flex items-center justify-center transition-all shrink-0 ml-2 self-center ${marcado
                       ? 'bg-blue-600 border-blue-600 text-white'
                       : 'border-gray-300 bg-white'
                       }`}>
@@ -158,7 +158,7 @@ export const EmployeeRegister = () => {
             <Button
               type="submit"
               variant="primary"
-              className="w-full flex justify-center items-center py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl shadow-md active:scale-95 transition-transform bg-blue-600 text-white hover:bg-blue-700"
+              className="w-full flex justify-center items-center py-3 sm:py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl shadow-md active:scale-95 transition-transform bg-blue-600 text-white hover:bg-blue-700"
               disabled={carregando}
             >
               {carregando ? (

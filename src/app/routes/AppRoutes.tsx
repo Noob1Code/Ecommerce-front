@@ -5,16 +5,18 @@ import { Spinner } from '../../shared/components/ui';
 import { ErrorBoundary, Layout } from '../layout';
 
 const RouteFallback = () => (
-  <div className="flex min-h-[60vh] items-center justify-center px-4">
+  <div className="flex min-h-[50vh] sm:min-h-[60vh] items-center justify-center px-4 w-full">
     <Spinner className="h-10 w-10 text-blue-600" />
   </div>
 );
 
-const GuardaVisitante = ({ children }: { children: React.ReactNode }) => {
-  const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
-  if (estaAutenticado) {
+const GuestGuard = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = useAuthStore((state) => state.estaAutenticado);
+  
+  if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
+  
   return <>{children}</>;
 };
 
@@ -62,7 +64,7 @@ const router = createBrowserRouter([
           <Suspense fallback={<RouteFallback />}>
             <CustomerProfile />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'meus-pedidos',
@@ -70,7 +72,7 @@ const router = createBrowserRouter([
           <Suspense fallback={<RouteFallback />}>
             <CustomerOrders />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'cart',
@@ -96,9 +98,9 @@ const router = createBrowserRouter([
         path: 'login',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <GuardaVisitante>
+            <GuestGuard>
               <Login />
-            </GuardaVisitante>
+            </GuestGuard>
           </Suspense>
         ),
       },
@@ -106,9 +108,9 @@ const router = createBrowserRouter([
         path: 'register',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <GuardaVisitante>
+            <GuestGuard>
               <Register />
-            </GuardaVisitante>
+            </GuestGuard>
           </Suspense>
         ),
       },

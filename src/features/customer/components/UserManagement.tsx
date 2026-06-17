@@ -38,15 +38,14 @@ export const UserManagement = () => {
     }
 
     return (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-
-            <div className="border-b border-gray-200 pb-5 mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-10 w-full">
+            <div className="border-b border-gray-200 pb-5 mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between text-center sm:text-left">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">Gerenciamento de Usuários</h1>
                     <p className="mt-1 text-xs sm:text-sm text-gray-500 font-medium">Auditoria completa, edição de perfis e controle de acesso IAM.</p>
                 </div>
 
-                <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center w-full lg:w-auto">
                     {abaAtiva === 'funcionarios' && (
                         <Button
                             type="button"
@@ -58,53 +57,55 @@ export const UserManagement = () => {
                         </Button>
                     )}
 
-                    <div className="border-l border-gray-200 h-6 mx-1 hidden sm:block"></div>
+                    <div className="border-l border-gray-200 h-6 mx-1 hidden lg:block"></div>
 
-                    <button
-                        type="button"
-                        onClick={() => { setAbaAtiva('clientes'); setTermoPesquisa(''); fecharEdicao(); setExibirFormCriacao(false); }}
-                        className={`flex-1 sm:flex-none text-center px-4 py-2.5 text-xs font-bold uppercase rounded-xl border transition-all ${abaAtiva === 'clientes' ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        Clientes
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { setAbaAtiva('funcionarios'); setTermoPesquisa(''); fecharEdicao(); }}
-                        className={`flex-1 sm:flex-none text-center px-4 py-2.5 text-xs font-bold uppercase rounded-xl border transition-all ${abaAtiva === 'funcionarios' ? 'border-purple-600 bg-purple-50 text-purple-700 ring-1 ring-purple-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        Funcionários
-                    </button>
+                    <div className="flex w-full sm:w-auto gap-2">
+                        <button
+                            type="button"
+                            onClick={() => { setAbaAtiva('clientes'); setTermoPesquisa(''); fecharEdicao(); setExibirFormCriacao(false); }}
+                            className={`flex-1 sm:flex-none text-center px-4 py-2.5 text-xs font-bold uppercase rounded-xl border transition-all ${abaAtiva === 'clientes' ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
+                        >
+                            Clientes
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setAbaAtiva('funcionarios'); setTermoPesquisa(''); fecharEdicao(); }}
+                            className={`flex-1 sm:flex-none text-center px-4 py-2.5 text-xs font-bold uppercase rounded-xl border transition-all ${abaAtiva === 'funcionarios' ? 'border-purple-600 bg-purple-50 text-purple-700 ring-1 ring-purple-600' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
+                        >
+                            Funcionários
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {abaAtiva === 'funcionarios' && exibirFormCriacao && (
-                <Card className="p-4 sm:p-6 border border-green-200 bg-green-50/5 rounded-xl mb-8 max-w-3xl animate-in fade-in zoom-in-95 duration-150 shadow-xs">
+                <Card className="p-4 sm:p-6 border border-green-200 bg-green-50/5 rounded-xl mb-8 max-w-3xl animate-in fade-in zoom-in-95 duration-150 shadow-xs w-full">
                     <form onSubmit={submeterCriacaoFuncionario} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="sm:col-span-2 border-b border-gray-200 pb-2 mb-1">
-                            <h3 className="text-xs sm:text-sm font-black text-green-700 uppercase tracking-wide">Contratar / Registrar Novo Funcionário</h3>
+                            <h3 className="text-xs sm:text-sm font-black text-green-700 uppercase tracking-wide text-left">Contratar / Registrar Novo Funcionário</h3>
                         </div>
 
                         <div>
-                            <label htmlFor="create-name" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">Nome Completo *</label>
+                            <label htmlFor="create-name" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider text-left">Nome Completo *</label>
                             <Input id="create-name" type="text" value={formCriacao.nome} onChange={(e) => handleMudancaFormCriacao('nome', e.target.value)} placeholder="Ex: João Silva" required className="w-full text-xs rounded-xl" />
                         </div>
 
                         <div>
-                            <label htmlFor="create-email" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">E-mail Corporativo *</label>
+                            <label htmlFor="create-email" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider text-left">E-mail Corporativo *</label>
                             <Input id="create-email" type="email" value={formCriacao.email} onChange={(e) => handleMudancaFormCriacao('email', e.target.value)} placeholder="joao@empresa.com" required className="w-full text-xs rounded-xl" />
                         </div>
 
                         <div>
-                            <label htmlFor="create-matricula" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">Matrícula Funcional *</label>
+                            <label htmlFor="create-matricula" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider text-left">Matrícula Funcional *</label>
                             <Input id="create-matricula" type="text" value={formCriacao.matricula} onChange={(e) => handleMudancaFormCriacao('matricula', e.target.value)} placeholder="M-90821" required className="w-full text-xs rounded-xl" />
                         </div>
 
                         <div>
-                            <label htmlFor="create-password" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">Senha de Acesso Inicial *</label>
+                            <label htmlFor="create-password" className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider text-left">Senha de Acesso Inicial *</label>
                             <Input id="create-password" type="password" value={formCriacao.senha} onChange={(e) => handleMudancaFormCriacao('senha', e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} className="w-full text-xs rounded-xl" />
                         </div>
 
-                        <div className="sm:col-span-2 p-4 bg-white border border-gray-200 rounded-xl space-y-2.5 shadow-2xs">
+                        <div className="sm:col-span-2 p-4 bg-white border border-gray-200 rounded-xl space-y-2.5 shadow-2xs w-full text-left">
                             <span className="block text-[10px] font-bold uppercase text-gray-400 tracking-wider">Atribuir Nível de Autoridade IAM *</span>
                             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-6">
                                 {['ROLE_ADMIN', 'ROLE_ESTOQUE', 'ROLE_FATURAMENTO'].map((role) => (
@@ -125,7 +126,7 @@ export const UserManagement = () => {
                             </div>
                         </div>
 
-                        <div className="sm:col-span-2 flex justify-end gap-2 border-t pt-4 border-gray-150">
+                        <div className="sm:col-span-2 flex justify-end gap-2 border-t pt-4 border-gray-150 w-full">
                             <Button type="button" variant="secondary" onClick={() => setExibirFormCriacao(false)} className="text-xs py-2 px-4 rounded-xl">Cancelar</Button>
                             <Button type="submit" className="text-xs py-2 bg-green-600 text-white hover:bg-green-700 font-bold px-5 rounded-xl shadow-sm border-none">Salvar Contratação</Button>
                         </div>
@@ -133,22 +134,22 @@ export const UserManagement = () => {
                 </Card>
             )}
 
-            <div className="mb-6 max-w-md w-full">
+            <div className="mb-6 max-w-md w-full mx-auto sm:mx-0">
                 <label htmlFor="user-search" className="block text-xs font-bold uppercase text-gray-400 mb-1.5 tracking-wider">Localizar Usuário Rapidamente</label>
                 <Input
                     id="user-search"
                     type="text"
                     value={termoPesquisa}
                     onChange={(e) => setTermoPesquisa(e.target.value)}
-                    placeholder={`Buscar por nome, e-mail ou documento...`}
+                    placeholder="Buscar por nome, e-mail ou documento..."
                     className="w-full text-sm py-2.5 rounded-xl"
                 />
             </div>
 
             {erro && <ErrorMessage message="Erro de barramento ao tentar sincronizar contas com o Spring Boot." />}
 
-            <Card className="overflow-hidden border border-gray-200 bg-white shadow-xs rounded-xl">
-                <div className="w-full overflow-x-auto">
+            <Card className="overflow-hidden border border-gray-200 bg-white shadow-xs rounded-xl w-full">
+                <div className="w-full overflow-x-auto scrollbar-thin">
                     <table className="min-w-[950px] w-full divide-y text-sm text-left table-fixed">
                         <colgroup>
                             <col className="w-[20%]" />
@@ -199,7 +200,7 @@ export const UserManagement = () => {
                                         {emEdicao && formEdicao && (
                                             <tr className="bg-blue-50/10">
                                                 <td colSpan={6} className="px-6 py-5 border-t border-b border-blue-100">
-                                                    <form onSubmit={salvarAlteracoes} className="max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-100">
+                                                    <form onSubmit={salvarAlteracoes} className="max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-100 text-left">
                                                         <div className="sm:col-span-2"><h4 className="text-xs font-black uppercase text-blue-600 tracking-wider">Alterar Dados do Cliente</h4></div>
                                                         <div>
                                                             <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">Nome Completo</label>
@@ -270,7 +271,7 @@ export const UserManagement = () => {
                                         {emEdicao && formEdicao && (
                                             <tr className="bg-purple-50/10">
                                                 <td colSpan={6} className="px-6 py-5 border-t border-b border-purple-100">
-                                                    <form onSubmit={salvarAlteracoes} className="max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-100">
+                                                    <form onSubmit={salvarAlteracoes} className="max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-100 text-left">
                                                         <div className="sm:col-span-2"><h4 className="text-xs font-black uppercase text-purple-700 tracking-wider">Alterar Dados e Permissões do Funcionário</h4></div>
                                                         <div>
                                                             <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-wider">Nome Completo</label>
@@ -310,7 +311,7 @@ export const UserManagement = () => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
+                                                        <div className="sm:col-span-2 flex justify-end gap-2 pt-2 w-full">
                                                             <Button type="button" variant="secondary" onClick={fecharEdicao} className="text-xs py-2 px-4 rounded-xl">Cancelar</Button>
                                                             <Button type="submit" variant="primary" className="text-xs py-2 px-5 bg-purple-600 text-white hover:bg-purple-700 rounded-xl border-none font-bold shadow-sm">Salvar Cadastro</Button>
                                                         </div>
