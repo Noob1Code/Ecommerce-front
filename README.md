@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# Configuração de IPs Antes do Deploy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+_Guia de orientação técnica detalhando a substituição de chaves e endereços de IP necessários para o correto funcionamento da conexão do Front-end._
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Visão geral
 
-## React Compiler
+Este documento descreve o procedimento obrigatório de alteração das chaves de IP no código-fonte do front-end antes de realizar o deploy do sistema. O objetivo é garantir que a aplicação aponte para os endpoints e servidores corretos no ambiente de produção, evitando falhas de comunicação (CORS ou erros de conexão) com o back-end. 
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Este guia é voltado para os desenvolvedores e responsáveis pela esteira de deploy do projeto.
 
-## Expanding the ESLint configuration
+## Pontos Principais
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Comunicação Front-Back:** Ajuste das URLs base e proxies para que a integração com o back-end funcione fora do ambiente local.
+- **Atenção às Linhas Exatas:** As alterações são pontuais e devem respeitar os arquivos mapeados para não quebrar a compilação.
+- **Arquivos Identificados:** O mapeamento abrange configurações do bundler (Vite), adaptadores de domínio (Mappers) e componentes de interface (Backoffice).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Arquivos que Devem ser Alterados
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Com base na estrutura de diretórios do projeto, os três arquivos a seguir possuem dependências diretas de IP e devem ser atualizados manualmente antes de subir a aplicação:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 1. Configuração do Vite
+* **Caminho do arquivo:** `../vite.config.ts` *(localizado na pasta raiz, uma pasta antes de `src`)*
+* **Linha para alteração:** Linha 11
+* **Contexto:** Ajuste do IP do servidor, configurações de host ou regras de proxy de desenvolvimento/build.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 2. Mapper de Produtos
+* **Caminho do arquivo:** `src/features/products/domain/product.mapper.ts`
+* **Linha para alteração:** Linha 15
+* **Contexto:** Atualização do IP responsável por mapear ou formatar as URLs de dados do produto (ex: imagens, links de APIs específicas).
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 3. Painel de Backoffice de Produtos
+* **Caminho do arquivo:** `src/features/products/components/ProductBackoffice.tsx`
+* **Linha para alteração:** Linha 411
+* **Contexto:** Correção do IP de requisição direta ou endpoint específico de gerenciamento dentro do componente.
+
+---
+
+_Última atualização: 2026-06-17_
