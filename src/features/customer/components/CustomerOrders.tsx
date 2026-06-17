@@ -98,9 +98,6 @@ export const CustomerOrders = () => {
                       className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-2xs w-full"
                     >
                       <div className="flex items-start space-x-3 text-left">
-                        <div className="h-10 w-10 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center border text-gray-400 font-mono text-[9px]">
-                          BOX
-                        </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-bold text-gray-900 truncate">{item.variacao.nomeProduto}</p>
                           <p className="text-xs text-gray-500 font-medium mt-0.5">{item.variacao.detalhes}</p>

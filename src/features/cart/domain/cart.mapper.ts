@@ -1,6 +1,8 @@
 import type { CartStoreItem } from '../store/useCartStore';
 import type { BackendCarrinhoResponseDTO, EnrichedCartItem } from './cart.types';
 
+const IMAGE_BASE_URL = 'http://localhost:8080';
+
 export const CartMapper = {
 
     formatarMoeda(valor: number): string {
@@ -31,19 +33,32 @@ export const CartMapper = {
                 const prod = item.produto!;
                 const subtotal = prod.preco * item.quantidade;
 
+                console.log("🔍 [RAIO-X DO CARRINHO] Objeto processado:", prod);
+
+                let fullImageUrl = '';
+                if (prod.urlImagem) {
+                    let cleanPath = prod.urlImagem;
+                    if (cleanPath.startsWith('/')) {
+                        cleanPath = cleanPath.substring(1);
+                    }
+                    fullImageUrl = cleanPath.startsWith('http')
+                        ? cleanPath
+                        : `${IMAGE_BASE_URL}/${cleanPath}`;
+                }
+
                 return {
                     id: prod.variacaoId,
                     skuId: prod.variacaoId,
                     quantity: item.quantidade,
                     product: {
-                        id: prod.variacaoId,
+                        id: prod.produtoId || '', 
                         name: prod.nomeProduto,
                     },
                     selectedSku: {
                         skuCode: prod.sku,
                         price: prod.preco,
                         stock: prod.estoque,
-                        images: [],
+                        images: fullImageUrl ? [{ imageUrl: fullImageUrl }] : [], 
                         options: CartMapper.parseDetalhesAtributos(prod.detalhes),
                     },
                     precoFormatado: CartMapper.formatarMoeda(prod.preco),

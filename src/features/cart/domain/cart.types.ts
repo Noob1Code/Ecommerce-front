@@ -1,4 +1,3 @@
-
 export interface BackendItemCarrinhoRequestDTO {
     variacaoId: string;
     quantidade: number;
@@ -6,11 +5,13 @@ export interface BackendItemCarrinhoRequestDTO {
 
 export interface BackendItemCatalogoCompletoDTO {
     variacaoId: string;
+    produtoId?: string; // 🛡️ Opcional enquanto o backend não implementa
     nomeProduto: string;
     preco: number;
     estoque: number;
     sku: string;
     detalhes: string;
+    urlImagem?: string; // 🛡️ Opcional enquanto o backend não implementa
 }
 
 export interface BackendItemCarrinhoResponseDTO {

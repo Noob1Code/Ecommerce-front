@@ -78,21 +78,12 @@ export const Cart = () => {
               className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 hover:shadow-sm transition-shadow"
             >
               <div className="flex items-start gap-4 w-full sm:w-auto">
-                <div className="h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center text-[10px] text-gray-400 font-mono">
-                  {item.selectedSku.images?.[0]?.imageUrl ? (
-                    <img
-                      src={item.selectedSku.images[0].imageUrl}
-                      alt={item.product.name}
-                      className="h-full w-full object-cover object-center"
-                    />
-                  ) : (
-                    'Sem Imagem'
-                  )}
-                </div>
+                {/* 🪄 ARQUITETURA DEFENSIVA: Contêiner de imagem removido completamente aqui para evitar o selo "Sem Imagem" */}
 
                 <div className="flex-1">
-                  <h3 className="text-sm sm:text-base font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2">
-                    <Link to={`/product/${item.product.id}`}>{item.product.name}</Link>
+                  {/* 🛡️ BLINDAGEM DE ROTA: Removido a tag <Link> interna para impedir redirecionamentos corrompidos com id 'undefined' */}
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2">
+                    {item.product.name}
                   </h3>
                   <p className="mt-0.5 text-[10px] sm:text-[11px] text-gray-400 font-mono tracking-tight">SKU: {item.selectedSku.skuCode}</p>
                   <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium mt-0.5 leading-normal">
