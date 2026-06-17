@@ -12,7 +12,7 @@ import type {
   SkuOption
 } from './product.types';
 
-const IMAGE_BASE_URL = 'http://localhost:8080';
+const IMAGE_BASE_URL = 'http://192.168.18.206:8080';
 
 export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => {
   const mappedSkus: ProductSku[] = (payload.variacoes || []).map((skuDto) => {

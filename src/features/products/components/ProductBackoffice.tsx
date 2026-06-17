@@ -404,7 +404,15 @@ export const ProductBackoffice = () => {
                                             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1 w-full">
                                               {dadosEdicaoSku.images.map((url, idx) => (
                                                 <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-square bg-white shrink-0">
-                                                  <img src={url} alt="Preview SKU" className="w-full h-full object-cover" />
+                                                  <img
+                                                    src={
+                                                      url.startsWith('http') || url.startsWith('blob:')
+                                                        ? url
+                                                        : `http://192.168.18.206:8080${url}` 
+                                                    }
+                                                    alt="Preview SKU"
+                                                    className="w-full h-full object-cover"
+                                                  />
                                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                                     <button
                                                       type="button"
