@@ -5,6 +5,21 @@ import { useNotificationModalStore } from '../../../shared/store/useNotification
 import { cadastrarClienteApi, logarUsuarioApi } from '../api/authApi';
 import { useAuthStore } from '../store/useAuthStore';
 
+const formatCPF = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
+
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits.length > 0 ? `(${digits}` : '';
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
 export const useRegister = () => {
   const navigate = useNavigate();
   const fazerLogin = useAuthStore((state) => state.fazerLogin);
@@ -23,26 +38,31 @@ export const useRegister = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    let maskedValue = value;
+    if (name === 'cpf') {
+      maskedValue = formatCPF(value);
+    } else if (name === 'telefone') {
+      maskedValue = formatPhone(value);
+    }
+
     setFormulario((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: maskedValue,
     }));
     setErroValidacao(null);
   };
 
-  // A inteligência do fluxo sequencial agora vive aqui no mutationFn do controlador
   const { mutate: registrarCliente, isPending: estaCarregando, error: erro } = useMutation({
     mutationFn: async () => {
-      // 1. Cria a conta do cliente no servidor
       await cadastrarClienteApi({
         nome: formulario.nome,
         email: formulario.email,
         senha: formulario.senha,
-        cpf: formulario.cpf || undefined,
-        telefone: formulario.telefone || undefined,
+        cpf: formulario.cpf,
+        telefone: formulario.telefone,
       });
 
-      // 2. Realiza o login automático imediatamente aproveitando as credenciais
       const respostaAutenticada = await logarUsuarioApi({
         email: formulario.email,
         senha: formulario.senha,
@@ -65,8 +85,21 @@ export const useRegister = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!formulario.nome || !formulario.email || !formulario.senha) {
+    if (!formulario.nome || !formulario.email || !formulario.senha || !formulario.cpf || !formulario.telefone) {
       setErroValidacao('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const rawCPF = formulario.cpf.replace(/\D/g, '');
+    const rawTelefone = formulario.telefone.replace(/\D/g, '');
+
+    if (rawCPF.length !== 11) {
+      setErroValidacao('O CPF deve conter exatamente 11 dígitos.');
+      return;
+    }
+
+    if (rawTelefone.length !== 11) {
+      setErroValidacao('O telefone deve conter exatamente 11 dígitos.');
       return;
     }
 

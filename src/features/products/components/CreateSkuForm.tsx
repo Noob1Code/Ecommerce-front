@@ -43,13 +43,13 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
   };
 
   return (
-    <Card className="p-4 sm:p-6 border border-gray-200 bg-white shadow-xl rounded-xl max-w-2xl mx-auto animate-in fade-in duration-200 mt-4">
-      <div className="flex items-start justify-between border-b border-gray-100 pb-3 mb-5 gap-4">
+    <Card className="p-4 sm:p-6 border border-gray-200 bg-white shadow-xl rounded-xl max-w-2xl mx-auto animate-in fade-in duration-200 mt-4 w-full">
+      <div className="flex items-start justify-between border-b border-gray-100 pb-3 mb-5 gap-4 w-full">
         <div>
-          <h3 className="text-base font-black text-gray-900 tracking-tight">
+          <h3 className="text-base font-black text-gray-900 tracking-tight text-left">
             Adicionar Variação de SKU &rarr; <span className="text-blue-600 font-extrabold">{product.name}</span>
           </h3>
-          <p className="text-[11px] text-gray-400 font-medium mt-0.5 leading-relaxed">
+          <p className="text-[11px] text-gray-400 font-medium mt-0.5 leading-relaxed text-left">
             Gere uma nova composição física especificando preço, estoque e opções de atributos.
           </p>
         </div>
@@ -65,7 +65,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 w-full">
 
         {validationError && (
           <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center space-x-2 animate-in fade-in duration-150">
@@ -76,9 +76,9 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
           <div className="space-y-1.5">
-            <label htmlFor="sku-code-input" className="block text-xs font-bold uppercase text-gray-500 tracking-wide">
+            <label htmlFor="sku-code-input" className="block text-xs font-bold uppercase text-gray-500 tracking-wide text-left">
               Código SKU de Fábrica *
             </label>
             <Input
@@ -93,7 +93,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="sku-price-input" className="block text-xs font-bold uppercase text-gray-500 tracking-wide">
+            <label htmlFor="sku-price-input" className="block text-xs font-bold uppercase text-gray-500 tracking-wide text-left">
               Preço de Venda (R$) *
             </label>
             <Input
@@ -108,7 +108,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="sku-stock-input" className="block text-xs font-bold uppercase text-gray-500 tracking-wide">
+            <label htmlFor="sku-stock-input" className="block text-xs font-bold uppercase text-gray-500 tracking-wide text-left">
               Estoque Inicial *
             </label>
             <Input
@@ -125,11 +125,11 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
         </div>
 
         {product.attributes && product.attributes.length > 0 && (
-          <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-3 shadow-2xs">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-3 shadow-2xs w-full text-left">
             <span className="block text-[11px] font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-1.5">
               Definição de Opções Obrigatórias
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
               {product.attributes.map((attr) => (
                 <div key={attr.id} className="space-y-1.5">
                   <label htmlFor={`attr-select-${attr.id}`} className="block text-xs font-bold text-gray-700">
@@ -150,12 +150,12 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           </div>
         )}
 
-        <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-3 shadow-2xs">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-3 shadow-2xs w-full text-left">
           <span className="block text-[11px] font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-1.5">
             Galeria de Imagens da Variação
           </span>
 
-          <div className="flex flex-col sm:flex-row gap-2.5 items-end sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center w-full">
             <div className="flex-1 w-full">
               <Input
                 type="text"
@@ -195,17 +195,17 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           </div>
 
           {images.length > 0 && (
-            <div className="grid grid-cols-1 gap-1.5 pt-1 max-h-28 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-1.5 pt-1 max-h-28 overflow-y-auto pr-1 w-full">
               {images.map((url, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-xl text-[10px] text-gray-600 font-mono gap-4 shadow-3xs">
-                  <span className="truncate pr-2 select-all">
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-xl text-[10px] text-gray-600 font-mono gap-4 shadow-3xs w-full">
+                  <span className="truncate pr-2 select-all flex-1 min-w-0">
                     [{index + 1}] {url}
                   </span>
                   <button
                     type="button"
                     disabled={isPending}
                     onClick={() => handleRemoveImageUrl(index)}
-                    className="text-red-600 font-bold hover:text-red-800 transition-colors px-2 py-0.5 rounded-md hover:bg-red-50 disabled:opacity-40 shrink-0 text-xs active:scale-95"
+                    className="text-red-600 font-bold hover:text-red-800 transition-colors px-2 py-0.5 rounded-md hover:bg-red-50 disabled:opacity-40 shrink-0 text-xs active:scale-95 block"
                     title="Remover imagem"
                   >
                     Excluir
@@ -216,7 +216,7 @@ export const CreateSkuForm = ({ product, onClose }: CreateSkuFormProps) => {
           )}
         </div>
 
-        <div className="pt-4 flex flex-col-reverse sm:flex-row items-center sm:justify-end gap-3 border-t border-gray-100">
+        <div className="pt-4 flex flex-col-reverse sm:flex-row items-center sm:justify-end gap-3 border-t border-gray-100 w-full">
           <Button
             type="button"
             variant="secondary"

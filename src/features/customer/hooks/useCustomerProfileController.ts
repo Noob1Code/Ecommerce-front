@@ -1,10 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 import { useAuthStore } from '../../auth';
 import { customerApi } from '../api/customerApi';
 
+const formatCPF = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
+
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits.length > 0 ? `(${digits}` : '';
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
 export const useCustomerProfileController = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const usuario = useAuthStore((state) => state.usuario);
   const fazerLogin = useAuthStore((state) => state.fazerLogin);
@@ -32,8 +49,8 @@ export const useCustomerProfileController = () => {
     setDadosCarregadosId(usuario?.id || null);
     setNome(dadosPerfil.nome || '');
     setEmail(dadosPerfil.email || '');
-    setTelefone(dadosPerfil.telefone || '');
-    setCpf(dadosPerfil.cpf || '');
+    setTelefone(formatPhone(dadosPerfil.telefone || ''));
+    setCpf(formatCPF(dadosPerfil.cpf || ''));
     setMatricula(dadosPerfil.matricula || '');
   }
 
@@ -87,6 +104,21 @@ export const useCustomerProfileController = () => {
       return;
     }
 
+    if (ehCliente) {
+      const rawCPF = cpf.replace(/\D/g, '');
+      const rawTelefone = telefone.replace(/\D/g, '');
+
+      if (rawCPF.length !== 11) {
+        showError({ title: 'CPF Inválido', message: 'O CPF deve conter exatamente 11 dígitos.' });
+        return;
+      }
+
+      if (rawTelefone.length !== 11) {
+        showError({ title: 'Telefone Inválido', message: 'O telefone deve conter exatamente 11 dígitos.' });
+        return;
+      }
+    }
+
     if (!ehCliente && !matricula.trim()) {
       showError({ title: 'Dados Incompletos', message: 'Para funcionários, a Matrícula Funcional é obrigatória.' });
       return;
@@ -99,11 +131,15 @@ export const useCustomerProfileController = () => {
     if (dadosPerfil) {
       setNome(dadosPerfil.nome || '');
       setEmail(dadosPerfil.email || '');
-      setTelefone(dadosPerfil.telefone || '');
-      setCpf(dadosPerfil.cpf || '');
+      setTelefone(formatPhone(dadosPerfil.telefone || ''));
+      setCpf(formatCPF(dadosPerfil.cpf || ''));
       setMatricula(dadosPerfil.matricula || '');
       setSenha('');
     }
+  };
+
+  const handleBackToCatalog = () => {
+    navigate('/');
   };
 
   return {
@@ -117,11 +153,12 @@ export const useCustomerProfileController = () => {
     estaCarregando: carregandoDados || mutationSalvar.isPending,
     setNome,
     setEmail,
-    setTelefone,
-    setCpf,
+    setTelefone: (val: string) => setTelefone(formatPhone(val)),
+    setCpf: (val: string) => setCpf(formatCPF(val)),
     setMatricula,
     setSenha,
     handleSalvarAlteracoes,
-    handleCancelar
+    handleCancelar,
+    handleBackToCatalog
   };
 };

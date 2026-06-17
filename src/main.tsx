@@ -1,11 +1,11 @@
+import { AxiosError } from 'axios';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { AxiosError } from 'axios';
-import './styles/index.css';
 import App from './App.tsx';
-import { httpClient } from './services/api/httpClient';
 import { useAuthStore } from './features/auth/store/useAuthStore';
 import type { ApiErrorResponse } from './services/api/api.types';
+import { httpClient } from './services/api/httpClient';
+import './styles/index.css';
 
 httpClient.interceptors.request.use(
   (config) => {
@@ -25,8 +25,8 @@ httpClient.interceptors.response.use(
       const { status, data } = error.response;
 
       if (status === 401) {
-        console.warn('Session expired or unauthorized. Logging out...');
-        useAuthStore.getState().logout();
+        console.warn('Sessão expirada ou não autorizada. Limpando credenciais...');
+        useAuthStore.getState().fazerLogout();
         window.location.replace('/login');
       }
 

@@ -5,7 +5,7 @@ interface SpinnerProps {
 export const Spinner = ({ className = '' }: SpinnerProps) => {
   return (
     <svg
-      className={`animate-spin text-current flex-shrink-0 ${className}`}
+      className={`animate-spin text-current shrink-0 ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

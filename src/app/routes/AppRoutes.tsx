@@ -5,20 +5,21 @@ import { Spinner } from '../../shared/components/ui';
 import { ErrorBoundary, Layout } from '../layout';
 
 const RouteFallback = () => (
-  <div className="flex min-h-[60vh] items-center justify-center">
+  <div className="flex min-h-[50vh] sm:min-h-[60vh] items-center justify-center px-4 w-full">
     <Spinner className="h-10 w-10 text-blue-600" />
   </div>
 );
 
-const GuardaVisitante = ({ children }: { children: React.ReactNode }) => {
-  const estaAutenticado = useAuthStore((state) => state.estaAutenticado);
-  if (estaAutenticado) {
+const GuestGuard = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = useAuthStore((state) => state.estaAutenticado);
+  
+  if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
+  
   return <>{children}</>;
 };
 
-// Carregamento assíncrono das Views (Code Splitting)
 const ProductGrid = lazy(() => import('../../features/products/components/ProductGrid').then(m => ({ default: m.ProductGrid })));
 const ProductDetail = lazy(() => import('../../features/products/components/ProductDetail').then(m => ({ default: m.ProductDetail })));
 const ProductBackoffice = lazy(() => import('../../features/products/components/ProductBackoffice').then(m => ({ default: m.ProductBackoffice })));
@@ -30,8 +31,6 @@ const EmployeeRegister = lazy(() => import('../../features/auth').then(m => ({ d
 const CustomerProfile = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerProfile })));
 const CustomerOrders = lazy(() => import('../../features/customer').then(m => ({ default: m.CustomerOrders })));
 const UserManagement = lazy(() => import('../../features/customer/components/UserManagement').then(m => ({ default: m.UserManagement })));
-
-// CORREÇÃO: Importando a view real da feature invoicing a partir do arquivo barrel (Lei 3)
 const InvoicingPanel = lazy(() => import('../../features/invoicing').then(m => ({ default: m.InvoicingPanel })));
 
 const router = createBrowserRouter([
@@ -43,22 +42,6 @@ const router = createBrowserRouter([
       </ErrorBoundary>
     ),
     children: [
-      {
-        path: 'minha-conta',
-        element: (
-          <Suspense fallback={<RouteFallback />}>
-            <CustomerProfile />
-          </Suspense>
-        )
-      },
-      {
-        path: 'meus-pedidos',
-        element: (
-          <Suspense fallback={<RouteFallback />}>
-            <CustomerOrders />
-          </Suspense>
-        )
-      },
       {
         index: true,
         element: (
@@ -72,6 +55,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<RouteFallback />}>
             <ProductDetail />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'minha-conta',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <CustomerProfile />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'meus-pedidos',
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <CustomerOrders />
           </Suspense>
         ),
       },
@@ -99,9 +98,9 @@ const router = createBrowserRouter([
         path: 'login',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <GuardaVisitante>
+            <GuestGuard>
               <Login />
-            </GuardaVisitante>
+            </GuestGuard>
           </Suspense>
         ),
       },
@@ -109,9 +108,9 @@ const router = createBrowserRouter([
         path: 'register',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            <GuardaVisitante>
+            <GuestGuard>
               <Register />
-            </GuardaVisitante>
+            </GuestGuard>
           </Suspense>
         ),
       },
@@ -149,7 +148,6 @@ const router = createBrowserRouter([
         path: 'backoffice/faturamento',
         element: (
           <Suspense fallback={<RouteFallback />}>
-            {/* Mantida a barreira preventiva baseada em privilégios anexados ao perfil logado */}
             <RoleGuard allowedRoles={['ROLE_ADMIN', 'ROLE_FATURAMENTO']} fallback={<Navigate to="/" replace />}>
               <InvoicingPanel />
             </RoleGuard>

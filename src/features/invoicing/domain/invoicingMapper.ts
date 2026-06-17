@@ -1,15 +1,20 @@
 import type { BackendPedidoDetalhadoResponseDTO, Order, OrderStatus } from './invoicing.types';
 
 export class OrdersMapper {
-  private static mapStatus(backendStatus: string): OrderStatus {
-    const statusMap: Record<string, OrderStatus> = {
-      AGUARDANDO_PAGAMENTO: 'PENDING',
-      PAGO: 'PAID',
-      ENVIADO: 'SHIPPED',
-      ENTREGUE: 'DELIVERED',
-      CANCELADO: 'CANCELLED',
+  private static mapStatus(backendStatus: string): string {
+    if (!backendStatus) return 'Em Processamento';
+
+    const statusMap: Record<string, string> = {
+      PENDENTE: 'Pendente',
+      AGUARDANDO_PAGAMENTO: 'Aguardando Pagamento',
+      APROVADO: 'Pago',
+      PAGO: 'Pago',
+      ENVIADO: 'Enviado',
+      ENTREGUE: 'Entregue',
+      CANCELADO: 'Cancelado',
     };
-    return statusMap[backendStatus.toUpperCase()] || 'UNKNOWN';
+
+    return statusMap[backendStatus.toUpperCase()] || 'Em Processamento';
   }
 
   public static toDomain(dto: BackendPedidoDetalhadoResponseDTO): Order {
@@ -23,7 +28,7 @@ export class OrdersMapper {
         userType: dto.cliente.tipoUsuario,
         isActive: dto.cliente.ativo,
       },
-      status: OrdersMapper.mapStatus(dto.status),
+      status: OrdersMapper.mapStatus(dto.status) as OrderStatus,
       createdAt: dto.criadoEm,
       totalValue: dto.valorTotal,
       items: dto.itens.map((item) => ({
