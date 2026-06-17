@@ -16,9 +16,9 @@ export const AttributeManager = () => {
   } = useAttributeManagerController();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-200 py-4">
-      <div className="lg:col-span-1">
-        <Card className="p-4 sm:p-5 border border-gray-200 bg-white rounded-xl shadow-xs">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-200 py-4 w-full">
+      <div className="lg:col-span-1 w-full">
+        <Card className="p-4 sm:p-5 border border-gray-200 bg-white rounded-xl shadow-xs w-full text-left">
           <h3 className="text-base font-bold text-gray-900 mb-1 tracking-tight">
             {idEmEdicao ? 'Editar Nome do Atributo' : 'Cadastrar Atributo'}
           </h3>
@@ -26,7 +26,7 @@ export const AttributeManager = () => {
             Crie eixos como Cor ou Tamanho. Os valores serão digitados livremente na configuração de cada SKU.
           </p>
 
-          <form onSubmit={handleSalvarAtributo} className="space-y-4">
+          <form onSubmit={handleSalvarAtributo} className="space-y-4 w-full">
             {erroValidacao && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl animate-in fade-in duration-150">
                 {erroValidacao}
@@ -48,7 +48,7 @@ export const AttributeManager = () => {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100 flex-row">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100 flex-row w-full">
               {idEmEdicao && (
                 <Button
                   type="button"
@@ -73,8 +73,8 @@ export const AttributeManager = () => {
         </Card>
       </div>
 
-      <div className="lg:col-span-2">
-        <Card className="border border-gray-200 bg-white rounded-xl overflow-hidden shadow-xs">
+      <div className="lg:col-span-2 w-full">
+        <Card className="border border-gray-200 bg-white rounded-xl overflow-hidden shadow-xs w-full text-left">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 font-bold text-sm text-gray-900 tracking-tight">
             Eixos de Atributos Cadastrados no Sistema Java
           </div>
@@ -84,7 +84,7 @@ export const AttributeManager = () => {
               Nenhum eixo de especificação técnica localizado no banco.
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
+            <div className="w-full overflow-x-auto scrollbar-thin">
               <table className="min-w-[600px] w-full divide-y divide-gray-100 text-xs text-left">
                 <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
@@ -102,7 +102,7 @@ export const AttributeManager = () => {
                       <td className="px-5 py-3.5 font-bold text-gray-900 text-sm">
                         {attr.nome}
                       </td>
-                      <td className="px-5 py-3.5 text-right space-x-4 pr-6">
+                      <td className="px-5 py-3.5 text-right space-x-4 pr-6 whitespace-nowrap">
                         <button
                           type="button"
                           disabled={estaCarregando}

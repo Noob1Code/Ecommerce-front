@@ -1,5 +1,6 @@
 import { Button, Card, Spinner } from '../../../shared/components/ui';
 import { useCheckoutController } from '../hooks/useCheckoutController';
+import { useNotificationModalStore } from '../../../shared/store/useNotificationModalStore';
 
 export const Checkout = () => {
   const {
@@ -18,6 +19,8 @@ export const Checkout = () => {
     concluirFluxo
   } = useCheckoutController();
 
+  const showSuccess = useNotificationModalStore((state) => state.showSuccess);
+
   const possuiPermissaoCompra = !user || user.perfis?.some((p) =>
     ['ROLE_CLIENTE', 'ROLE_ADMIN'].includes(p)
   );
@@ -28,7 +31,7 @@ export const Checkout = () => {
         <Card className="bg-red-50 border border-red-200 rounded-xl p-6 sm:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-150">
           <h2 className="text-xl font-bold text-red-700 mb-2">Acesso Restrito a Compras</h2>
           <p className="text-sm text-red-600 mb-6">
-            Identificamos que você está autenticado sob uma credencial funcional corporativa.
+            Identificamos que você está autenticado sob uma credencial functional corporativa.
             Contas de funcionários não possuem permissão para gerenciar sacolas ou fechar pedidos.
           </p>
           <Button variant="primary" className="w-full sm:w-auto" onClick={() => window.location.assign('/')}>
@@ -41,30 +44,42 @@ export const Checkout = () => {
 
   if (sucessoCheckout) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12 text-center">
+      <div className="mx-auto max-w-2xl px-4 py-6 sm:py-12 text-center w-full">
         <Card className="p-5 sm:p-8 border border-green-200 bg-green-50/20 rounded-2xl shadow-md">
-          <div className="mx-auto h-12 w-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">✓</div>
+          <div className="mx-auto h-12 w-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mb-4 shrink-0">✓</div>
           <h2 className="text-2xl font-black text-gray-900">Pedido Gerado com Sucesso!</h2>
-          <p className="text-sm text-gray-500 mt-1 font-mono break-all">Código: {sucessoCheckout.pedido.id}</p>
-          <p className="text-sm text-gray-600 mt-3">{sucessoCheckout.mensagem}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1 font-mono break-all bg-white px-2 py-1 rounded border border-gray-100 inline-block">Código: {sucessoCheckout.pedido.id}</p>
+          <p className="text-sm text-gray-600 mt-3 px-2">{sucessoCheckout.mensagem}</p>
 
-          {/* Faturamento Dinâmico via PIX - Responsivo */}
           {sucessoCheckout.pixCopiaECola && (
             <div className="mt-6 p-4 bg-white border border-gray-200 rounded-xl text-left space-y-2">
               <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Pagamento via PIX Copia e Cola</p>
               <textarea readOnly value={sucessoCheckout.pixCopiaECola} rows={3} className="w-full font-mono text-xs p-2 bg-gray-50 border rounded-lg focus:outline-none resize-none break-all" />
-              <Button variant="secondary" onClick={() => { navigator.clipboard.writeText(sucessoCheckout.pixCopiaECola || ''); alert('Código copiado!'); }} className="text-xs w-full sm:w-auto py-2">
+              <Button 
+                variant="secondary" 
+                onClick={() => { 
+                  navigator.clipboard.writeText(sucessoCheckout.pixCopiaECola || ''); 
+                  showSuccess({ title: 'Pix Copiado', message: 'O código Pix Copia e Cola foi transferido para a sua área de transferência.' });
+                }} 
+                className="text-xs w-full sm:w-auto py-2.5 font-bold"
+              >
                 Copiar Chave Pix
               </Button>
             </div>
           )}
 
-          {/* Faturamento Dinâmico via BOLETO - Responsivo */}
           {sucessoCheckout.linhaDigitavel && (
             <div className="mt-6 p-4 bg-white border border-gray-200 rounded-xl text-left space-y-2">
               <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Linha Digitável do Boleto</p>
               <input type="text" readOnly value={sucessoCheckout.linhaDigitavel} className="w-full font-mono text-xs p-2.5 bg-gray-50 border rounded-lg focus:outline-none break-all" />
-              <Button variant="secondary" onClick={() => { navigator.clipboard.writeText(sucessoCheckout.linhaDigitavel || ''); alert('Linha digitável copiada!'); }} className="text-xs w-full sm:w-auto py-2">
+              <Button 
+                variant="secondary" 
+                onClick={() => { 
+                  navigator.clipboard.writeText(sucessoCheckout.linhaDigitavel || ''); 
+                  showSuccess({ title: 'Boleto Copiado', message: 'A linha digitável do boleto foi transferida para a sua área de transferência.' });
+                }} 
+                className="text-xs w-full sm:w-auto py-2.5 font-bold"
+              >
                 Copiar Código de Barras
               </Button>
             </div>
@@ -82,9 +97,9 @@ export const Checkout = () => {
 
   if (isEmpty) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-3 px-4 text-center">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-3 px-4 text-center w-full max-w-md mx-auto">
         <h2 className="text-xl font-bold text-gray-900">Seu carrinho de compras está vazio</h2>
-        <p className="text-sm text-gray-400 max-w-sm">Insira mercadorias na sacola antes de prosseguir para a confirmação.</p>
+        <p className="text-sm text-gray-400">Insira mercadorias na sacola antes de prosseguir para a confirmação.</p>
         <Button variant="primary" onClick={() => window.location.assign('/')} className="mt-2 w-full sm:w-auto">
           Ver Produtos
         </Button>
@@ -99,22 +114,23 @@ export const Checkout = () => {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:py-12 sm:px-6 lg:px-8">
-      <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 mb-6 sm:mb-8">Revisar e Fechar Pedido</h1>
-      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start">
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:py-12 sm:px-6 lg:px-8 w-full">
+      <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 mb-6 sm:mb-8 text-center sm:text-left">
+        Revisar e Fechar Pedido
+      </h1>
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start w-full">
         <div className="w-full lg:col-span-7 space-y-6">
           <Card className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Dados do Comprador</h2>
-            <div className="text-sm text-gray-900 space-y-1 font-medium break-all">
-              <p><span className="text-gray-400">Titular:</span> {user?.nome}</p>
-              <p><span className="text-gray-400">E-mail:</span> {user?.email}</p>
+            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3 px-0.5">Dados do Comprador</h2>
+            <div className="text-sm text-gray-900 space-y-1.5 font-medium break-all px-0.5">
+              <p><span className="text-gray-400 font-normal">Titular:</span> {user?.nome}</p>
+              <p><span className="text-gray-400 font-normal">E-mail:</span> {user?.email}</p>
             </div>
           </Card>
 
-          {/* Seleção de Pagamento */}
           <Card className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">Forma de Pagamento *</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2 px-0.5">Forma de Pagamento *</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full">
               {['PIX', 'BOLETO', 'CREDITO_CARD', 'DEBITO_CARD'].map((tipo) => (
                 <button
                   key={tipo}
@@ -134,9 +150,9 @@ export const Checkout = () => {
             </div>
 
             {metodoPagamento === 'CREDITO_CARD' && (
-              <div className="pt-2 animate-in fade-in duration-200">
-                <label htmlFor="parcelas" className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Opções de Parcelamento</label>
-                <select id="parcelas" value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className="w-full p-2.5 text-sm border rounded-lg bg-white font-semibold text-gray-700 focus:outline-none">
+              <div className="pt-2 animate-in fade-in duration-200 w-full">
+                <label htmlFor="parcelas" className="block text-xs font-bold text-gray-500 uppercase mb-1.5 px-0.5">Opções de Parcelamento</label>
+                <select id="parcelas" value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className="w-full p-2.5 text-sm border rounded-lg bg-white font-semibold text-gray-700 focus:outline-none shadow-2xs cursor-pointer">
                   {opcoesParcelamento.map((opcao) => (
                     <option key={opcao.parcelas} value={opcao.parcelas}>
                       {opcao.texto}
@@ -147,17 +163,16 @@ export const Checkout = () => {
             )}
           </Card>
 
-          {/* Lista de Itens do Pedido */}
           <Card className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl shadow-xs space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2">Produtos Escolhidos ({items.length})</h2>
-            <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto pr-1">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 border-b border-gray-100 pb-2 px-0.5">Produtos Escolhidos ({items.length})</h2>
+            <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto pr-1 w-full">
               {items.map((item) => (
-                <div key={item.skuId} className="py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm gap-2">
+                <div key={item.skuId} className="py-3 flex flex-row items-center justify-between text-sm gap-4 w-full">
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-gray-900 truncate">{item.product.name}</h4>
-                    <p className="text-[11px] text-gray-400 font-mono mt-0.5">SKU: {item.selectedSku.skuCode} | Qtd: {item.quantity}x</p>
+                    <p className="text-[10px] sm:text-[11px] text-gray-400 font-mono mt-0.5">SKU: {item.selectedSku.skuCode} | Qtd: {item.quantity}x</p>
                   </div>
-                  <span className="font-bold text-gray-900 whitespace-nowrap self-end sm:self-auto bg-gray-50 sm:bg-transparent px-2 py-0.5 sm:px-0 rounded">
+                  <span className="font-bold text-gray-900 whitespace-nowrap bg-gray-50 sm:bg-transparent px-2 py-0.5 sm:px-0 rounded text-right text-xs sm:text-sm">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                       item.selectedSku.price * item.quantity
                     )}
@@ -168,7 +183,6 @@ export const Checkout = () => {
           </Card>
         </div>
 
-        {/* Resumo Financeiro da Direita */}
         <div className="w-full lg:col-span-5">
           <Card className="bg-white p-4 sm:p-5 border border-gray-200 shadow-sm rounded-xl">
             <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">Resumo Econômico</h2>

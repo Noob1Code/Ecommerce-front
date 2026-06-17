@@ -12,6 +12,8 @@ import type {
   SkuOption
 } from './product.types';
 
+const IMAGE_BASE_URL = 'http://localhost:8080';
+
 export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => {
   const mappedSkus: ProductSku[] = (payload.variacoes || []).map((skuDto) => {
     const mappedOptions: SkuOption[] = (skuDto.opcoes || []).map((opt) => ({
@@ -21,12 +23,25 @@ export const mapApiToProduct = (payload: BackendProdutoResponseDTO): Product => 
       value: opt.valor,
     }));
 
-    const mappedImages: SkuImage[] = (skuDto.imagens || []).map((img) => ({
-      id: img.id,
-      imageUrl: img.urlImagem,
-      order: img.ordem,
-      createdAt: img.criadoEm,
-    }));
+    const mappedImages: SkuImage[] = (skuDto.imagens || []).map((img) => {
+      // 🕵️‍♂️ Tratamento defensivo: remove barras duplicadas ou prefixos corrompidos
+      let cleanPath = img.urlImagem || '';
+      
+      if (cleanPath.startsWith('/')) {
+        cleanPath = cleanPath.substring(1);
+      }
+
+      const fullImageUrl = cleanPath.startsWith('http')
+        ? cleanPath
+        : `${IMAGE_BASE_URL}/${cleanPath}`;
+
+      return {
+        id: img.id,
+        imageUrl: fullImageUrl,
+        order: img.ordem,
+        createdAt: img.criadoEm,
+      };
+    });
 
     return {
       id: skuDto.id,
@@ -82,10 +97,15 @@ export const mapVariationToRequestApi = (config: {
     })
   );
 
-  const mappedImages: BackendImagemVariacaoRequestDTO[] = config.images.map((url, index) => ({
-    urlImagem: url,
-    ordem: index + 1,
-  }));
+  const mappedImages: BackendImagemVariacaoRequestDTO[] = config.images.map((url, index) => {
+    // 🧼 Remove o link do localhost e garante que devolve apenas o caminho relativo para o banco
+    const relativeUrl = url.replace(`${IMAGE_BASE_URL}/`, '');
+    
+    return {
+      urlImagem: relativeUrl,
+      ordem: index + 1,
+    };
+  });
 
   return {
     sku: config.skuCode,
@@ -117,10 +137,15 @@ export const mapVariationToUpdateApi = (config: {
   }
 
   if (config.images !== undefined) {
-    payload.imagens = config.images.map((url, index) => ({
-      urlImagem: url,
-      ordem: index + 1,
-    }));
+    payload.imagens = config.images.map((url, index) => {
+      // 🧼 Garantia de limpeza bi-direcional no payload de atualização parcial
+      const relativeUrl = url.replace(`${IMAGE_BASE_URL}/`, '');
+      
+      return {
+        urlImagem: relativeUrl,
+        ordem: index + 1,
+      };
+    });
   }
 
   return payload;

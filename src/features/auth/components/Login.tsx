@@ -16,14 +16,14 @@ export const Login = () => {
   } = useLogin();
 
   return (
-    <div className="flex min-h-[75vh] items-center justify-center px-4 py-6 sm:py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-[75vh] items-center justify-center px-4 py-4 sm:py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-xl bg-white border border-gray-100 rounded-xl">
 
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
             Acessar Conta
           </h2>
-          <p className="mt-1.5 text-xs sm:text-sm text-gray-500 font-medium max-w-xs mx-auto">
+          <p className="mt-1.5 text-xs sm:text-sm text-gray-500 font-medium max-w-xs mx-auto px-2">
             Insira suas credenciais para acessar o sistema
           </p>
         </div>
@@ -36,9 +36,9 @@ export const Login = () => {
           <ErrorMessage message={erro} />
         )}
 
-        <form className="mt-6 sm:mt-8 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-4 sm:mt-8 space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email-address" className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            <label htmlFor="email-address" className="block text-xs font-bold text-gray-500 uppercase mb-1 px-0.5">
               Endereço de E-mail *
             </label>
             <Input
@@ -59,7 +59,7 @@ export const Login = () => {
           </div>
 
           <div>
-            <label htmlFor="senha" className="block text-xs font-bold text-gray-500 uppercase mb-1">
+            <label htmlFor="senha" className="block text-xs font-bold text-gray-500 uppercase mb-1 px-0.5">
               Senha de Acesso *
             </label>
             <Input
@@ -79,11 +79,11 @@ export const Login = () => {
             />
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1sm:pt-2">
             <Button
               type="submit"
               disabled={estaCarregando}
-              className="w-full flex justify-center py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl shadow-md active:scale-95 transition-transform bg-blue-600 text-white hover:bg-blue-700"
+              className="w-full flex justify-center py-3 sm:py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl shadow-md active:scale-95 transition-transform bg-blue-600 text-white hover:bg-blue-700"
               variant="primary"
             >
               {estaCarregando ? (
@@ -98,7 +98,7 @@ export const Login = () => {
           </div>
         </form>
 
-        <div className="text-center pt-4 border-t border-gray-100 flex flex-col space-y-3">
+        <div className="text-center pt-4 border-t border-gray-100 flex flex-col space-y-2.5">
           <p className="text-xs sm:text-sm text-gray-500 font-medium">
             Ainda não possui uma conta?{' '}
             <Link to="/register" className="font-bold text-blue-600 hover:text-blue-500 transition-colors">
